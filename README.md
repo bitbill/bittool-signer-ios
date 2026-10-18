@@ -10,6 +10,13 @@ SwiftUI + JavaScriptCore 离线签名器，最低 iOS 17，iOS 26 使用 Liquid 
 
 代码以 [MIT License](LICENSE) 发布（BITTOOL PTE. LTD., 2026）。
 
+**怎么核对你装的 App 就是这份源码**：见 [docs/Reproducible-Build.md](docs/Reproducible-Build.md)。
+简短版——App Store 的可执行文件被 Apple 重新签名并带 FairPlay 加密，**无法**字节级复现；
+但全部交易解析与签名逻辑都在一个不加密的资源文件 `signer.js` 里，它可以从你自己下载的
+`.ipa` 中取出，和你用 `npm ci --ignore-scripts && npm run build` 从源码重建的结果逐字节比较。
+`scripts/release-manifest.sh` 生成发布清单（commit、全部跟踪文件的哈希、在干净克隆里重建出的
+引擎哈希），第三方在同一个 tag 上自己跑一遍即可 `diff` 比对。
+
 代码经过 AI 辅助的安全审查，发现的问题已修复并补了回归测试（见
 [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md)）。
 **那不是第三方独立安全审计**，也不构成任何安全保证；独立审计仍在待办清单里。
