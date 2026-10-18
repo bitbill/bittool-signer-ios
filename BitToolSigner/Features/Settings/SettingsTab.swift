@@ -75,10 +75,11 @@ struct SettingsTab: View {
 
                 Section {
                     LabeledContent("Version", value: version)
-                    LabeledContent("Publisher", value: "BITTOOL PTE. LTD.")
                     LabeledContent("Network connections", value: String(localized: "None", bundle: AppText.bundle))
                     NavigationLink("Fully Open Source") { OpenSourceView() }
                         .accessibilityIdentifier("settings.openSource")
+                    NavigationLink("Contact Us") { ContactView() }
+                        .accessibilityIdentifier("settings.contact")
                     NavigationLink("Terms of Use") { LegalDocumentView(document: .terms) }
                         .accessibilityIdentifier("settings.terms")
                     NavigationLink("Privacy Policy") { LegalDocumentView(document: .privacy) }
@@ -110,6 +111,34 @@ struct SettingsTab: View {
     }
 }
 
+
+/// Who publishes the app and where to write. The app opens neither a browser
+/// nor a mail client, so the address is text to copy, like every other address
+/// it shows.
+struct ContactView: View {
+    private static let publisher = "BITTOOL PTE. LTD."
+    private static let email = "support@bittool.com"
+
+    var body: some View {
+        List {
+            Section {
+                LabeledContent("Publisher", value: Self.publisher)
+                    .accessibilityIdentifier("contact.publisher")
+            }
+            Section {
+                CopyableText(text: Self.email, label: "Copy address", font: .callout)
+                    .accessibilityIdentifier("contact.email")
+            } header: {
+                Text("Contact email")
+            } footer: {
+                Text("The app never opens a mail app. Copy the address and write to us from another device.")
+            }
+        }
+        .listStyle(.insetGrouped)
+        .navigationTitle("Contact Us")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
 
 struct CompatibilityView: View {
     private enum Tab: Hashable { case formats, wallets }

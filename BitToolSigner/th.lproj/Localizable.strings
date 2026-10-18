@@ -156,6 +156,8 @@
 "Confirm new password" = "ยืนยันรหัสผ่านใหม่";
 "Confirm passphrase" = "ยืนยันรหัสผ่านวลี";
 "Confirm password" = "ยืนยันรหัสผ่าน";
+"Contact Us" = "ติดต่อเรา";
+"Contact email" = "อีเมลติดต่อ";
 "Continue" = "ดำเนินการต่อ";
 "Contract" = "สัญญา";
 "Contract Interaction" = "การโต้ตอบกับสัญญา";
@@ -617,6 +619,7 @@
 "The QR code is the phrase" = "คิวอาร์โค้ดนี้คือตัววลีเอง";
 "The address the wallet itself publishes." = "ที่อยู่เว็บที่กระเป๋านั้นประกาศเอง";
 "The app never opens a browser. Copy the address and open it on another device." = "แอปนี้ไม่เคยเปิดเบราว์เซอร์ ให้คัดลอกที่อยู่แล้วเปิดบนอุปกรณ์อื่น";
+"The app never opens a mail app. Copy the address and write to us from another device." = "แอปนี้ไม่เปิดแอปอีเมล โปรดคัดลอกที่อยู่แล้วเขียนถึงเราจากอุปกรณ์อื่น";
 "The camera is unavailable." = "กล้องใช้งานไม่ได้";
 "The cards contain the words only. Back up your BIP39 passphrase separately." = "การ์ดมีเฉพาะคำเท่านั้น สำรองรหัสผ่านวลี BIP39 ของคุณแยกต่างหาก";
 "The encrypted wallet could not be created." = "ไม่สามารถสร้างกระเป๋าที่เข้ารหัสได้";
@@ -631,7 +634,7 @@
 "The name as it is published." = "ชื่อตามที่ประกาศไว้";
 "The password decrypts this wallet for this signature only." = "รหัสผ่านถอดรหัสกระเป๋านี้สำหรับลายเซ็นครั้งนี้เท่านั้น";
 "The password encrypts this wallet on this device and authorizes every signature. It is not part of your recovery phrase." = "รหัสผ่านเข้ารหัสกระเป๋านี้บนอุปกรณ์นี้และอนุมัติทุกลายเซ็น รหัสผ่านไม่ได้เป็นส่วนหนึ่งของวลีกู้คืนของคุณ";
-"The password is incorrect or the encrypted wallet has been modified." = "รหัสผ่านไม่ถูกต้องหรือกระเป๋าที่เข้ารหัสถูกแก้ไข";
+"The password is incorrect." = "รหัสผ่านไม่ถูกต้อง";
 "The password key could not be created." = "ไม่สามารถสร้างคีย์ของรหัสผ่านได้";
 "The phrase is hidden again, but the screenshot may already contain it. Delete it from Photos, Recently Deleted and any synced copies, and keep a written backup offline." = "วลีถูกซ่อนอีกครั้งแล้ว แต่ภาพหน้าจออาจมีวลีอยู่แล้ว ให้ลบออกจากรูปภาพ จากรายการลบล่าสุด และจากสำเนาที่ซิงก์ไว้ทุกชุด แล้วเก็บสำเนาที่เขียนไว้แบบออฟไลน์";
 "The recovery phrase is empty or too large." = "วลีกู้คืนว่างเปล่าหรือยาวเกินไป";

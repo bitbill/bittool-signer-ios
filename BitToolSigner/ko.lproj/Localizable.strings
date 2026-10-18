@@ -156,6 +156,8 @@
 "Confirm new password" = "새 비밀번호 확인";
 "Confirm passphrase" = "패스프레이즈 확인";
 "Confirm password" = "비밀번호 확인";
+"Contact Us" = "문의하기";
+"Contact email" = "연락 이메일";
 "Continue" = "계속";
 "Contract" = "컨트랙트";
 "Contract Interaction" = "컨트랙트 상호작용";
@@ -617,6 +619,7 @@
 "The QR code is the phrase" = "QR 코드가 곧 복구 구문입니다";
 "The address the wallet itself publishes." = "지갑이 직접 공개한 주소.";
 "The app never opens a browser. Copy the address and open it on another device." = "이 앱은 브라우저를 열지 않습니다. 주소를 복사해 다른 기기에서 여세요.";
+"The app never opens a mail app. Copy the address and write to us from another device." = "이 앱은 메일 앱을 열지 않습니다. 주소를 복사해 다른 기기에서 보내주세요.";
 "The camera is unavailable." = "카메라를 사용할 수 없습니다.";
 "The cards contain the words only. Back up your BIP39 passphrase separately." = "카드에는 단어만 들어 있습니다. BIP39 패스프레이즈는 따로 백업하세요.";
 "The encrypted wallet could not be created." = "암호화된 지갑을 만들지 못했습니다.";
@@ -631,7 +634,7 @@
 "The name as it is published." = "공개된 그대로의 이름.";
 "The password decrypts this wallet for this signature only." = "암호는 이번 서명에만 이 지갑을 복호화합니다.";
 "The password encrypts this wallet on this device and authorizes every signature. It is not part of your recovery phrase." = "암호는 이 기기에서 이 지갑을 암호화하고 모든 서명을 승인합니다. 복구 구문의 일부가 아닙니다.";
-"The password is incorrect or the encrypted wallet has been modified." = "암호가 틀렸거나 암호화된 지갑이 변경되었습니다.";
+"The password is incorrect." = "비밀번호가 올바르지 않습니다.";
 "The password key could not be created." = "암호 키를 만들지 못했습니다.";
 "The phrase is hidden again, but the screenshot may already contain it. Delete it from Photos, Recently Deleted and any synced copies, and keep a written backup offline." = "복구 구문을 다시 가렸지만, 스크린샷에는 이미 담겼을 수 있습니다. ‘사진’과 ‘최근 삭제된 항목’, 동기화된 사본에서도 삭제하고, 손으로 적은 백업을 오프라인으로 보관하세요.";
 "The recovery phrase is empty or too large." = "복구 구문이 비어 있거나 너무 깁니다.";

@@ -156,6 +156,8 @@
 "Confirm new password" = "Підтвердити новий пароль";
 "Confirm passphrase" = "Підтвердити парольну фразу";
 "Confirm password" = "Підтвердити пароль";
+"Contact Us" = "Зв’язатися з нами";
+"Contact email" = "Електронна пошта для зв’язку";
 "Continue" = "Продовжити";
 "Contract" = "Контракт";
 "Contract Interaction" = "Взаємодія з контрактом";
@@ -617,6 +619,7 @@
 "The QR code is the phrase" = "QR-код — це і є фраза";
 "The address the wallet itself publishes." = "Адреса, яку публікує сам гаманець.";
 "The app never opens a browser. Copy the address and open it on another device." = "Застосунок ніколи не відкриває браузер. Скопіюйте адресу й відкрийте її на іншому пристрої.";
+"The app never opens a mail app. Copy the address and write to us from another device." = "Застосунок не відкриває поштовий клієнт. Скопіюйте адресу й напишіть нам з іншого пристрою.";
 "The camera is unavailable." = "Камера недоступна.";
 "The cards contain the words only. Back up your BIP39 passphrase separately." = "Картки містять лише слова. Зберігайте копію парольної фрази BIP39 окремо.";
 "The encrypted wallet could not be created." = "Не вдалося створити зашифрований гаманець.";
@@ -631,7 +634,7 @@
 "The name as it is published." = "Назва в тому вигляді, в якому її опубліковано.";
 "The password decrypts this wallet for this signature only." = "Пароль розшифровує цей гаманець лише для цього підпису.";
 "The password encrypts this wallet on this device and authorizes every signature. It is not part of your recovery phrase." = "Пароль шифрує цей гаманець на цьому пристрої та авторизує кожен підпис. Він не є частиною вашої фрази відновлення.";
-"The password is incorrect or the encrypted wallet has been modified." = "Пароль неправильний або зашифрований гаманець було змінено.";
+"The password is incorrect." = "Неправильний пароль.";
 "The password key could not be created." = "Не вдалося створити ключ пароля.";
 "The phrase is hidden again, but the screenshot may already contain it. Delete it from Photos, Recently Deleted and any synced copies, and keep a written backup offline." = "Фразу знову приховано, але знімок екрана вже може її містити. Видаліть його з «Фото», з «Нещодавно видалених» і з усіх синхронізованих копій, а письмову копію тримайте офлайн.";
 "The recovery phrase is empty or too large." = "Фраза відновлення порожня або завелика.";

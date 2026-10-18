@@ -32,6 +32,16 @@ struct ReviewTextTests {
         #expect(ReviewText.shortDecimal("0.500000000000 ETH") == "0.50000000 ETH")
     }
 
+    @Test func aFeeTooLargeForAnIntegerStillRenders() {
+        // A request can name any fee the engine can represent, and this runs
+        // while drawing the review — before anyone has authorized anything.
+        // Carrying through Int would trap and take the app down.
+        #expect(ReviewText.shortDecimal("9223372036854775807.99999999999998 ETH") == "9223372036854775808.00000000 ETH")
+        #expect(ReviewText.shortDecimal("99999999999999999999999999.999999999 ETH") == "100000000000000000000000000.00000000 ETH")
+        // Carrying into a whole part that is itself all nines grows a digit.
+        #expect(ReviewText.shortDecimal("9.999999999") == "10.00000000")
+    }
+
     @Test func shorteningLeavesAnythingItCannotRoundAlone() {
         #expect(ReviewText.shortDecimal("0.0001 ETH") == "0.0001 ETH")   // already short
         #expect(ReviewText.shortDecimal("12 TRX") == "12 TRX")           // no fraction

@@ -825,6 +825,14 @@ final class BitToolSignerUITests: XCTestCase {
         goBack(in: app)
         goBack(in: app)
 
+        // Contact Us: the publisher and an address to copy, no mail client.
+        tap(app.buttons["Contact Us"], in: app)
+        XCTAssertTrue(app.navigationBars["Contact Us"].waitForExistence(timeout: 5))
+        XCTAssertTrue(element(containing: "BITTOOL PTE. LTD.", in: app).exists)
+        XCTAssertTrue(element(containing: "support@bittool.com", in: app).exists)
+        XCTAssertFalse(app.links.firstMatch.exists, "The address is text, not a mailto link.")
+        goBack(in: app)
+
         // Open Source: the address is text, and the build is described on device.
         tap(app.buttons["settings.openSource"], in: app)
         XCTAssertTrue(app.navigationBars["Open Source"].waitForExistence(timeout: 5))

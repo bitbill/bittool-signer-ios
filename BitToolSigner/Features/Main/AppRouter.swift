@@ -32,6 +32,9 @@ final class AppRouter: ObservableObject {
     /// A token rather than a flag, so asking twice in a row still works and
     /// nothing has to be reset afterwards.
     @Published private(set) var scanRequest = 0
+    /// The last `scanRequest` the Scan tab acted on. Not published: changing it
+    /// must not redraw anything.
+    private var handledScanRequest = 0
     @Published var setup: SetupPresentation?
     /// Opened once the setup sheet has fully dismissed. Pushing while the sheet
     /// is still animating away can leave the push transition stuck mid-way.
@@ -58,6 +61,18 @@ final class AppRouter: ObservableObject {
     func startScanning() {
         tab = .scan
         scanRequest += 1
+    }
+
+    /// True once per `startScanning()`, then false until the next one.
+    ///
+    /// The mark has to live here rather than in the Scan tab's `@State`: that
+    /// view is torn down the moment a request arrives and built again once the
+    /// signature is done, so view state resets to zero and the camera would
+    /// reopen on top of the person every time they finished signing.
+    func consumeScanRequest() -> Bool {
+        guard scanRequest != handledScanRequest else { return false }
+        handledScanRequest = scanRequest
+        return true
     }
 
     func open(_ route: WalletRoute) {

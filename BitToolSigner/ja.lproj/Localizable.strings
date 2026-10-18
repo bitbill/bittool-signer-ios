@@ -156,6 +156,8 @@
 "Confirm new password" = "新しいパスワードを確認";
 "Confirm passphrase" = "パスフレーズを確認";
 "Confirm password" = "パスワードを確認";
+"Contact Us" = "お問い合わせ";
+"Contact email" = "連絡先メール";
 "Continue" = "続ける";
 "Contract" = "コントラクト";
 "Contract Interaction" = "コントラクト操作";
@@ -617,6 +619,7 @@
 "The QR code is the phrase" = "QR コードはフレーズそのものです";
 "The address the wallet itself publishes." = "そのウォレット自身が公開しているアドレス。";
 "The app never opens a browser. Copy the address and open it on another device." = "このアプリがブラウザを開くことはありません。アドレスをコピーして、別の端末で開いてください。";
+"The app never opens a mail app. Copy the address and write to us from another device." = "このアプリはメールアプリを開きません。アドレスをコピーして、別の端末からご連絡ください。";
 "The camera is unavailable." = "カメラを利用できません。";
 "The cards contain the words only. Back up your BIP39 passphrase separately." = "カードに含まれるのは単語だけです。BIP39 パスフレーズは別途バックアップしてください。";
 "The encrypted wallet could not be created." = "暗号化されたウォレットを作成できませんでした。";
@@ -631,7 +634,7 @@
 "The name as it is published." = "公開されているとおりの名称。";
 "The password decrypts this wallet for this signature only." = "パスワードは、この署名のためだけにこのウォレットを復号します。";
 "The password encrypts this wallet on this device and authorizes every signature. It is not part of your recovery phrase." = "パスワードはこの端末上でこのウォレットを暗号化し、すべての署名を承認します。リカバリーフレーズの一部ではありません。";
-"The password is incorrect or the encrypted wallet has been modified." = "パスワードが違うか、暗号化されたウォレットが変更されています。";
+"The password is incorrect." = "パスワードが正しくありません。";
 "The password key could not be created." = "パスワード鍵を作成できませんでした。";
 "The phrase is hidden again, but the screenshot may already contain it. Delete it from Photos, Recently Deleted and any synced copies, and keep a written backup offline." = "フレーズは再び隠しましたが、スクリーンショットにはすでに写っている可能性があります。「写真」「最近削除した項目」、同期されたコピーからも削除し、手書きのバックアップをオフラインで保管してください。";
 "The recovery phrase is empty or too large." = "リカバリーフレーズが空か、長すぎます。";

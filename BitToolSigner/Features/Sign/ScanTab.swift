@@ -108,7 +108,6 @@ struct ScanTab: View {
 struct ScanHomeView: View {
     @EnvironmentObject private var store: AppStore
     @EnvironmentObject private var router: AppRouter
-    @State private var handledScanRequest = 0
     @StateObject private var session = ScanSession()
     @State private var scanning = false
     @State private var pasting = false
@@ -165,9 +164,7 @@ struct ScanHomeView: View {
     /// Opens the camera once per request from elsewhere, never while a request
     /// is already being reviewed.
     private func openCameraIfAsked() {
-        guard router.scanRequest != handledScanRequest else { return }
-        handledScanRequest = router.scanRequest
-        guard store.review == nil, !scanning else { return }
+        guard router.consumeScanRequest(), store.review == nil, !scanning else { return }
         error = nil
         scanning = true
     }

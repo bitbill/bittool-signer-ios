@@ -79,16 +79,29 @@ enum ReviewText {
     }
 
     /// Adds one unit in the last place of `fraction`, carrying into `whole`.
+    ///
+    /// The whole part is carried as a string, never parsed into an integer. A
+    /// request can name any fee the engine can represent — far beyond `Int` —
+    /// and this runs while drawing the review, before anyone has authorized
+    /// anything. Parsing and adding would trap on an overflow and take the app
+    /// down on a request it was supposed to be warning about.
     private static func increment(whole: String, fraction: String) -> String? {
-        var digits = Array(fraction), carry = true
-        var index = digits.count - 1
+        guard let carriedFraction = carried(Array(fraction)) else { return nil }
+        guard carriedFraction.carry else { return whole + "." + String(carriedFraction.digits) }
+        guard let carriedWhole = carried(Array(whole)) else { return nil }
+        let head = carriedWhole.carry ? "1" : ""
+        return head + String(carriedWhole.digits) + "." + String(carriedFraction.digits)
+    }
+
+    /// Adds one to a run of decimal digits, reporting whether it carried past
+    /// the front. Nil if anything in it is not a digit.
+    private static func carried(_ digits: [Character]) -> (digits: [Character], carry: Bool)? {
+        var digits = digits, carry = true, index = digits.count - 1
         while carry && index >= 0 {
             guard let value = digits[index].wholeNumberValue else { return nil }
             if value == 9 { digits[index] = "0" } else { digits[index] = Character(String(value + 1)); carry = false }
             index -= 1
         }
-        guard carry else { return whole + "." + String(digits) }
-        guard let number = Int(whole) else { return nil }
-        return String(number + 1) + "." + String(digits)
+        return (digits, carry)
     }
 }

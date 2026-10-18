@@ -156,6 +156,8 @@
 "Confirm new password" = "Xác nhận mật khẩu mới";
 "Confirm passphrase" = "Xác nhận mật khẩu bổ sung";
 "Confirm password" = "Xác nhận mật khẩu";
+"Contact Us" = "Liên hệ với chúng tôi";
+"Contact email" = "Email liên hệ";
 "Continue" = "Tiếp tục";
 "Contract" = "Hợp đồng";
 "Contract Interaction" = "Tương tác hợp đồng";
@@ -617,6 +619,7 @@
 "The QR code is the phrase" = "Mã QR chính là cụm từ";
 "The address the wallet itself publishes." = "Địa chỉ do chính ví đó công bố.";
 "The app never opens a browser. Copy the address and open it on another device." = "Ứng dụng không bao giờ mở trình duyệt. Hãy sao chép địa chỉ rồi mở trên một thiết bị khác.";
+"The app never opens a mail app. Copy the address and write to us from another device." = "Ứng dụng không bao giờ mở ứng dụng email. Hãy sao chép địa chỉ và viết cho chúng tôi từ một thiết bị khác.";
 "The camera is unavailable." = "Camera không khả dụng.";
 "The cards contain the words only. Back up your BIP39 passphrase separately." = "Các thẻ chỉ chứa những từ đó. Hãy sao lưu mật khẩu bổ sung BIP39 của bạn riêng.";
 "The encrypted wallet could not be created." = "Không thể tạo ví đã mã hóa.";
@@ -631,7 +634,7 @@
 "The name as it is published." = "Tên đúng như đã được công bố.";
 "The password decrypts this wallet for this signature only." = "Mật khẩu chỉ giải mã ví này cho riêng chữ ký lần này.";
 "The password encrypts this wallet on this device and authorizes every signature. It is not part of your recovery phrase." = "Mật khẩu mã hóa ví này trên thiết bị này và cho phép mỗi chữ ký. Nó không phải một phần của cụm từ khôi phục.";
-"The password is incorrect or the encrypted wallet has been modified." = "Mật khẩu không đúng hoặc ví đã mã hóa đã bị sửa đổi.";
+"The password is incorrect." = "Mật khẩu không đúng.";
 "The password key could not be created." = "Không thể tạo khóa từ mật khẩu.";
 "The phrase is hidden again, but the screenshot may already contain it. Delete it from Photos, Recently Deleted and any synced copies, and keep a written backup offline." = "Cụm từ đã được ẩn lại, nhưng ảnh chụp màn hình có thể đã chứa nó. Hãy xóa ảnh khỏi Ảnh, khỏi mục Đã xóa gần đây và khỏi mọi bản sao đã đồng bộ, rồi giữ một bản ghi tay ở chế độ ngoại tuyến.";
 "The recovery phrase is empty or too large." = "Cụm từ khôi phục trống hoặc quá dài.";

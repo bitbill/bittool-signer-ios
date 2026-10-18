@@ -29,7 +29,10 @@ enum VaultError: LocalizedError, Equatable {
         case .randomFailure: return String(localized: "Secure randomness is unavailable. Try again after unlocking your device.", bundle: AppText.bundle)
         case .keyDerivationFailure: return String(localized: "The password key could not be created.", bundle: AppText.bundle)
         case .encryptionFailure: return String(localized: "The encrypted wallet could not be created.", bundle: AppText.bundle)
-        case .authenticationFailed: return String(localized: "The password is incorrect or the encrypted wallet has been modified.", bundle: AppText.bundle)
+        // AES-GCM cannot tell a wrong password from tampered ciphertext, but
+        // saying so only alarms the person who simply mistyped. Tampering
+        // still fails closed; it just does not need its own wording here.
+        case .authenticationFailed: return String(localized: "The password is incorrect.", bundle: AppText.bundle)
         case .deviceKeyUnavailable: return String(localized: "This wallet’s device key is unavailable. Restore your recovery phrase on this device.", bundle: AppText.bundle)
         case .devicePasscodeRequired: return String(localized: "Set an iPhone passcode before creating a wallet. The device key requires passcode protection.", bundle: AppText.bundle)
         case .storageFailure: return String(localized: "The encrypted wallet could not be read or saved.", bundle: AppText.bundle)

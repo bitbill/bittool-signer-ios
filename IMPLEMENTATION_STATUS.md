@@ -1,4 +1,4 @@
-# BitTool Signer 实施状态 · Revision 9（2026-10-18）
+# BitTool Signer 实施状态 · Revision 10（2026-10-18）
 
 本轮按用户要求对尚未上线的 App 做全面重构：原生化并重做全部界面，Settings 放进 Tab Bar（共 4 个 Tab），审查并加固安全、逻辑、JS 引擎与密码学，重绘七个主网络图标，重建热门 Token 表与图标，补齐自动化测试。App 未上线，因此直接采用新存储格式，不兼容旧开发数据。[Revision 1 规范](docs/Modification-Spec-2026-09-21.md)中的产品决定（D01–D28）在 Revision 2 中全部保留；Revision 3 按用户的新要求改变了其中几项：BTC 默认导出改为 Account XPUB（移除叶子公钥模式）、TRON 可导出任意地址索引、移除 Ownbit 及其显示规则。
 
@@ -49,6 +49,29 @@ App 由 **BitSigner** 更名为 **BitTool Signer**（中文：BitTool 签名器�
 **3. passphrase 输入框可收起键盘**：该输入框自带 Done 工具条（`inputAccessoryView`），因为它紧贴底部操作栏，页面本身没有别的收起键盘的办法。同时给输入框加了 `frame(maxWidth: .infinity)`，避免 UIKit 文本框按内容宽度收缩。
 
 **4. Settings 调整**：Reference 里移除 Offline Setup Guide（引导页首次使用时仍会出现）；About 里 Open Source 改名 **Fully Open Source**。
+
+## Revision 10（2026-10-18 晚）：第二轮审查的四条发现、手续费规则与若干修正
+
+**1. BTS-SEC-2026-1018 的四条发现全部复现、全部修复**。四条都是真问题，其中两条是 Revision 9 自己引入的回归：
+
+| 编号 | 级别 | 问题 | 修复 |
+| --- | --- | --- | --- |
+| F-01 | HIGH | Safe 的 `DELEGATECALL` 不会转移 `value`（Executor 只把 value 交给 `call`），但代码把它当成已付金额显示；MultiSend 同理，且标题只列 3 条调用，第 4 条以后的真实转账会从主界面消失 | `evm.js`：`DELEGATECALL` 传 `0n` 给 `decodeCall`，被忽略的 value 单独列字段并给出警告；MultiSend 只在 `CALL` 时累加 `moved`；**任何花费原生币的调用一定出现在标题里**，截断不再能藏住转账 |
+| F-02 | HIGH | SPL Token 的 Burn/BurnChecked 只写进「详细资料」，不进 `movements`，也不置高风险。于是「销毁 100 万 USDC + 转 1 lamport」在主卡片上显示为 0.000000001 SOL，且无需风险确认 | `solana.js`：销毁作为一等的破坏性效果进入 `movements`，**销毁始终领衔摘要**（与比特币 burn 同一规则），`riskLevel='high'` 强制确认，并给出 HIGH RISK 警告 |
+| F-03 | MEDIUM | `ReviewText.shortDecimal` 向上进位时用 `Int(whole) + 1`。手续费整数部分等于 `Int.max` 时溢出陷阱，**在审核页绘制时崩溃**——发生在任何授权之前 | `ReviewText.swift`：整数部分改为字符串进位，不再解析成 `Int`。请求可以写出引擎能表示的任意大的手续费，渲染器不该依赖「金额合理」来保命 |
+| F-04 | LOW | Revision 9 的比特币 burn 修复写了 `note:undefined`；`stable()` 拒绝 `undefined`，导致计划哈希前就抛 "Expected a plain JSON object."，**所有含销毁输出的交易根本签不了** | `bitcoin.js`：不存在的可选字段直接不写 key。回归测试走完整的 `resolveSigningPlan`，而不只是 `bitcoinDisplay` |
+
+回归测试：[engine/test/audit-bts-2026-1018.test.mjs](engine/test/audit-bts-2026-1018.test.mjs)（5 个用例）与 `BitToolSignerTests/ReviewTextTests.swift`。引擎 **194 个测试全通过**。
+
+> F-04 的教训值得记下：只测 `bitcoinDisplay` 的返回值看不出问题，因为 `JSON.stringify` 会悄悄丢掉 `undefined`。必须测到 `resolveSigningPlan`。
+
+**2. 比特币高手续费规则**：旧规则「> 0.01 BTC 或 > 输入的 1%」在小额支付上几乎必然触发——小额交易的手续费占比天然就高，结果是把人训练成闭眼打勾。新规则：**> 0.01 BTC，或（> 发送金额的一半 且 > 0.0001 BTC）**。0.0001 BTC 这个下限就是为了让小额支付安静下来。见 [engine/test/bitcoin-fee-warning.test.mjs](engine/test/bitcoin-fee-warning.test.mjs)。
+
+**3. 关于页新增「联系我们」**：运营主体与 `support@bittool.com`。邮箱是可复制文本而非 `mailto:` 链接——App 既不开浏览器也不唤起邮件客户端。
+
+**4. 密码错误文案简化**：「密码不正确，或加密钱包已被修改。」→「密码不正确。」AES-GCM 分不清密钥错误和密文篡改，原文案照实写，但对打错字的人只是吓唬。篡改仍然失败关闭，只是不再单独措辞。
+
+**5. 签完名点「完成」后相机又弹出来（Revision 9 的回归）**：扫码按钮的「已处理」标记存在 `ScanHomeView` 的 `@State` 里，而这个视图在请求到达时被销毁、签完名后重建，`@State` 归零于是又开相机。标记移到 `AppRouter`（跨越整个流程存活），由 `consumeScanRequest()` 消费。回归测试 [BitToolSignerTests/ScanRequestRouterTests.swift](BitToolSignerTests/ScanRequestRouterTests.swift) 照着「请求 → 审核 → 结果 → 完成」走一遍，四次都必须不开相机。
 
 ## Revision 9（2026-10-18）：21 种语言全覆盖、引擎文案本地化、动态配对二维码、Connect 改名 Pair、钱包目录与提交入口
 

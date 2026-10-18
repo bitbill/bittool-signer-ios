@@ -156,6 +156,8 @@
 "Confirm new password" = "Confirmar a nova palavra-passe";
 "Confirm passphrase" = "Confirmar a palavra-passe BIP39";
 "Confirm password" = "Confirmar a palavra-passe";
+"Contact Us" = "Contacte-nos";
+"Contact email" = "E-mail de contacto";
 "Continue" = "Continuar";
 "Contract" = "Contrato";
 "Contract Interaction" = "Interação com contrato";
@@ -617,6 +619,7 @@
 "The QR code is the phrase" = "O código QR é a frase";
 "The address the wallet itself publishes." = "O endereço que a própria carteira publica.";
 "The app never opens a browser. Copy the address and open it on another device." = "A app nunca abre um navegador. Copie o endereço e abra-o noutro dispositivo.";
+"The app never opens a mail app. Copy the address and write to us from another device." = "A app nunca abre uma app de e-mail. Copie o endereço e escreva-nos a partir de outro dispositivo.";
 "The camera is unavailable." = "A câmara está indisponível.";
 "The cards contain the words only. Back up your BIP39 passphrase separately." = "Os cartões contêm apenas as palavras. Guarde uma cópia da sua palavra-passe BIP39 à parte.";
 "The encrypted wallet could not be created." = "Não foi possível criar a carteira encriptada.";
@@ -631,7 +634,7 @@
 "The name as it is published." = "O nome tal como é publicado.";
 "The password decrypts this wallet for this signature only." = "A palavra-passe desencripta esta carteira apenas para esta assinatura.";
 "The password encrypts this wallet on this device and authorizes every signature. It is not part of your recovery phrase." = "A palavra-passe encripta esta carteira neste dispositivo e autoriza cada assinatura. Não faz parte da sua frase de recuperação.";
-"The password is incorrect or the encrypted wallet has been modified." = "A palavra-passe está incorreta ou a carteira encriptada foi modificada.";
+"The password is incorrect." = "A palavra-passe está incorreta.";
 "The password key could not be created." = "Não foi possível criar a chave da palavra-passe.";
 "The phrase is hidden again, but the screenshot may already contain it. Delete it from Photos, Recently Deleted and any synced copies, and keep a written backup offline." = "A frase está novamente oculta, mas a captura de ecrã pode já contê-la. Elimine-a de Fotografias, de Apagados recentemente e de qualquer cópia sincronizada, e guarde uma cópia escrita offline.";
 "The recovery phrase is empty or too large." = "A frase de recuperação está vazia ou é demasiado longa.";

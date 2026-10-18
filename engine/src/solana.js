@@ -291,9 +291,17 @@ function instruction(program,a,data,signers){
       if(transfer||approve){fields.push(field('Source token account',a[0]));if(checked)fields.push(field('Mint',a[1]));fields.push(field(approve?'Delegate':'Destination token account',a[checked?2:1]),field('Owner / authority',a[checked?3:2]));}
       else fields.push(field(opcode===7||opcode===14?'Mint':'Token account',a[0]),field(opcode===7||opcode===14?'Destination token account':'Mint',a[1]),field('Authority',a[2]));
       if(approve){riskLevel='high';warnings.push('Token delegation authorizes another address to spend these assets.');}
+      const burn=(opcode===8||opcode===15)&&amount>0n;
       const mint=(checked&&(transfer||approve))?a[1]:([7,14].includes(opcode)?a[0]:([8,15].includes(opcode)?a[1]:undefined));
       if(mint){asset=lookupToken('solana',undefined,mint,amount,program);if(asset){if(checked)check(asset.decimals===decimals,'TOKEN_METADATA','Instruction decimals disagree with the local registry for this mint.');fields.push(field('Asset',asset.name+' ('+asset.symbol+')'),field('Amount ('+asset.symbol+')',asset.displayAmount));}}
       else warnings.push('Mint is not included in this unchecked instruction. Token-account addresses cannot establish asset identity or decimals offline.');
+      if(burn){
+        const shown=asset?asset.displayAmount:checked?decimal(amount,decimals):String(amount);
+        const unit=asset?asset.symbol:checked?(shown==='1'?'token':'tokens'):(amount===1n?'raw unit':'raw units');
+        movements.push({amount:shown,symbol:unit,to:a[1],label:'Mint',destroys:true});
+        riskLevel='high';
+        warnings.push(`HIGH RISK: This permanently destroys ${shown} ${unit}. Burning cannot be undone.`);
+      }
       if(transfer){const destination=a[checked?2:1],shown=asset?asset.displayAmount:checked?decimal(amount,decimals):String(amount);
         const movement={amount:shown,symbol:asset?asset.symbol:checked?(shown==='1'?'token':'tokens'):(amount===1n?'raw unit':'raw units'),to:destination,label:'To token account'};
         movements.push(movement);extra.transfer={checked,program,mint:checked?a[1]:undefined,destination,movement};
@@ -382,17 +390,23 @@ export function parseSolana(request){
   // A single headline amount is shown only when exactly one value movement exists;
   // otherwise every transfer is listed in the details and the headline says how many.
   // NFT flows carry a headline instead of an amount, plus the mint or asset ID to compare.
+  const burns=movements.filter(m=>m.destroys);
   const single=movements.length===1?movements[0]:undefined,hint=single?decoded[single.source].display:undefined,lone=actions.length===1?actions[0]:undefined;
-  const display=single&&hint?{action:lone?hint.action:'Sign Transaction',headline:hint.headline,counterpartyLabel:single.label,counterparty:single.to}
+  const rest=movements.length-burns.length;
+  const burnDisplay=burns.length?{action:'Burn',amount:burns[0].amount,symbol:burns[0].symbol,
+    headline:(burns.length>1?`Destroys ${burns.length} assets`:`Destroys ${burns[0].amount} ${burns[0].symbol}`)
+      +(rest?` · ${rest} other transfer${rest>1?'s':''} below`:''),
+    counterpartyLabel:'Mint',counterparty:burns[0].to}:undefined;
+  const display=burnDisplay??(single&&hint?{action:lone?hint.action:'Sign Transaction',headline:hint.headline,counterpartyLabel:single.label,counterparty:single.to}
     :single?{action:lone?lone.action:'Sign Transaction',amount:single.amount,symbol:single.symbol,counterpartyLabel:single.label,counterparty:single.to}
     :movements.length>1?{action:'Sign Transaction',headline:movements.length+' transfers · review each below'}
-    :{action:lone?lone.action:'Sign Transaction',headline:actions.length>1?actions.length+' instructions':undefined};
+    :{action:lone?lone.action:'Sign Transaction',headline:actions.length>1?actions.length+' instructions':undefined});
   const assetHint=hint??(!movements.length&&lone?decoded[lone.source].display:undefined);
   if(assetHint?.assetKind)Object.assign(display,{assetKind:assetHint.assetKind,assetContract:assetHint.assetContract,assetContractLabel:assetHint.assetContractLabel});
   const markets=[...new Set(decoded.map(d=>d.marketplace).filter(Boolean))];
   if(markets.length){display.action='NFT marketplace action';if(!hint&&movements.length<=1)display.headline=markets.join(' + ')+' · not decoded';}
   if(!display.headline)delete display.headline;display.fee=decimal(baseFee+priorityFee,9)+' SOL max';
-  const summary=markets.length&&!movements.length?'NFT marketplace action (not decoded)':single?(hint?.summary??`${single.amount} ${single.symbol}`):movements.length>1?`${movements.length} transfers`:instructions.length===1?(actions[0]?.action??'1 instruction'):`${instructions.length} instructions`;
+  const summary=burns.length?`Burn ${burns[0].amount} ${burns[0].symbol}`+(rest?` and ${rest} transfer${rest>1?'s':''}`:''):markets.length&&!movements.length?'NFT marketplace action (not decoded)':single?(hint?.summary??`${single.amount} ${single.symbol}`):movements.length>1?`${movements.length} transfers`:instructions.length===1?(actions[0]?.action??'1 instruction'):`${instructions.length} instructions`;
   const title=instructions.length===1&&actions[0]?.action==='proposal approve'?'Approve a multisig proposal':'Sign Solana transaction';
   const asset=single&&assets.length===1&&single.symbol===assets[0].symbol?assets[0]:undefined;
   return {bytes,keys,required,signatures,signingBytesDigest:bytesToHex(sha256(bytes)),review:reviewResult(request,title,summary,fields,[...new Set(warnings)],{decodeStatus,riskLevel,network:NETWORK,display,...(asset?{asset}:{})})};

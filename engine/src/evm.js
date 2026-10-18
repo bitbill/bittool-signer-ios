@@ -253,9 +253,16 @@ export function decodeCall(to, data, value = 0n, depth = 0, context = {}) {
       const length = BigInt('0x' + bytesToHex(reader.take(32)));
       check(length <= 65536n, 'LIMIT', 'MultiSend calldata is too large.');
       const innerData = '0x' + bytesToHex(reader.take(Number(length)));
-      const inner = decodeCall(destination, innerData, innerValue, depth + 1, context);
-      moved += innerValue;
-      calls.push({ index: count, inner, risk: op ? 'high' : inner.riskLevel });
+      const inner = decodeCall(destination, innerData, op ? 0n : innerValue, depth + 1, context);
+      if (op) {
+        // MultiSend hands no value to a delegatecall. Showing the encoded
+        // number as an amount paid would misstate what the batch does.
+        if (innerValue > 0n) {
+          fields.push(field(`Call ${count} ignored value`, `${innerValue} wei encoded on a DELEGATECALL, which transfers nothing`));
+          warnings.push(`Call ${count} encodes a value of ${innerValue} wei on a DELEGATECALL. MultiSend does not transfer it; it is not part of the amount shown.`);
+        }
+      } else moved += innerValue;
+      calls.push({ index: count, inner, risk: op ? 'high' : inner.riskLevel, moves: op ? 0n : innerValue });
       fields.push(field(`Call ${count} operation`, op ? 'DELEGATECALL' : 'CALL'), ...inner.fields.map(f => field(`Call ${count}: ${f.label}`, f.value)));
       // Call-specific warnings are indexed; the shared generic notice is kept once.
       warnings.push(...inner.warnings.map(w => w === GENERIC_CALL_WARNING ? w : indexWarning(w, `Call ${count}`)));
@@ -270,7 +277,12 @@ export function decodeCall(to, data, value = 0n, depth = 0, context = {}) {
       return detail ? `${d.action ?? inner.title} (${detail})` : d.action ?? inner.title;
     };
     const ordered = [...calls].sort((p, q) => (RISK_ORDER[p.risk] ?? 0) - (RISK_ORDER[q.risk] ?? 0) || p.index - q.index);
-    const headline = `${count} call${count === 1 ? '' : 's'}: ${ordered.slice(0, 3).map(describe).join('; ')}${count > 3 ? ` (+${count - 3} more)` : ''}`;
+    // A call that spends native value is always described, whatever its risk
+    // rank: truncating the list must never be what hides a transfer.
+    const spending = ordered.filter(c => c.moves > 0n);
+    const shown = [...new Set([...spending, ...ordered])].slice(0, Math.max(3, spending.length));
+    const omitted = count - shown.length;
+    const headline = `${count} call${count === 1 ? '' : 's'}: ${shown.map(describe).join('; ')}${omitted > 0 ? ` (+${omitted} more)` : ''}`;
     // `moved` is what the batch forwards internally; `value` is what this
     // wallet actually pays to the batch contract. When both exist they are
     // shown separately — the amount is always what leaves the wallet.
@@ -496,7 +508,15 @@ function typedDataReview(request, common) {
     fields.push(field('Safe address', domain.verifyingContract ?? 'Not included'), field('Safe operation', m.operation ? 'DELEGATECALL' : 'CALL'), field('Safe nonce', m.nonce));
     const context = { chainId: network?.chainId, network };
     const refund = safeRefund(fields, warnings, m, context);
-    const inner = decodeCall(m.to, m.data, m.value, 0, context);
+    // Safe's Executor gives value to `call` only; `delegatecall` takes none, so
+    // a value on a DELEGATECALL is never paid and must not be shown as the
+    // amount. It is reported separately instead.
+    const delegated = m.operation === 1n;
+    const inner = decodeCall(m.to, m.data, delegated ? 0n : m.value, 0, context);
+    if (delegated && m.value > 0n) {
+      fields.push(field('Ignored delegatecall value', `${m.value} wei encoded on a DELEGATECALL, which transfers nothing`));
+      warnings.push(`This Safe transaction encodes a value of ${m.value} wei on a DELEGATECALL. The Safe does not transfer it; it is not part of the amount shown.`);
+    }
     fields.push(...inner.fields);
     warnings.push(...inner.warnings, 'This is one Safe owner signature. Current owner membership, threshold and nonce remain unverified offline.');
     asset = inner.asset; decodeStatus = inner.decodeStatus;

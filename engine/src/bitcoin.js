@@ -8,6 +8,12 @@ import { randomBytes } from '@noble/hashes/utils.js';
 import { check, field, reviewResult, fromBase64, toBase64, bytesToHex, hexToBytes, decimal, equal, concat } from './util.js';
 import { validatePath } from './keys.js';
 
+/** A fee this large is worth a second look whatever the payment is: 0.01 BTC. */
+const HIGH_FEE_ABSOLUTE=1000000n;
+/** The share test below ignores fees under 0.0001 BTC: on a small payment a
+ * few thousand satoshis is simply what the network costs, and warning there
+ * only teaches people to tick the box without reading. */
+const HIGH_FEE_FLOOR=10000n;
 const pathText=path=>'m/'+path.map(i=>(i&0x7fffffff)+(i>=0x80000000?"'":'')).join('/');
 const xOnly=pub=>pub.length===33?pub.slice(1):pub;
 function leaves(input) {
@@ -43,9 +49,9 @@ export function bitcoinDisplay(outputs,fee,change=new Set()) {
   // A burn leads the summary whatever else the transaction does.
   if(burned>0n) {
     const rest=payments.length?` · ${payments.length===1?decimal(total,8)+' BTC to '+payments[0].address:`${payments.length} recipients · ${decimal(total,8)} BTC`}`:'';
-    return {...base,action:'Burn',amount:burn,symbol:'BTC',
-      headline:`Destroys ${burn} BTC in an unspendable output${rest}`,
-      note:undefined};
+    const {note:_dropped,...noNote}=base;
+    return {...noNote,action:'Burn',amount:burn,symbol:'BTC',
+      headline:`Destroys ${burn} BTC in an unspendable output${rest}`};
   }
   if(payments.length===1)return {...base,amount:decimal(payments[0].amount,8),symbol:'BTC',counterpartyLabel:'To',counterparty:payments[0].address,...(change.size?{note:'Change returns to your wallet'}:{})};
   if(payments.length===0)return {...base,action:'Consolidate',headline:change.size?'All outputs return to your wallet':'Data output only'};
@@ -130,7 +136,8 @@ export function parseBitcoin(request) {
   }
   const fee=inputTotal-outputTotal;check(fee>=0n&&inputTotal<=2100000000000000n,'FEE','Bitcoin output total exceeds verified inputs.');
   fields.push(field('Total output',decimal(outputTotal,8)+' BTC'),field('Network fee',decimal(fee,8)+' BTC'));
-  if(fee>1000000n||fee*100n>inputTotal)warnings.push('HIGH FEE: Fee exceeds 0.01 BTC or 1% of input value. Verify it carefully.');
+  // Large outright, or eating more than half of what is being sent.
+  if(fee>HIGH_FEE_ABSOLUTE||(fee>HIGH_FEE_FLOOR&&fee*2n>outputTotal))warnings.push('HIGH FEE: Fee exceeds 0.01 BTC, or it is more than half the amount being sent. Verify it carefully.');
   parsed.fee=fee;
   parsed.review=reviewResult(request,'Sign Bitcoin transaction',`Send ${decimal(outputTotal,8)} BTC`,fields,warnings,{riskLevel:warnings.some(w=>w.startsWith('HIGH'))?'high':'warning',network:{name:'Bitcoin',symbol:'BTC'},display:bitcoinDisplay(parsed.outputs,fee)});
   return parsed;

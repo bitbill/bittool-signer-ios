@@ -156,6 +156,8 @@
 "Confirm new password" = "確認新密碼";
 "Confirm passphrase" = "確認 passphrase";
 "Confirm password" = "確認密碼";
+"Contact Us" = "聯絡我們";
+"Contact email" = "聯絡信箱";
 "Continue" = "繼續";
 "Contract" = "合約";
 "Contract Interaction" = "合約互動";
@@ -617,6 +619,7 @@
 "The QR code is the phrase" = "二維碼就是助記詞本身";
 "The address the wallet itself publishes." = "該錢包自己公布的網址。";
 "The app never opens a browser. Copy the address and open it on another device." = "本 App 不會開啟瀏覽器。請複製網址，在另一台裝置上開啟。";
+"The app never opens a mail app. Copy the address and write to us from another device." = "本 App 不會開啟郵件程式。請複製地址，在其他裝置上寫信給我們。";
 "The camera is unavailable." = "相機無法使用。";
 "The cards contain the words only. Back up your BIP39 passphrase separately." = "卡片只包含助記詞。BIP39 passphrase 需要另行備份。";
 "The encrypted wallet could not be created." = "無法建立加密錢包。";
@@ -631,7 +634,7 @@
 "The name as it is published." = "該錢包對外公布的名稱。";
 "The password decrypts this wallet for this signature only." = "這組密碼僅為本次簽名解密這個錢包。";
 "The password encrypts this wallet on this device and authorizes every signature. It is not part of your recovery phrase." = "這組密碼在本機加密這個錢包，並授權每一次簽名。它不是助記詞的一部分。";
-"The password is incorrect or the encrypted wallet has been modified." = "密碼不正確，或加密錢包已被修改。";
+"The password is incorrect." = "密碼不正確。";
 "The password key could not be created." = "無法產生密碼金鑰。";
 "The phrase is hidden again, but the screenshot may already contain it. Delete it from Photos, Recently Deleted and any synced copies, and keep a written backup offline." = "助記詞已重新隱藏，但截圖中可能已經包含它。請從照片、最近刪除以及任何同步副本中刪除，並保留離線手抄備份。";
 "The recovery phrase is empty or too large." = "助記詞為空或過長。";
