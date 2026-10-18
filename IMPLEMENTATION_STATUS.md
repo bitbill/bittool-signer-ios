@@ -5,11 +5,12 @@ what has **not** been verified. Newest revisions first. Version **1.0.0 (1)**, i
 with Liquid Glass on iOS 26 and native fallbacks on iOS 17 and 18.
 
 The app has not shipped, so each round adopts the new storage format directly and does not
-migrate older development data. The product decisions (D01–D28) from the
-[Revision 1 specification](docs/Modification-Spec-2026-09-21.md) were all retained in Revision 2;
-Revision 3 changed several of them at the user's request: Bitcoin now exports an Account XPUB by
-default, the leaf-public-key mode is gone, TRON can export any address index, and Ownbit and its
-display rules were removed.
+migrate older development data. The product decisions (D01–D28) of the original Revision 1
+specification were all retained in Revision 2; Revision 3 changed several of them at the user's
+request: Bitcoin now exports an Account XPUB by default, the leaf-public-key mode is gone, TRON can
+export any address index, and Ownbit and its display rules were removed. That specification was a
+pre-implementation work order whose decisions this log supersedes in places, so it is no longer
+published here; it remains in the Git history from the initial commit.
 
 ## Revision 11 (18 October 2026, late): the three open R2 findings, password reset, delete confirmation
 
@@ -745,8 +746,8 @@ only 40 or 50 bits, and the interface says a single card still needs to be kept 
   contradicted "offline throughout", and before launch the links did not even resolve. Both English
   documents, `BitToolSigner/Resources/TERMS_OF_USE.txt` and `PRIVACY_POLICY.txt`, are now bundled and
   read inside the app (a page from Settings › About, a sheet from the welcome page), are selectable and
-  copyable, and contain no URL anywhere. This is a deliberate change to D27 of the
-  [Revision 1 specification](docs/Modification-Spec-2026-09-21.md).
+  copyable, and contain no URL anywhere. This is a deliberate change to D27 of the Revision 1
+  specification, which had asked for links to the website instead.
   - The Privacy Policy corresponds line by line to actual behaviour: no data collected, no networking
     code, no third-party SDK; what is stored locally (the encrypted phrase and passphrase, authenticated
     public wallet data, up to 100 Activity records, preferences), file protection and backup exclusion;
