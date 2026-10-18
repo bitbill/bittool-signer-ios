@@ -1,378 +1,1021 @@
-# BitTool Signer 实施状态 · Revision 11（2026-10-18）
+# BitTool Signer implementation status · Revision 11 (18 October 2026)
 
-本轮按用户要求对尚未上线的 App 做全面重构：原生化并重做全部界面，Settings 放进 Tab Bar（共 4 个 Tab），审查并加固安全、逻辑、JS 引擎与密码学，重绘七个主网络图标，重建热门 Token 表与图标，补齐自动化测试。App 未上线，因此直接采用新存储格式，不兼容旧开发数据。[Revision 1 规范](docs/Modification-Spec-2026-09-21.md)中的产品决定（D01–D28）在 Revision 2 中全部保留；Revision 3 按用户的新要求改变了其中几项：BTC 默认导出改为 Account XPUB（移除叶子公钥模式）、TRON 可导出任意地址索引、移除 Ownbit 及其显示规则。
+This log records what was changed in each round, what was tested, and — just as importantly —
+what has **not** been verified. Newest revisions first. Version **1.0.0 (1)**, iOS 17 minimum,
+with Liquid Glass on iOS 26 and native fallbacks on iOS 17 and 18.
 
-版本 **1.0.0 (1)**，最低 iOS 17；iOS 26 使用 Liquid Glass，iOS 17/18 有对应的原生回退样式。
+The app has not shipped, so each round adopts the new storage format directly and does not
+migrate older development data. The product decisions (D01–D28) from the
+[Revision 1 specification](docs/Modification-Spec-2026-09-21.md) were all retained in Revision 2;
+Revision 3 changed several of them at the user's request: Bitcoin now exports an Account XPUB by
+default, the leaf-public-key mode is gone, TRON can export any address index, and Ownbit and its
+display rules were removed.
 
-## Revision 4（2026-10-16）：品牌更名与条款
+## Revision 11 (18 October 2026, late): the three open R2 findings, password reset, delete confirmation
 
-App 由 **BitSigner** 更名为 **BitTool Signer**（中文：BitTool 签名器），原 BitTool 改称 **BitTool Wallet**（BitTool 钱包），运营主体 **BITTOOL PTE. LTD.**，网址 [bittool.com](https://bittool.com)（通用）、[bittool.com/signer](https://bittool.com/signer)、[bittool.com/wallet](https://bittool.com/wallet)，联系邮箱 support@bittool.com。App 未上线，因此一次改彻底、不做兼容：
+**1. All three open findings of BTS-SEC-2026-1018 R2 were reproduced and fixed.** R2 confirmed the
+earlier F-01 to F-04 fixes were effective, but rated F-01 only "partially fixed": that round had
+corrected the immediate value and left the recursion and the second entry point alone.
 
-**1. 工程与标识符**：`BitToolSigner.xcodeproj`、target/scheme/源码目录全部更名；bundle id 改为 `com.bittool.signer`（测试 `.tests`/`.uitests`），显示名 `BitTool Signer`。Keychain service、加密 AAD、公开索引 AAD、UI 测试的参数与环境变量、本地目录（`Application Support/BitToolSigner/…`）统一改到 `com.bittool.signer.*`。钱包身份的域分隔串改为 `BitTool-Signer/WalletKeyId/v1`，`walletKeyId` 向量随之更新（测试里的固定向量同步改掉）。**设备上已有的开发期钱包因此无法再打开，需要重新导入助记词。**
-
-**2. 配对协议**：钱包级载荷 `protocol` 改为 `bittool-signer-wallet`，签名回执 transport 改为 `bittool-signer-json`，`crypto-account` / `crypto-multi-accounts` 里第三方钱包显示的设备名改为 `BitTool Signer`。[docs/Wallet-Pairing-v1.md](docs/Wallet-Pairing-v1.md) 与 [docs/bittool-handoff/](docs/bittool-handoff/) 顶部都加了更名说明，夹具已用新名字重新生成——**BitTool Wallet 侧的解析需要同步更新**。
-
-**3. 图标**：两个 App 共用 BitTool 的标记（环 + 实心节点），几何尺寸直接量自 Wallet 图标（环 288–372、节点半径 94.8 居于 (828.5, 511.5)）。Wallet 用浅色版（墨色标记、白底），Signer 用深色版（白色标记、`#0A0A0C` 底）。`scripts/make-brand-assets.py` 重写为不依赖第三方库：形状都是圆，直接按覆盖率栅格化并用 zlib 写 PNG。
-
-**4. 使用条款（v1.1）**：按“出现任何问题赔偿为 0、用户自己负责”的要求重写，参考自托管钱包通行写法。新增“自托管：一切都在你手里”“你接受的风险”“你对我们的赔偿责任”“争议解决”等章节，并把责任限制写明为 **总责任为零、不作任何赔偿**（保留不可排除的法定权利与消费者保护的例外）。管辖法律为新加坡。隐私政策同步更新为 v1.1，补上运营主体与联系方式。两份文档的联系方式都是 BITTOOL PTE. LTD. / support@bittool.com / https://bittool.com/signer。
-
-**5. Connect 默认钱包级**：Connect 页打开即是 **Wallet Level**，Coin Level 变成第二个选项。预取也改为预取钱包级二维码（原先预取的是 BTC 币种级），所以首次推入依然在第一帧就是完整页面；Coin Level 在选中时再加载。
-
-
-
-**6. 本机模拟器环境**：这台 Mac 上 Xcode 已升到 **26.4**，但唯一安装的 iOS 26 运行时仍是 **beta（23A5276e）**。用 26.4 的 SDK 编译出来的包在那个旧 beta 运行时上会在 `glassEffect`（`GlassCircle`）处因找不到类型元数据而 `SIGABRT` 崩溃——与本次改名无关，换成 iOS 18.6 运行时全部通过。本轮的验证因此跑在 **iPhone 16 Pro · iOS 18.6**（UI 15/15、截图巡检通过）。要再验 Liquid Glass 路径，需要在 Xcode 里装一个与 26.4 匹配的 iOS 26 正式运行时。
-
-**7. App 名称**：所有语言都叫 **BitTool Signer**，不做翻译。名称只有一处设置：工程里的 `INFOPLIST_KEY_CFBundleDisplayName`（上架名另在 App Store Connect 按语言填）。App 刻意**不声明任何额外语言**——一旦声明，系统自己的控件（权限弹窗按钮、键盘、分享表单）会跟着设备语言走，而 App 界面仍是英文，看起来像翻译了一半；`AppNameTests` 会守住这一点。
-
-**8. BIP39 passphrase 可见切换与 AutoFill**：创建和导入的 passphrase 输入框右侧加了眼睛按钮，可切换明文；切到后台自动恢复遮盖。passphrase 打错不会报错，只会悄悄打开另一个钱包，所以必须能读回来核对。该输入框改为 UIKit `UITextField` 承载（`MaskedTextField`）：遮盖与否只是它的一个属性，不需要换一个视图，并且对“新建的秘密”（passphrase、新设密码）**关闭 iOS AutoFill**——AutoFill 的强密码流程会直接替换掉用户输入的内容。其余密码输入框仍是原来的 SwiftUI `SecureField`，未改动。此外给 passphrase 输入框设了空的 `passwordRules`，彻底关掉 iOS 的强密码生成入口。
-
-**9. 欢迎页卖点**：第二条由“Sign with QR codes”换成 **Fully open source**（“Every line that touches your keys is published. Read it, or rebuild it and compare.”），扫码签名的说明并入第三条，引导页第二页仍完整介绍二维码兼容性。
-
-**10. 中国区“无线数据”弹窗**：App 不含任何联网代码，链接的框架里也没有 CFNetwork/Network.framework（`otool -L` 可验证）。中国大陆销售的 iPhone 上，iOS 对每个 App 都有一个无线数据开关，首次使用时会询问，这个弹窗来自系统而不是 App。离线指南新增一条“若 iOS 询问是否允许无线数据，选 Don't Allow”，隐私政策也加了一小节说明。
-
-## Revision 5（2026-10-17）：界面语言、删除确认与若干修正
-
-**1. 界面语言（Settings › Appearance › Language）**：在 Theme 下面加了语言选择，切换即时生效、无需重启——选中的语言通过 `.environment(\.locale)` 作用于整棵视图树（`AppLanguage` + `LanguageEnvironment`）。阿拉伯语同时切换 `layoutDirection`，整个界面镜像为从右到左（Tab 顺序、行内对齐、返回箭头都会翻转）。导航栏标题由系统缓存，所以切换语言时整棵树重建一次，会回到第一个 Tab。
-
-语言表按 BitTool Wallet／Ownbit 的清单，共 **21 种**（en、zh-Hans、zh-Hant、ja、ko、ru、uk、es、es-419、de、fr、it、pt-BR、pt-PT、pl、id、tr、th、vi、fil、ar）。选择器只列出**真正已翻译**的语言，不会出现选了还是英文的情况。
-
-**已完成：简体中文、繁體中文、العربية**，每种 388 条，全部通过校验。待补：其余 17 种。
-
-字符串清单不再靠手工正则，而是用 Xcode 自己的提取（`xcodebuild -exportLocalizations`）得到权威列表，再并入引擎产出的静态文案（见 Revision 9），存在 [engine/data/interface-strings.json](engine/data/interface-strings.json)；[scripts/write-localizations.py](scripts/write-localizations.py) 把 `translations/<语言>.json` 写成 `.lproj/Localizable.strings`，并拒绝漏条目或改动 `%@`／`%lld` 占位符的译文（占位符错位会让运行时按错误的值格式化）。
-
-为了让"翻译彻底"，把所有以 `String` 接收显示文案的组件和局部辅助函数改成 `LocalizedStringKey`（`Callout`、`DetailLine`、`WalletGroup`、`StepRow`、`PayloadDisclosure`、`SetupScaffold`、`ProfileMenu`、引导页 `Page`、Scan 页的 `optionTile`、密码规则行、地址页的分组标题与脚注等）；引擎返回的动态文案走 `verbatim:` 入口保持原样。
-
-仍是英文的部分：**JS 引擎生成的审核文案**（警告、字段名、风险说明，几百条，安全相关性最高）与条款／隐私政策（按决定保持英文）。
-
-**2. 删除钱包改为 Face ID + 密码**：点 Delete Wallet 先做一次 Face ID（设备支持时；取消即中止，生物识别不可用或失败则继续走密码），然后弹出密码输入框，输入正确的钱包密码才真正删除。原来密码框是内嵌在表单里的一行，容易被忽略。垃圾桶图标在红色按钮上显示为深色，改为强制白色。
-
-**3. passphrase 输入框可收起键盘**：该输入框自带 Done 工具条（`inputAccessoryView`），因为它紧贴底部操作栏，页面本身没有别的收起键盘的办法。同时给输入框加了 `frame(maxWidth: .infinity)`，避免 UIKit 文本框按内容宽度收缩。
-
-**4. Settings 调整**：Reference 里移除 Offline Setup Guide（引导页首次使用时仍会出现）；About 里 Open Source 改名 **Fully Open Source**。
-
-## Revision 11（2026-10-18 深夜）：R2 复审的三条未关闭发现、密码重置与删除确认
-
-**1. BTS-SEC-2026-1018 R2 的三条发现全部复现、全部修复**。R2 确认 F-01～F-04 的修复有效，但 F-01 只算「部分修复」——当时只改了「立即 value」，没有改递归与第二个入口：
-
-| 编号 | 级别 | 问题 | 修复 |
+| ID | Severity | Problem | Fix |
 | --- | --- | --- | --- |
-| R2-01 A | HIGH | MultiSend 里 `DELEGATECALL` 子调用的 `moves` 恒为 `0n`。可是 delegatecall **在 Safe 自己的账户上下文里执行**，它内部的 CALL 花的就是 Safe 的钱。于是「delegatecall 到另一个 MultiSend，里面付 40 ETH」在主卡片上一分钱都不显示，而且这条分支不算「花钱的调用」，会被标题的 3 条截断藏掉 | `decodeCall` 新增返回值 `forwards`：**这次调用的函数体会从执行账户支出多少原生币**（普通方法都是 `0n`，MultiSend 是它的 `moved`）。父级于是 `moved += op ? inner.forwards : innerValue`——CALL 只记交给它的 value（后代花的是对方的钱，不重复计），DELEGATECALL 记后代实际支出。标题的「必须显示」集合从「花钱的调用」扩大到「花钱的或 delegatecall 的调用」 |
-| R2-01 A' | HIGH | delegatecall 的函数体无法解码时，金额其实是**不完整**的，但界面不说 | 这种分支计数后把 `decodeStatus` 降为 `partiallyDecoded`，并给出 HIGH RISK：「显示的金额不完整，有 N 条 DELEGATECALL 分支用 Safe 自己的余额执行且函数体未完全解码」。审不出来就说审不出来，不假装 0 |
-| R2-01 B | HIGH | `execTransaction` 这个入口（第 236 行）把 `a[1]`（value）原样传给 `decodeCall`，**完全没看 `a[3]`（operation）**。SafeTx typed data 那一侧早就改对了，两个入口的结论因此相反：同一串字节，一边说「付了 100 ETH」，一边说「什么都没转」 | 与 SafeTx 同一套规则：`delegated ? 0n : a[1]`，被忽略的 value 单列字段并给出警告。两个入口现在说同样的话 |
-| R2-02 | LOW | 相对手续费规则拿 `fee*2 > outputTotal` 比，而 `outputTotal` **包含找零**。找零是回到自己钱包的钱，从来就没被「发送」。于是同样的支付、同样的手续费，只要多一个大额找零输出，警告就消失了 | 规则抽成 `highFeeWarning(fee, payment)` 一个函数，解析器与 resolver 共用。解析时不知道哪些是找零，先按 `outputTotal` 算；resolver 在**用签名钱包自己的公钥验证出找零之后**，用真正发出去的金额重算一次。找零只会让 `payment` 变小，所以重算只可能**加上**警告，不可能撤掉。全部输出都回到自己钱包时（归集／自转）单独一句：「所有输出都回到本钱包，手续费就是这笔交易的全部成本」 |
-| R2-02' | LOW | 同一个根因还有第二处：`review.summary`（「Send 1.0002 BTC」）也是按 `outputTotal` 算的，而它是**历史记录和签名回执显示的那一行**——主卡片早就只显示真实支付额，历史却虚报 | resolver 验证出找零后同时重算 summary，和卡片上的金额一致；全部回到自己钱包时写「所有输出都回到本钱包」而不是「Send 0 BTC」 |
-| R2-03 | LOW | Solana 的销毁摘要固定取 `burns[0]` 当主金额。于是「先销毁 0.000001 USDC，再销毁 100 万 USDC」主卡片上写的是 0.000001；「小额销毁 + 转 1000 SOL」也只显示那笔小额销毁 | 销毁按 **mint + 符号 + 小数位**分组求和：同一个 mint 的多笔销毁合并成一个总额（「销毁 1000000.000001 USDC，共 2 笔」）。**只有当一个数字能描述整笔交易时才显示主金额**——不同 mint，或销毁旁边还有转账，就不给主金额，改由标题逐项列出（「销毁 A + 销毁 B · 另有 1 笔转账见下」）。每笔销毁各自的精确 HIGH RISK 警告一条不少 |
+| R2-01 A | HIGH | A `DELEGATECALL` child inside MultiSend always had `moves = 0n`. But a delegatecall **executes in the Safe's own account context**, so a CALL inside it spends the Safe's money. "Delegatecall into another MultiSend that pays 40 ETH" therefore showed nothing at all on the main card, and that branch did not count as a spending call, so the headline's three-item truncation could hide it | `decodeCall` now returns `forwards`: **how much native currency this call's body pays out of the executing account** (zero for every ordinary method; `moved` for MultiSend). The parent then does `moved += op ? inner.forwards : innerValue` — a CALL counts only the value handed to it, since what the target then does is the target's own money and must not be double-counted, while a DELEGATECALL counts what its descendants actually spend. The headline's "must be described" set widened from spending calls to spending-or-delegating calls |
+| R2-01 A' | HIGH | When a delegatecall's body cannot be decoded, the amount is genuinely **incomplete**, but the interface did not say so | Such branches are counted, `decodeStatus` drops to `partiallyDecoded`, and a HIGH RISK warning says the amount shown is incomplete because N DELEGATECALL branches run with the Safe's own balance and their bodies are not fully decoded. If it cannot be determined, say so rather than implying zero |
+| R2-01 B | HIGH | The `execTransaction` entry point passed `a[1]` (the value) straight to `decodeCall` **without ever reading `a[3]` (the operation)**. The SafeTx typed-data path had been corrected long before, so the two entry points reached opposite conclusions about the same bytes: one said "100 ETH was paid", the other "nothing moved" | The same rule as SafeTx: `delegated ? 0n : a[1]`, with the ignored value given its own field and a warning. Both entry points now say the same thing |
+| R2-02 | LOW | The relative fee rule compared `fee*2 > outputTotal`, and `outputTotal` **includes change**. Change is money returning to your own wallet; it was never sent. So an identical payment with an identical fee went quiet as soon as a large change output was added | The rule was extracted into one function, `highFeeWarning(fee, payment)`, shared by the parser and the resolver. The parser cannot know which outputs are change, so it uses `outputTotal`; the resolver recomputes against the real payment **after change has been verified from the signing wallet's own public keys**. Change only makes `payment` smaller, so recomputing can **add** the warning and never withdraw one. When every output returns to the wallet (consolidation or self-send) there is a separate line: the fee is the whole cost of the transaction |
+| R2-02' | LOW | The same root cause had a second site: `review.summary` ("Send 1.0002 BTC") was also computed from `outputTotal`, and that is **the line the history and the signature receipt show** — the main card had long shown only the real payment, while the history overstated it | The resolver recomputes the summary once change is verified, consistent with the card, and writes "every output returns to your wallet" rather than "Send 0 BTC" when nothing leaves |
+| R2-03 | LOW | The Solana burn summary always took `burns[0]` as the principal amount. "Burn 0.000001 USDC, then burn 1,000,000 USDC" showed 0.000001 on the main card, and so did "a small burn plus a 1,000 SOL transfer" | Burns are grouped by **mint, symbol and decimals** and totalled: several burns of one mint merge into a single total ("Destroys 1000000.000001 USDC in 2 burns"). **A single headline amount is shown only when one number describes the whole transaction** — different mints, or a transfer beside a burn, means no headline amount, and the headline enumerates the effects instead ("Destroys A + B · 1 other transfer below"). Every burn keeps its own exact HIGH RISK warning |
 
-两条 Informational 也一起修了：**I-01** 历史记录里把 TRON 的能量预算标成「网络手续费」（审核页早就区分了 `feeKind`，历史页没跟上）；**I-02** `RepairWalletSheet` 的密码草稿只在页面消失时清除，现在和其它密码框一样，App 一进后台（`securityEpoch` 变化）就清掉。
+Both informational items were fixed too: **I-01**, the history labelling TRON's energy budget as a
+network fee (the review page had distinguished `feeKind` for some time; the history had not caught
+up), and **I-02**, `RepairWalletSheet` clearing its password draft only when the sheet disappeared,
+where it now clears as soon as the app is suspended, like every other password field.
 
-回归测试：[engine/test/audit-bts-2026-1018-r2.test.mjs](engine/test/audit-bts-2026-1018-r2.test.mjs)，16 个用例，三条发现各自覆盖「问题场景」与「原有正确行为不许回退」。其中 R2-01 的「CALL 的后代仍是对方的钱」是专门防过度修复的——把后代支出也算进 CALL 会重复计数、虚报支出。引擎 **210 个测试全通过**。
+Regressions: [engine/test/audit-bts-2026-1018-r2.test.mjs](engine/test/audit-bts-2026-1018-r2.test.mjs),
+16 cases, each finding covered both for the failing scenario and for "existing correct behaviour
+must not regress". The R2-01 case "a CALL's descendants are still the target's money" exists
+specifically to prevent over-correction: counting descendant spending into a CALL would
+double-count and overstate what leaves the wallet.
 
-> R2-01 暴露的一个结构问题值得记下：`decodeCall` 的三个 `return` 里有一个（不透明合约调用）漏了 `forwards`，`moved += undefined` 会抛 "Cannot mix BigInt and other types" ——又是在审核页绘制时崩溃，和 F-03 同一类。除了补上字段，累加处也写成 `inner.forwards ?? 0n`：少一个字段应该让金额显示成不完整，不该让 App 挂掉。
+> R2-01 exposed a structural problem worth recording. One of `decodeCall`'s three `return`
+> statements — the opaque contract call — omitted `forwards`, so `moved += undefined` threw
+> "Cannot mix BigInt and other types": **a crash while drawing the review page**, before any
+> authorization, the same class of fault as F-03. Besides adding the field, the accumulator is
+> now written `inner.forwards ?? 0n`. A missing field should make an amount display as
+> incomplete, not take the app down.
 
-**2. 忘记密码可以用助记词重置**（替代原来的「删掉钱包再导入一次」）
+**2. A forgotten password can be reset with the recovery phrase** (replacing "delete the wallet and
+import it again").
 
-- 密码页的提示文案改成：**如果忘记密码，重新导入这组助记词即可重置密码。**
-- 导入时如果助记词（含 passphrase，若有）与本机某个钱包**完全一致**，密码页自动切换成重置模式：标题变「重置密码」，按钮变「重置密码」，上面那句「忘记密码」的提示不再出现（此刻正在做的就是它说的事），并显示将被重置的是哪一个钱包 + 一句「只有密码会改变」。完成页写「密码已重置」，不再提示去配对钱包。
-- 新增 `WalletVault.resetPassword(id:mnemonic:passphrase:newPassword:)`：用现有的设备密钥和 header 元数据重新加密，所以**钱包保留原有的名称、创建时间、地址、已配对钱包和活动记录**——这正是「删掉再导入」会丢掉的东西。同时清掉失败次数计数器（刚用助记词证明过身份的人，不该还在为忘记的密码排队等待）。
-- 凭证是助记词而不是旧密码：**持有助记词的人本来就能完全控制这些资金**，所以这不多给任何权限，只是把「重新导入」这件事原地做掉。`AppStore.resetPassword` 在落盘前重新派生公开索引并比对 `walletKeyId`——否则这会变成「用 A 的助记词覆盖 B 的加密记录」的途径。
+- The password screen's hint now reads: **if you forget this password, import this recovery phrase
+  again to set a new one.**
+- If, on import, the phrase and any BIP39 passphrase are **identical** to a wallet already on the
+  device, the password step switches to reset mode: the title and button become Reset Password, the
+  "if you forget" hint disappears — this screen is now doing the thing it describes — and the
+  wallet to be reset is shown along with a note that only the password changes. The completion page
+  says Password Reset and does not offer to pair a wallet.
+- New: `WalletVault.resetPassword(id:mnemonic:passphrase:newPassword:)` re-encrypts using the
+  existing device key and header metadata, so **the wallet keeps its name, creation date, addresses,
+  paired wallets and activity history** — exactly what delete-and-reimport loses. The failed-attempt
+  counter is also cleared: someone who has just proved ownership with the phrase should not be left
+  queueing behind a password they have forgotten.
+- The proof is the phrase, not the old password: **whoever holds the phrase already controls the
+  funds**, so this grants nothing extra and simply does "re-import" in place. `AppStore.resetPassword`
+  re-derives the public index and compares `walletKeyId` before writing anything — otherwise this
+  would be a way to overwrite wallet B's encrypted record using wallet A's phrase.
 
-**3. 删除钱包的生物识别只在开了 App Lock 时才要**。原来的判断是 `biometry.isAvailable`（设备有没有 Face ID），现在是 `isEnabled && biometry.isAvailable`（这个 App 用不用 Face ID）。把 App Lock 关掉就是在说「这个 App 不用 Face ID」，删除钱包不该把人刚拒绝掉的弹窗再端上来。脚注文案随之二选一；密码仍然是真正授权删除的那一步。
+**3. Deleting a wallet asks for biometrics only when App Lock is on.** The condition used to be
+`biometry.isAvailable` (does the device have Face ID); it is now `isEnabled && biometry.isAvailable`
+(does this app use Face ID). Turning App Lock off is a statement that this app does not use Face ID,
+and deleting a wallet should not put back the prompt the person just declined. The footer text
+follows the same branch, and the password remains the step that actually authorizes the deletion.
 
-**4. 删除确认的勾选项改成「我确认要删除」**（原为「我已备份助记词」）。那一页上方的红色说明已经讲清了「只能用助记词恢复」，勾选项要确认的是**这个删除动作本身**。
+**4. The delete confirmation toggle now says "I confirm I want to delete this wallet"** (previously
+"I have a backup of the recovery phrase"). The red callout above it already explains that only the
+recovery phrase can restore the wallet; what the toggle needs to confirm is **the deletion itself**.
 
-回归测试：`WalletVault` 的重置覆盖「换了密码后旧密码失效、助记词与 passphrase 原样取回、名称与创建时间不变、不产生第二个钱包」「弱密码与不存在的钱包都要拒绝且不留痕」「重置清掉失败计数器」；`AppAccessController` 覆盖「App Lock 关着时不问生物识别、开着时问、关掉之后又不问」。新增 UI 测试 `testImportingAnExistingPhraseResetsItsPasswordInPlace` 把整条路走完：导入夹具钱包自己的助记词 → 页面变成「重置密码」且不再出现「忘记密码」提示 → 设新密码 → 「密码已重置」→ 钱包列表仍只有一个且同名 → 旧密码打不开、新密码能取回同一组助记词。
+Tests: the vault reset covers "the old password stops working, the phrase and passphrase come back
+unchanged, the name and creation date survive, and no second wallet appears", "a weak password and a
+non-existent wallet are both refused without leaving a trace", and "a reset clears the failed-attempt
+counter". `AppAccessController` covers "no biometric prompt while App Lock is off, a prompt while it
+is on, and none again after it is turned off". A new UI test,
+`testImportingAnExistingPhraseResetsItsPasswordInPlace`, walks the whole path: import the fixture
+wallet's own phrase → the page becomes Reset Password and the "if you forget" hint is gone → set a new
+password → Password Reset → the wallet list still holds exactly one wallet with the same name → the
+old password no longer opens it and the new one returns the same recovery phrase.
 
-字符串清单从 765 条增加到 **773 条**（新增 10 条、移除 2 条），20 种语言逐条补齐并通过 `scripts/write-localizations.py` 校验。
+The string list grew from 765 to **773 entries** (10 added, 2 removed), with all 20 non-English
+languages filled in and validated by `scripts/write-localizations.py`.
+## Revision 10 (18 October 2026, evening): the four findings of the second review, the fee rule, and assorted fixes
 
-**验证**：引擎 210/210；Swift 单元测试全通过；UI 测试串行跑 17 个，`testApprovalNamesAKnownSpenderAndFlagsAnUnlistedOne` 失败一次（第二段长载荷 `typeText` 在负载下掉字符，与[已知的 XCUITest 问题](IMPLEMENTATION_STATUS.md)同一个；单独重跑通过，且该用例失败前的已知合约断言本身是通过的）。
+**1. All four findings of BTS-SEC-2026-1018 were reproduced and fixed.** All four were real, and two
+of them were regressions introduced by Revision 9 itself:
 
-## Revision 10（2026-10-18 晚）：第二轮审查的四条发现、手续费规则与若干修正
-
-**1. BTS-SEC-2026-1018 的四条发现全部复现、全部修复**。四条都是真问题，其中两条是 Revision 9 自己引入的回归：
-
-| 编号 | 级别 | 问题 | 修复 |
+| ID | Severity | Problem | Fix |
 | --- | --- | --- | --- |
-| F-01 | HIGH | Safe 的 `DELEGATECALL` 不会转移 `value`（Executor 只把 value 交给 `call`），但代码把它当成已付金额显示；MultiSend 同理，且标题只列 3 条调用，第 4 条以后的真实转账会从主界面消失 | `evm.js`：`DELEGATECALL` 传 `0n` 给 `decodeCall`，被忽略的 value 单独列字段并给出警告；MultiSend 只在 `CALL` 时累加 `moved`；**任何花费原生币的调用一定出现在标题里**，截断不再能藏住转账 |
-| F-02 | HIGH | SPL Token 的 Burn/BurnChecked 只写进「详细资料」，不进 `movements`，也不置高风险。于是「销毁 100 万 USDC + 转 1 lamport」在主卡片上显示为 0.000000001 SOL，且无需风险确认 | `solana.js`：销毁作为一等的破坏性效果进入 `movements`，**销毁始终领衔摘要**（与比特币 burn 同一规则），`riskLevel='high'` 强制确认，并给出 HIGH RISK 警告 |
-| F-03 | MEDIUM | `ReviewText.shortDecimal` 向上进位时用 `Int(whole) + 1`。手续费整数部分等于 `Int.max` 时溢出陷阱，**在审核页绘制时崩溃**——发生在任何授权之前 | `ReviewText.swift`：整数部分改为字符串进位，不再解析成 `Int`。请求可以写出引擎能表示的任意大的手续费，渲染器不该依赖「金额合理」来保命 |
-| F-04 | LOW | Revision 9 的比特币 burn 修复写了 `note:undefined`；`stable()` 拒绝 `undefined`，导致计划哈希前就抛 "Expected a plain JSON object."，**所有含销毁输出的交易根本签不了** | `bitcoin.js`：不存在的可选字段直接不写 key。回归测试走完整的 `resolveSigningPlan`，而不只是 `bitcoinDisplay` |
-
-回归测试：[engine/test/audit-bts-2026-1018.test.mjs](engine/test/audit-bts-2026-1018.test.mjs)（5 个用例）与 `BitToolSignerTests/ReviewTextTests.swift`。引擎 **194 个测试全通过**。
-
-> F-04 的教训值得记下：只测 `bitcoinDisplay` 的返回值看不出问题，因为 `JSON.stringify` 会悄悄丢掉 `undefined`。必须测到 `resolveSigningPlan`。
-
-**2. 比特币高手续费规则**：旧规则「> 0.01 BTC 或 > 输入的 1%」在小额支付上几乎必然触发——小额交易的手续费占比天然就高，结果是把人训练成闭眼打勾。新规则：**> 0.01 BTC，或（> 发送金额的一半 且 > 0.0001 BTC）**。0.0001 BTC 这个下限就是为了让小额支付安静下来。见 [engine/test/bitcoin-fee-warning.test.mjs](engine/test/bitcoin-fee-warning.test.mjs)。
-
-**3. 关于页新增「联系我们」**：运营主体与 `support@bittool.com`。邮箱是可复制文本而非 `mailto:` 链接——App 既不开浏览器也不唤起邮件客户端。
-
-**4. 密码错误文案简化**：「密码不正确，或加密钱包已被修改。」→「密码不正确。」AES-GCM 分不清密钥错误和密文篡改，原文案照实写，但对打错字的人只是吓唬。篡改仍然失败关闭，只是不再单独措辞。
-
-**5. 签完名点「完成」后相机又弹出来（Revision 9 的回归）**：扫码按钮的「已处理」标记存在 `ScanHomeView` 的 `@State` 里，而这个视图在请求到达时被销毁、签完名后重建，`@State` 归零于是又开相机。标记移到 `AppRouter`（跨越整个流程存活），由 `consumeScanRequest()` 消费。回归测试 [BitToolSignerTests/ScanRequestRouterTests.swift](BitToolSignerTests/ScanRequestRouterTests.swift) 照着「请求 → 审核 → 结果 → 完成」走一遍，四次都必须不开相机。
-
-## Revision 9（2026-10-18）：21 种语言全覆盖、引擎文案本地化、动态配对二维码、Connect 改名 Pair、钱包目录与提交入口
-
-**1. 语言补齐到 21 种**：新增 uk、es-419、it、pt-BR、pt-PT、pl、id、tr、th、vi、fil 共 11 种，与既有的 en、zh-Hans、zh-Hant、ja、ko、ru、de、fr、es、ar 合为 21 种，和 BitTool Wallet 的语言数量一致。pt-BR／pt-PT 与 es／es-419 是分别逐条写的，不是机械替换：葡语两版在 palavra-passe／senha、ecrã／tela、ficheiro／arquivo 以及进行时（“A descodificar…”对“Decodificando…”）上系统性不同；西语两版在 billetera／cartera、monto／importe、Configuración／Ajustes 上不同。`knownRegions` 同步补齐到 22 项（含 Base）。
-
-**2. 引擎产出的审核文案现在也翻译**：引擎（JS）仍然只写英文——那是请求指纹覆盖的文本，也是重建引擎时必须逐字节复现的内容，不能随语言变化。改为在**绘制的最后一刻**翻译：新增 [BitToolSigner/Models/ReviewText.swift](BitToolSigner/Models/ReviewText.swift)，`phrase` 翻译整句（Details 的字段名、`display.action`、对手方标签），`label` 翻译带单位括号的字段名（“Amount (USDC)”只译前半截），`headline` 翻译“Method 0x3593564c”这类“固定词 + 引擎填值”的标题。查不到译文时原样回退成引擎的英文，所以以后引擎新增标签只会显示英文，不会消失。字符串清单 [engine/data/interface-strings.json](engine/data/interface-strings.json) 从 548 条增加到 **742 条**：558 条来自 Xcode 提取，另外 184 条是从引擎源码里抽出的静态字段名、display action、counterparty 标签、review title 与 resultType。
-
-**3. 手续费上限只显示 8 位小数**：审核页原样显示 `0.000396834604360128 ETH`。`ReviewText.shortDecimal` 截到 8 位，并且**向上取整**（丢掉的尾数非零时末位加一，必要时进位到整数位），因为这是“最多多少”的上限，向下取整会低报。Details 里仍保留完整数值。
-
-**4. 扫码页退出后界面变深色**：`QRScannerView` 用 `.preferredColorScheme(.dark)` 给相机界面配深色材质，但那是**窗口级**偏好；当 App 的外观设置是“跟随系统”（根视图传 `nil`，即“无偏好”）时，模态关闭后没有偏好去覆盖它，窗口就停在深色。改成 `.environment(\.colorScheme, .dark)`，只影响扫码页自己的视图树，不碰窗口。
-
-**5. 之前漏掉的界面文案**：`QRScannerView` 的 `title`／`hint` 改成 `LocalizedStringKey`（“Scan Request”“Scan Recovery QR”及两段提示语此前是 `String`，永远按原文绘制）；助记词输入框的状态行（“12–24 words · any BIP39 language”“1 word”“%lld words”“Unknown: %@”）改用 `String(localized:bundle:)`；地址详情标题 `%@ address #%lld`、Solana 的 `%@ account`、签名按钮 `Sign with %@` 同样补上。
-
-**7. 钱包级二维码改为动态，并带上全部地址类型**：原来只导出 BTC 的 BIP84（bc1q）一种和一个 Solana 地址。现在 `accounts` 带 **4 个 BTC 账户 xpub**——`p2wpkh`（bc1q，m/84'）、`p2tr`（bc1p，m/86'）、`p2sh-p2wpkh`（3，m/49'）、`p2pkh`（1，m/44'）——以及 EVM、TRON 的 xpub 和 **3 个 Solana 地址**（standard／trust／legacy；Ed25519 是硬化派生，观察钱包无法由一个推出另一个，所以三个都得送）。`m/48'` 的两个多签 profile 不在其中：多签需要全部 cosigner 公钥与阈值，那是 Coin Level 的 cosigner 导出负责的。载荷因此从 755 字节增加到 **1561 字节**，一张二维码装不下，改为 **多帧 `ur:bytes` 动态二维码**（400 字节分片，测试钱包是 4 帧 × 831 字符；分片长度取 `min(400, ⌈载荷/2⌉)`，保证至少 2 帧）。上限从 1024 字节放宽到 4096。校验区现在列出**每一个导出账户**的首地址：4 个 BTC、EVM、TRON、3 个 Solana，共 9 条。
-
-> **BitTool Wallet 侧必须同步更新**：`accounts` 数组从 4 项变成 7 项，解码方要按每项的 `chain`／`script` 读取，不能再按下标；Solana 条目新增 `profile` 字段；并且必须先收齐所有帧再解码。协议文档 [docs/Wallet-Pairing-v1.md](docs/Wallet-Pairing-v1.md) 已更新，测试向量与 SHA-256 重新生成。
-
-**6. 回归测试**：[BitToolSignerTests/ReviewTextTests.swift](BitToolSignerTests/ReviewTextTests.swift) 覆盖“查不到译文要回退英文”“前缀翻译要保留引擎填的值”以及手续费截断的进位（`0.999999999 → 1.00000000`）与不该动的情形（没有小数、没有单位、已经很短）。钱包级配对的新形状在 `engine/test/wallet-pairing.test.mjs`（186 个引擎测试全通过）与 `BitToolSignerTests/SessionTests.swift` 里都有断言：4 种脚本类型各自的 xpub、3 个 Solana 地址、不含 `m/48'`、帧数 ≥ 2。
-
-**8. Connect 改名为 Pair（配对）**：按钮与标题从 `Connect` 改为 `Pair`——`Connect Wallet` → `Pair Wallet`（配对钱包）、`Connect Bitcoin` → `Pair Bitcoin`、`Connect a Wallet` → `Pair a Wallet`，以及正文里按名字引用该按钮的两句话。理由有三：一是 App 里解释这个功能的文案本来就在说 pair／配对（`Pairing level`／配对级别、`wallet pairing`／钱包配对、`Pair BitTool Signer with a watch-only wallet…`），只有按钮写着「连接」，自己和自己打架；二是「连接」恰恰是离线签名器**永远不做**的事，App 里甚至有一句「这个 App 从不联网」，按钮却写「连接」；三是 dApp 世界的 Connect Wallet 指的是把你的钱包接到网站上，方向与这里相反（这里是把公钥导出给观察钱包），沿用反而容易误导。
-
-> 只改面向用户的文案。无障碍标识符（`connect.level`、`connect.copy`、`wallet.connect.*`）、类型名（`ConnectView`、`PairingLevel`）和代码注释保持不变，避免无谓的改动面。`Network connections`（设置里的网络连接）、`the app never connects` 等含义不同的词不受影响。
-
-**9. 配对页校验区地址重复（Revision 9 自身引入的回归）**：第 7 条把导出账户从 4 个增加到 9 个之后，页面上 4 个 Bitcoin 行显示的是同一个 bc1q 地址和同一条路径，3 个 Solana 行也一样。引擎其实给出的是 9 个各不相同的地址，问题在 `WalletPairingPayload.Line` 的 `var id: String { chain }`——一条链以前只有一行，现在有四行，`ForEach` 看到重复的 id 就只画了第一条的内容。修法：引擎的 `verify` 条目加上 `profile`（`native`／`taproot`／`nested`／`legacy`，以及 Solana 的 `standard`／`trust`／`legacy`），`id` 改成 `chain + "/" + profile`。同时每行现在标出是哪一个账户——「Bitcoin · Taproot」「Solana · Trust」，名称直接复用 Coin Level 选择器里的 `AccountProfile`，两个页面说法一致；标题也从「核对每条链的首个地址」改为「核对每个账户的首个地址」（一条链已经不止一个账户了）。
-
-> `profile` 只出现在 `verify`（界面数据）里，不在 CBOR 载荷中，所以协议的测试向量与 SHA-256 不变，BitTool Wallet 侧不受这一条影响。回归断言加在 `SessionTests`：9 行的 id、地址、路径必须两两不同，且 BTC／SOL 的 profile 顺序正确。
-
-**10. 提交钱包与钱包目录**：
-
-- **「提交钱包」入口**：Connect（配对）页每个「适用钱包」卡片底部新增一个链接，进入 [SubmitWalletView](BitToolSigner/Features/Settings/SubmitWalletView.swift) 说明怎么提交：收件人 `support@bittool.com`、主题 `Add supported wallet`，以及至少要写的五项——钱包名称、官网、App 图标（链接或附件，方形不小于 512 px）、源码仓库（若开源）、支持的二维码格式（钱包级，以及 BTC／EVM／TRON／SOL 的币种级）。App 不联网也不唤起邮件客户端，所以收件人和主题都是**可复制的文本**，不是按钮。
-- **设置 › 兼容性新增「钱包」分页**：顶部分段控件切换「格式」（原有内容）与「钱包」。[WalletDirectoryView](BitToolSigner/Features/Settings/WalletDirectoryView.swift) 按字母序列出 App 里出现过的全部 24 个钱包，含图标、平台、能否签名，以及**官网（可复制，不可点击——App 默认没有网络）**。
-- **免责声明放在最显眼的位置**（页面顶部两条 Callout）：这里的钱包只是支持、或**声称**自己支持 BitTool Signer 的二维码；**任何人都可以提交并作出这样的声称**；我们没有完全核实，也不对任何一个钱包做审计、背书或担保；本页仅作信息展示，用户需自行审查；通过其他钱包发生的漏洞、黑客、诈骗或任何损失，BitTool 概不负责。提交页底部也重复了一遍。
-- **24 个官网逐个核对过**（2026 年 10 月，实际抓取各站点确认内容属于该钱包），写在 [CompatibleWallets.sites](BitToolSigner/Models/CompatibleWallets.swift)。这些网址是给人复制到另一台有网设备上打开的，写错等于指向钓鱼站，所以没有凭记忆填写。另有断言保证 24 个钱包与 24 条网址一一对应。
-
-## Revision 8（2026-10-17）：欢迎页底部间距、保持 iOS 17
-
-**1. 欢迎页法律链接贴近底部**：`bottomActionBar` 增加 `bottomPadding` 参数（默认仍是 8），欢迎页传 0。以 Terms of Use / Privacy Policy 这行结尾的操作栏不需要按钮那样的留白。实测（iPhone 16 Pro，@3x）：链接下方的空白从 130 px 缩到 106 px，即 **43.3pt → 35.3pt**，正好少掉那 8pt。**剩下的约 34pt 是系统的 home indicator 安全区，再压就会画到手势条下面，不能动。** 其余三处调用（创建流程、签名结果页、欢迎页的引导分支）行为不变。
-
-**2. 保持最低 iOS 17**：Revision 7 的评估已采纳结论“不降”，代码未改，评估记录保留在 [docs/DeploymentTarget.md](docs/DeploymentTarget.md) 供以后重开时参考。
-
-**3. 修回被 Xcode 改掉的部署目标**：做 iOS 15 评估时临时把 `IPHONEOS_DEPLOYMENT_TARGET` 改成 15.0、构建后已按备份还原；但之后 Xcode（项目处于打开状态）把**工程级**的两个配置自作主张改成了 `$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)`（target 级的四个仍是 17.0）。症状是 iOS 17／18 的模拟器从可用目标列表里消失，只剩 26.4／27.x。已改回 17.0，`project.pbxproj` 与评估前逐字节一致，模拟器列表恢复正常。
-
-## Revision 7（2026-10-17）：Connect 默认层级、Activity 的输入与输出
-
-**1. 点币种进 Coin Level**：钱包详情页的 Bitcoin / Ethereum & EVM / TRON / Solana 四行，点进去现在直接是 **Coin Level** 且已选中该链——选了币种本身就是币种级的选择。Revision 4 定下的“默认 Wallet Level”保留在**不指定币种**的入口上：钱包卡片的 Connect 按钮、创建完成页的“Connect a Wallet”，以及详情页的“钱包级”一行，这三处改走 `connectWallet` 路由。顺带修掉一个遗漏：钱包级路由此前没有接上预取的二维码，现在两条路由都接上了，所以从币种页切到 Wallet Level 也是第一帧就完整。
-
-**2. Activity 展示输入与输出**：每条签名现在记下**签进去的那份请求**（引擎审核过的规范 JSON）和**产出的那份签名**（二维码帧 + 导出文本）。详情页因此多了两段：
-
-- **Input**：操作、金额、交易对手、手续费几行要点，一个“All Decoded Fields”进到完整页面（直接复用审核页的摘要卡、合约提示、警告与 Details），以及可展开的请求原文。要点不是存下来的摘要——打开页面时把存下的请求**重新交给引擎审核一遍**，所以字段和当初审核页看到的是同一套，而且重算出的请求指纹必须等于记录里的那个，对不上就不显示解码内容。这样“解码字段”不占额外存储，也永远不会和原文脱节。
-- **Output**：`Show QR Code` 把当初那张签名二维码再显示一次（对方钱包没扫上时很有用；再扫一次不产生任何新东西）、`Export as File`，以及可展开的签名原文。
-
-存储：`SigningReceipt` 增加 `requestJSON` / `responseFrames` / `responseText`，单条载荷上限 32 KiB（超过就整条不存，不做截断），只为**最近 25 条**保留载荷，更早的记录保留其余字段、只丢载荷；文件上限从 256 KiB 提到 2 MiB，读取时逐条校验。文件本身仍是 `completeFileProtection` + 0o600 + 不进备份。存的两样都是公开数据（请求和签名），不涉及任何秘密，测试会检查记录文件里不出现助记词、密码或私钥。
-
-**3. 请求指纹改为大写**：同一张卡片上“指纹”是大写（`store.fingerprint(for:)` 一直如此）而“请求指纹”是小写，两个都叫指纹却不一致。`HashText` 统一改为大写显示（只影响显示，比对仍大小写无关）。
-
-**4. 本轮测试**：引擎 **179/179**（未变动）；原生单元 **166/166**（新增 `ActivityRecordTests` 10 项：记录确实带上请求与签名、存下的请求能重新审核出同一套字段且指纹必须对上、对不上或非 JSON 一律拒绝、只保留最近 25 条载荷且老记录不丢本体、超限载荷整条不存不截断、记录文件里不出现助记词／密码／私钥、上限算术保证下次启动一定读得回、多条签名跨启动仍可读、列表要点行的取值）；UI 自动化 **16/16**（`testPastedRequestIsMatchedReviewedAndSignedWithPassword` 扩到 Activity 的 Input／Output：进“All Decoded Fields”、重新显示签名二维码、展开签名原文；`testRenameThenDeleteLastWalletReturnsToWelcome` 增加“点链进 Coin Level”的断言）。截图巡检新增 `31b/31c/31d`。
-
-**5. 一个测试工具问题**：新加的已知合约 UI 测试单独跑稳过、放进整套里必失败。原因不在 App：`typeText` 在模拟器有负载（整套并行克隆）时会吞字符，400 字符的 UR 二维码文本因此校验失败，表现成“审核页一直没出来”。改为输入后读回 `field.value` 校验、不一致就重输（`typePayload(_:into:in:)`），三处长载荷粘贴都走它。
-
-**6. 最低系统版本评估（已决定不降）**：评估了 iOS 17 → iOS 15 的可行性，**最终决定保持最低 iOS 17**，代码未改；评估记录在 [docs/DeploymentTarget.md](docs/DeploymentTarget.md)。要点：工具链接受 iOS 15.0；降到 **iOS 16** 约 63 处机械替换、不动架构（多覆盖 iPhone 8）；再降到 **iOS 15** 还要把 `NavigationStack` 重写成 `NavigationView`，而导航恰好与签名后的状态流转耦合最深。当时的建议是先降 16、iOS 15 单独立项；现已决定两步都不走。
-
-## Revision 6（2026-10-17）：已知公开合约
-
-把 Ownbit 整理的 WalletConnect 已知合约库搬了过来，用在**签名审核**和 **Settings 浏览**两处。详见 [docs/KnownContracts.md](docs/KnownContracts.md)。
-
-**1. 合约库**：来自 Ownbit 安全中心（`wallet-ios-core/scripts/security-center/known_contracts.json`，sourceVersion 1，2026-10-09），共 **1,720 个地址、307 个项目**：Ethereum 329、Base 217、BNB Smart Chain 194、Polygon 191、Arbitrum 186、OP Mainnet 169、Solana 262、TRON 139、Avalanche 6，另有 27 个 CREATE2 确定性部署（Permit2、Seaport、ERC-4337 EntryPoint、Multicall3、Safe 等），在所有 EVM 网络上是同一个地址，作为链内查不到时的兜底，并在审核里注明“在每条 EVM 网络上都是同一个地址”。HyperEVM（999，132 条）因为 App 不审核该网络而舍弃。`scripts/build-known-contracts.py` 校验地址格式、类别、重复后写出两份投影：引擎用的列式字符串（139 KiB，按首次使用才切分，所以不涉及合约的请求不付这笔开销）和 App 浏览用的完整 JSON（277 KiB）。
-
-**收录只代表“这个地址是项目方自己公布的部署”，不代表请求安全**——已知合约一样能掏空账户，区别只在于能不能把“大家都在用的 Permit2”和“没见过的地址”分开，而仿冒合约正是靠这一点。
-
-**2. 签名时应用**：查的是**请求授权出去的那个地址**，不一定是被调用的合约——`approve` 查 spender，`setApprovalForAll(…, true)` 查 operator，EIP-712 消息里有 `spender`/`operator` 就查它，否则查 `domain.verifyingContract`，其余情况查被调用的合约。`SafeTx` 的 verifying contract 直接跳过：每个 Safe 都是用户自己部署的，提示“不在名单里”只会变成噪音。
-
-命中时审核多一行 `Spender (known contract)` 等字段，`review.contract` 带上名称、项目与类别。未命中时先问代币表——已经被代币表认出来的地址按代币显示，不叫“未知”；否则给出警告，并且**只有未收录的 spender／operator** 才把风险等级抬到 `warning`。未收录的普通合约不抬等级：绝大多数合约都是新的或私有部署，全部标红会让这个信号失去意义。
-
-**3. Solana**：Solana 一笔交易是多条指令、没有单一的交易对手，所以不设 `review.contract`；改为给**引擎自己不解码**的程序加一行 `Program (known)`（例如一条本来只是裸字节的指令旁边写出“Raydium AMM v4 — Raydium · dex”）。引擎自己解码的程序（System、Token、Token-2022、ATA、Compute Budget、Memo、Stake、Squads 以及 Metaplex 与市场程序）保留自己的名字，因为它们的 Action 字段比名单标签说得更多。未收录的 Solana 程序不额外报警：指令有没有被解码本身就是信号，未解码的指令已经是高风险。
-
-**4. 审核页展示**：地址已经出现在摘要卡的交易对手框里时（授权类请求），提示就跟在地址下面一行；地址不同时（代币转账授权的是代币合约、不是收款人），单独给一张卡片。四种状态：已收录＝琥珀色 + 印章图标（**不用绿色**——给一个正在拿到无限额度的地址打绿勾，等于说了名单支撑不了的话）、未收录的 spender／operator＝红色、未收录的普通合约＝灰色问号、代币表认识的＝强调色。
-
-**5. Settings 合并为 Networks, Tokens & Contracts**：原“Networks & Tokens”扩成同时浏览代币和已知合约。每个网络页用一个分段控件在代币与合约之间切换，共用一个搜索框（合约可按名称、项目、类别或地址搜），只有一边有内容时不显示切换器（如 Gnosis 只有代币）。确定性部署单列一行“All EVM networks”。
-
-**6. 本轮测试**：引擎 **179/179**（新增 Solana 已知程序一项：命中命名、未收录不额外报警、引擎自己解码的程序不被改名）；原生单元 **156/156**（新增 `KnownContractTests` 14 项：打包文件的记录完整性与声明计数、每条链都能在 Settings 里走到、`ReviewContract` 的解析与降级、摘要是否已经展示该地址）；UI 自动化 **16/16**（新增 `testApprovalNamesAKnownSpenderAndFlagsAnUnlistedOne`：用真实 `eth-sign-request` 二维码走一遍 USDT 无限授权给 Permit2 与授权给未收录地址，断言审核页出现／不出现对应提示；`testSettingsReferencePagesAndGuide` 扩到合约浏览与搜索）。截图巡检新增 `28/29-review-known-contract`、`44c/44d/44e-contracts`。
-
-**7. 顺带修的**：Info.plist 的相机与 Face ID 用途说明原先只能是英文（它们来自构建设置，不走 `Localizable.strings`），现在 `translations/<语言>.json` 增加 `infoPlist` 段，由 `scripts/write-localizations.py` 一并写出 `InfoPlist.strings`，三种语言都已翻译；`AppNameTests` 相应改为“可以翻译系统提示，但不许改 App 名字”。
-
-## Revision 3（2026-09-22）：连接、备份与 NFT 审核
-
-本次按用户的 10 条反馈修改（第 8 条末尾“另外现在点：”没有写完，未能据此修改）。
-
-**1. 创建完成后点“Connect a Wallet”卡住**：确认是 App 的问题。原先在关闭创建 sheet 的同时向钱包导航栈推入连接页，两个转场同时进行，推入动画停在半途。现在路由先记下，等 sheet 完全关闭（`onDismiss`）后再推入。UI 测试从完成页进入连接页，并确认二维码加载、链切换可用。
-
-**2. 连接页顶部看不出选中了哪条链**：选中项改为强调色描边的浅色底块、图标全彩并略放大，未选中项图标降低饱和度与透明度、文字变灰；浅色和深色模式下都一目了然。大字号下只显示图标（VoiceOver 仍读出链名）。
-
-**3. TRON 地址索引**：由 0–99 改为 0 到 2³¹−1（BIP32 非硬化索引上限）。连接页可用步进器，也可直接输入索引，路径随时显示在下方；超出上限时自动夹到最大值。引擎按账户节点现场派生，地址页可无限下拉。`tron-sign-request` 总是带路径，所以任何索引的签名请求都能匹配；只带地址、不带路径的请求仍只比对缓存的 0–99。
-
-**4. Sparrow / BlueWallet 与 XPUB**：调研确认两者默认导入账户 xpub（`crypto-account`），并能用 `crypto-psbt` 扫码签名。BTC 默认改为 Account XPUB。同时发现上一版的 “Public Key”（只含 `/0/0` 叶子公钥、没有 chain code）不符合 BCR-2020-015，调研的钱包都无法导入，因此从界面和引擎中移除。
-
-**5. 支持的钱包**：移除 Ownbit。逐个钱包、逐种导出查官方文档、源码或 Keystone 官方指南与固件，再由独立核查者反驳，只保留确认的条目；Connect 页和 Settings › Compatibility 分为“可扫码签名”和“仅观察”两组（`BitToolSigner/Models/CompatibleWallets.swift`，证据见 [docs/Compatibility.md](docs/Compatibility.md)）。
-- BTC 可签名：Sparrow、BlueWallet、Nunchuk、Bitcoin Keeper、BULL Bitcoin、Specter、Bitcoin Safe、ZEUS（无 Legacy）；多签协调器：Sparrow、BlueWallet、Nunchuk、Keeper、Specter、Bitcoin Safe；地址观察：BlueWallet、Electrum。
-- EVM 可签名：MetaMask、Rabby、imToken、TokenPocket（EIP-4527）、Ambire；地址观察：Rabby、TokenPocket、OKX Wallet、Trust Wallet。
-- Solana 可签名：Solflare、Helium Wallet；地址观察：Phantom、Backpack、Jupiter、OKX Wallet、TokenPocket。
-- TRON 只能观察：TokenPocket、TronLink、OKX Wallet、OneKey。**TP 确实支持观察 TRX 和 SOL 地址**，但它的冷钱包签名是自有协议；目前没有主流热钱包对纯地址导出生成 `tron-sign-request`。
-- 移除 Safe（旧 iOS App 已归档，新版没有 QR 签名器）；Backpack 的 SOL 签名流程无官方记录，降为仅观察。新增 14 个官方钱包图标，移除 Ownbit、Safe 图标（[来源](docs/WalletLogoSources.md)）。
-
-**6. Token 表扩充**：从 358 条扩到 **596 条**（Ethereum 196、BNB Smart Chain 112、Arbitrum 67、Base 86、TRON 14、Solana 121）。新增发现脚本 `scripts/discover-token-candidates.py`（放宽门槛），每条网络由一名审核者挑选主流代币，再由独立核查者按一手资料逐条复核，删掉 28 个（已废弃的 ERC-20、低层级 meme、刚上线几周的代币、一个刚被攻击的代币等），全部 596 条由构建脚本重新核对 CoinGecko 映射、独立列表或发行方文档、链上 decimals 与符号，并逐一目检图标。TRON 没有新增：CoinGecko 映射到 TRON 的主流、活跃 TRC-20 已全部收录。构建脚本新增：发行方文档（`officialSource`，原始页面必须含该地址）可作为独立来源；按哈希拒绝 CoinGecko 的“破图”占位图。引擎只打包精简版 `token-registry.engine.json`。
-
-**6b. Token 表再扩充（CoinMarketCap 前 2000）**：在 596 条人工核定条目之上，加入 CoinMarketCap 前 2000 榜单中部署在受支持链上的代币，共 **3,350 条**（Ethereum 1,008、BNB Smart Chain 876、Solana 585、Base 333、Arbitrum 225、Polygon 137、Avalanche 75、OP Mainnet 53、Gnosis 32、TRON 26）。榜单只决定“收录哪些”并提供名称、符号和图标；**decimals 一律从链上读取**（EVM `decimals()`、Solana `getMultipleAccounts`、TRON `triggerconstantcontract`），3,250 个合约中 3,242 个读到，读不到的直接不收录。符号以合约自报的 `symbol()` 为准（2,276 条），与榜单不一致的 235 条里有 161 条只差大小写或标点（`frxUSD`、`$MBG`），其余多是跨链桥/包装版本（Avalanche 的 `LINK.e`、`UNI.e`、`DAI.e`，`wROSE`、`pONT`、`axlSAGA`，以及改名前的 `LUNA`、`UST`）——按榜单显示反而会把它们说成原版代币。与原 596 条重叠的 486 个合约是一次独立验证：链上读到的 decimals 与人工核定值**全部一致**。新增 `scripts/refresh-cmc-snapshot.py`（API key 只从环境变量 `CMC_API_KEY` 读取，绝不写入仓库）与 `scripts/build-expanded-registry.py`（人工条目永远优先）。审核界面对新旧条目一视同仁，不加任何额外标注；收录本身从来不代表背书。
-
-**6c. 图标改为内容寻址的打包文件**：596 个 `token_*.imageset` 全部移出 Assets.xcassets（资源目录 10.9 MB → 484 KB），3,350 条记录的图标按字节 SHA-256 去重后只剩 **1,985 张**（同一代币在多条链上共用一张），拼成单个 `TokenIcons.pack`（10.7 MiB）加 `TokenIcons.index.json` 偏移表；App 侧 `TokenIconStore` 以 mmap 方式读取并按需解码。散放 2,000 个小文件在设备上每个都要占满一个文件系统块，约多 4 MB。
-
-引擎侧的精简表改成“网络/程序字符串只存一份 + 每行用制表符分隔的一整个字符串”（313 KiB），进入新 VM 时只分配一个字符串，只有真正涉及代币的请求才会在首次查询时切分建表；模拟器实测单次 VM 启动 66–75 ms（596 条时 47–59 ms），首次代币查询 <1 ms。
-
-**7. NFT 显示**：新增专门的 NFT 审核（详见 [docs/Compatibility.md](docs/Compatibility.md) “NFT 的审核显示”）。
-- EVM/TRON：ERC-721/1155/TRC-721 转账与授权；`approve`/`transferFrom` 选择器与 ERC-20 相同时明确显示两种解释；`setApprovalForAll(true)` 红色警告；ERC-1155 批量合并显示；超长 Token ID 缩写并完整显示；MultiSend 内的 NFT 调用逐条标注。
-- NFT 市场签名：Seaport 1.5/1.6（含批量挂单）、LooksRare v2 解码为“你给出 / 你收到 / 其他人收到”，并对 0 价、价格降到 0、任意代币可被挑走、永不过期、被伪装成 NFT 的 ERC-20 等钓鱼特征给红色警告；Blur 的盲签 Merkle root 标为未解码的高风险。
-- Solana：0 位小数、数量 1 的 SPL 转账（“likely NFT”）、Metaplex Token Metadata TransferV1、Bubblegum 压缩 NFT、Core TransferV1、Token-2022 转账钩子、NFT 委托/锁定/销毁，以及市场程序名称。
-- 审核卡片新增 NFT 图标、NFT 合约（not verified）或 Mint/Asset ID 地址框、完整 Token ID、给出/收到/其他收款列表。所有常量按官方仓库核对并经独立复核；NFT 显示从不使用绿色“已验证”提示。
-
-**8. Tap to Reveal**：点一下直接显示，不再弹确认框；截屏、切后台、录屏时仍立即遮盖，截屏警告确认前不能再次显示。
-
-**9. 二维码**：改为 Ownbit 式的助记词明文二维码（单词以空格分隔，不含 passphrase），默认模糊，点一下显示；上方说明用途，下方红字警告，不提供保存或分享。导入扫码时按二维码原样拼写，不再询问语言。上一版的加密备份（`BSBK1:`）、备份密码表单和相册写入权限已全部移除。
-
-**10. 助记词卡片（2/3）**：“Word Cards”改为 Ownbit 式的 Recovery Cards：三张卡片各隐去三分之一的单词（显示为 xxxx），任意两张可恢复；布局只取决于单词数（每行三个位置、每行各隐去一个），重复打开或在其他设备上生成都一致；默认遮盖、点一下显示。12/15 词时单张卡片只缺 40/50 位，界面会提示单张卡片也要妥善保管。
-
-**测试与审查中发现并修复的问题**
-- 连接页把 TRON 的索引也发给了 BTC/EVM/SOL，改过 TRON 索引后其他链会报错不出二维码（独立审查发现）。
-- 打开 Recovery Cards 或 Security Tips 时，被遮住的助记词视图仍在监听截屏：一次截屏会同时触发两个警告，可能让“Tap to Reveal”失效。现在被 sheet 遮住时暂停下层会话。
-- 3 列单词网格在 375 pt 宽的 iPhone（SE、mini）上会把 8 个字母的单词截成 “…”（Revision 2 起就存在），可能导致抄错。现在按实际宽度和字号计算列数，放不下就改为 2 列或 1 列；备份、卡片和补全检查三处都已处理。
-- 12/15 词时卡片说明原先写“丢一张仍然安全”，与熵计算矛盾，已按单词数改写。
-- 地址索引行：6 位以上时标签被挤成两行、路径被截断；输入框宽度不随字号变化；超出上限时显示的数字与实际导出不一致。均已修正。
-- Multisig 开关状态带到 EVM 页，使 EVM 显示 “Cosigner account path”。已修正。
-- 助记词扫码出错时显示的是签名请求的文案。已按用途区分。
-- 二维码页的 “Hide QR Code” 在底栏下方时无法点到；已移到二维码正下方。
-- Token 构建：CoinGecko 给 DoubleZero（2Z）的图片是“破图”占位图，自动检查未能识别；已剔除该代币并按哈希拦截。另一工具留在缓存中的非标准 404 标记会导致构建崩溃，已清理。
-
-### Revision 3 后续修改（同日）
-
-- **单词字号统一、全部完整显示**：此前每个格子各自缩小以放下单词，长词比短词小，放不下时还会出现 “proper…”。现在同一张网格只用一个字号：取能完整放下最长单词的最大字号（不小于正常字号的 80%）；再小就改为 2 列或 1 列。助记词网格、恢复卡片、补全检查三处一致。
-- **钱包级配对（Wallet Level）**：按用户提供的 *BitTool Signer Wallet-Level QR Pairing Protocol v1* 草案实现，Connect 页顶部新增 Coin Level（默认，原有各链格式）/ Wallet Level 切换。按用户后续要求，Wallet Level 只有一种类型：一个静态二维码（单个 `ur:bytes`，不分帧、不动画）只包含 BTC（BIP84）、EVM、TRON 的账户级 xpub 和 1 个 Solana 地址（`m/44'/501'/0'/0'`；Ed25519 为硬化派生，没有 xpub），界面不出现 Simple/Full 字样。测试钱包的载荷为 755 字节，二维码文本 1533 个字符（QR 版本 23，纠错级别 L）。编码为 `ur:bytes` + canonical CBOR（RFC 8949 §4.2.1，字段名即 JSON 键名），另加 `masterFingerprint` 字段；精确规则与测试向量见 [docs/Wallet-Pairing-v1.md](docs/Wallet-Pairing-v1.md)。默认支持的钱包为 **BitTool Wallet**（BITTOOL PTE. LTD.，iOS；按用户指定列出，官方图标已加入并记录来源），Connect 页与 Settings › Compatibility 都会显示。Solana 地址直接取已有的标准预设，公开索引保持版本 1，已有钱包无需 Repair。（中间版本曾导出 10 个 Solana 账户并为此把公开索引升到版本 2，已按用户要求撤回。）
-- **后台任务**：用户看到的 3 个 “running” 任务核实过：没有进程在运行，所有工作都已完成；其中两个是已结束的子任务残留的监听记录，已清理。
-- **真机启动卡在启动页、后台卡片变深色**：不是 App 代码问题。Xcode 在 14:58 两次 Run 重叠，第二次附加调试器失败后在手机上留下了孤立的 debugserver；此后每次 Run 都停在 “Launching suspended and the debugger is responsible for resuming”，App 进程被挂起、一行代码都没执行，所以手机上一直是系统启动图（不跟随 App 内外观设置）。清除调试会话后恢复正常。另外在模拟器上逐一验证了外观组合（系统浅/深 × App 设置 System/Light/Dark，以及进入后台后系统外观切换）：切到后台后的卡片一直跟随 App 设置；只有 App 设置为 System、手机自己切换到深色时卡片才变深色，这是正确行为。作为加固，隐私遮罩窗口现在显式使用 App 的外观设置（改设置时实时更新）；录屏或镜像时遮罩上会说明“Hidden while your screen is recorded or mirrored”，不再像启动卡住。
-- **钱包级二维码改为一个静态大码**：不再分 4 帧动画，改为单个 `ur:bytes`（单段 UR，1533 个字符，QR 版本 23、纠错 L），页面上以最大 360 pt 显示。载荷超过 1024 字节时拒绝导出，保证始终能放进一个易扫的二维码；解码端仍接受其他导出方的多段 `ur:bytes`。
-- **Address type 右侧内边距**：原来是菜单样式 Picker，系统自带的内边距在各 iOS 版本不同，值和箭头几乎贴着卡片右边。现在改成自定义标签的 Menu，左右各 14 pt，整行可点；辅助功能大字号下改为上下排列，VoiceOver 同时读出当前值和说明。Connect 与 Addresses 共用。
-- **TRON 地址列表不再显示派生路径**：分组标题由 “Receive · m/44'/195'/0'/0/i” 改为 “Receive · TRX and TRC-20 tokens”（与 BTC 的 “Receive · Native SegWit”、EVM 的 “Receive · All EVM networks” 同一写法）；BTC 页脚也去掉了 “(…/0/i)”。UI 测试与截图巡检新增 TRON 地址列表。
-- **首次从主页进入 Connect 时动画中途停顿**：在模拟器上用计时探针（不经过 XCUITest，避免其无障碍查询干扰）实测：首次进入时 JS 引擎冷启动，配对结果在滑入动画进行到一半时才返回，主线程随即插入二维码、验证卡片并重排整页（约 300 pt 位移并带淡入动画），CoreImage/Metal 首次渲染二维码也在同一时间。修复：钱包显示出来后（App 处于前台、未锁定、未录屏），在后台为每个钱包预先生成 Connect 默认打开的二维码（BTC Native SegWit 账户 xpub，只用本机已认证的公开索引，仅存内存）；Connect 页打开时直接带着成品，推入动画期间不再调用引擎、不再渲染二维码、不再重排。二维码改用 CPU 渲染（1 像素/模块，开销极小），避开 Metal 首次初始化；未命中预生成时，首次结果也不再带淡入动画。实测首次推入：原来开头 286–329 ms 的卡顿加动画中途再 75–83 ms；现在只剩开头一次约 190 ms（Debug 构建，页面首次构建），动画中途没有停顿。预生成结果与 warm JS 上下文在切到后台、App Lock、录屏时清除（此前文档写明 warm VM 会在后台释放，但代码并未调用，现已补上），回到前台后重新预生成。
-
-### Revision 3 后续修改（第二轮）
-
-- **钱包标识改为指纹**：钱包卡片、详情页、审核页的签名钱包、密码输入头部和 Activity 详情，原来的 “Wallet ID”（`walletKeyId` 截断）统一改为 **Fingerprint**，显示 BIP32 master fingerprint（如 `C6A5A927`），与 Wallet Level 载荷中的 `masterFingerprint`、Connect 页的 Master fingerprint 完全一致。签名记录新增保存指纹。内部身份与请求匹配仍用 `walletKeyId`，指纹只作显示。App Lock 解锁前的钱包选择只显示钱包名：指纹也会出现在导出的 PSBT/xpub 里，不在解锁前暴露。
-- **Coin Level 每个二维码增加 Payload**：验证卡片在指纹下面新增 “Format”（如 `ur:crypto-account · CBOR · 162 bytes`）和默认折叠的 “Payload (JSON)” / “Payload (Text)”。内容由引擎把刚生成的帧重新解码得到，字段名按 BC-UR 注册表，详见 [docs/Compatibility.md](docs/Compatibility.md) 的“二维码载荷视图”。UR 中的指纹是 32 位整数，Payload 区会注明对应的十六进制指纹。Wallet Level 改用同一个组件。复制改为 “Copy Payload”（本机、会过期的剪贴板），不再允许把全文选中复制到通用剪贴板。
-- **审核页签名钱包卡片精简**：详情里已经列出请求的签名地址和派生路径（EVM、Solana、TRON）时，签名钱包卡片不再重复；比特币 PSBT 的详情里没有签名路径，所以仍然显示。
-- **Format 与 Master fingerprint 顺序统一**：Coin Level 与 Wallet Level 的验证卡片都是 Format 在上、Master fingerprint 在下，最后是 Payload。
-- **使用条款与隐私政策改为随 App 内置（v1.0）**：原来 Settings › About 和欢迎页底部是指向 `bittool.com/signer` 的网页链接，点击会跳出到浏览器（页脚那句 “Legal links open in your browser.” 就是在提示这一点，现已删除）。这与“全程离线”矛盾，且未上线时链接也打不开。现在两份英文文档 `BitToolSigner/Resources/TERMS_OF_USE.txt`、`PRIVACY_POLICY.txt` 随 App 打包，在 App 内阅读（Settings › About 进入页面，欢迎页以 sheet 打开），可选中复制，全文不含任何网址。这是对 [Revision 1 规范](docs/Modification-Spec-2026-09-21.md) 中 D27 的有意改动。
-  - 隐私政策逐条对应实际行为：不收集任何数据、无网络代码、无第三方 SDK；本机保存的内容（加密的助记词与 passphrase、带认证标签的公开钱包数据、最多 100 条 Activity 记录、偏好设置）、文件保护与不进备份；相机只在扫码时打开且不保存帧；Face ID 只返回成功与否；复制只进本机剪贴板并在两分钟后过期；切后台、录屏与镜像时遮挡界面；删除钱包或 App 会一并删除 Keychain 中的设备密钥。
-  - 文档中 `[Publisher legal name]`、`[Governing law jurisdiction]`、`[Contact email]` 三处占位需在上架前填写；单元测试会检查不出现其他占位符、不出现任何网址。
-  - 初稿由多个审查者逐句与代码核对，改掉了几处不实表述：备份页的助记词明文二维码属于“会离开设备”的例外；偏好设置存在 UserDefaults，会进入设备备份（钱包文件、公开数据、Activity 才不进备份）；删除钱包不会删掉它的 Activity 记录（界面显示为 “Deleted wallet”）；删除 App 后 Keychain 里的设备密钥可能残留；Activity 记录字段补全；补上失败次数计数文件；文件导入导出可能落到 Files 里的云盘目录。Terms 补上 passphrase 与忘记密码的说明、Apple 要求的 EULA 最低条款、修正条款存续清单。
-  - 顺带修好 Settings › Third-Party Licenses：原文件有 3 条 “undefined undefined” 和 1 条 “[object Object]”。新增 `scripts/build-third-party-licenses.mjs`，直接按 `engine/bundle-manifest.json` 里实际打包的 67 个包重新生成（含嵌套的 @noble/curves 1.2.0、@noble/hashes 1.3.2、ethers 6.17.0），每条都有名称、版本、许可证与完整许可证文本。
-- **钱包详情页新增 Wallet Level 入口**：Connect 分组在四条链下面多了一行 “Wallet Level · One QR code for all four chains”，点进去直接打开 Connect 的 Wallet Level（新路由 `WalletRoute.connectWallet`）。
-- **签名结果页**：底部只保留 **Done** 一个主按钮。结果二维码下方新增卡片：Format、默认折叠的 “Payload (JSON)”（eth/sol/tron 签名显示 `request-id` 与 `signature`；比特币显示 `psbt_base64` 与按 Bitcoin Core `decodepsbt` 字段名解析的 `decoded`（排在前面，大 PSBT 截断显示时仍可见）），以及降级为次要操作的 “Export as File”。
-
-## Revision 2.1（2026-09-22）：多语言助记词导入与新的备份流程
-
-本次按新增需求实现两项：一是导入 BIP39 其他语言的助记词；二是参考 Ownbit 最新方案重做助记词备份，样式沿用本 App 的配色和组件。
-
-**多语言导入**
-- 支持 BIP39 官方全部 10 种词表：English、简体中文、繁體中文、日本語、한국어、Español、Français、Italiano、Čeština、Português。
-- 词表逐字节取自 bitcoin/bips，固定 SHA-256，并与 @scure/bip39、ethers 两个独立来源逐词核对。校验（含 checksum）改为原生实现。
-- 输入时实时识别语言，状态栏显示语言名，候选词也来自该语言。
-- 可不输入重音、可用大写、可带编号或逗号；中文可不加空格，日文可用全角空格。App 始终换回官方拼写再计算 seed，vault 以 NFC 保存。
-- 一组不带重音的词可能在两种语言中都有效，并对应两个不同的钱包（测试找到的实例：意大利语 “nomina solido comodo …”，加上重音后也是有效的西班牙语）。这时 App 请用户选择备份所用的语言，不会自行猜测。输入了重音则按原拼写处理。
-- 助记词输入框改用系统键盘，以便使用苹果的中文、日文、韩文输入法；第三方键盘仍在全 App 范围内被拒绝。
-
-**新的备份流程**
-- 备份页顶部可切换“单词 / 二维码”：
-  - 单词默认模糊，确认后才显示。
-  - “Word Cards”每次只显示一个大号单词（Revision 3 已改为 2/3 Recovery Cards）。
-  - “Security Tips”集中列出安全提示。
-  - 单词显示过一次后，才能点底部的 “I’ve Written Them Down in Order”。
-- 二维码页曾生成加密备份二维码（Revision 3 按用户要求改为助记词明文二维码，加密备份已移除）。
-- 检查页改为补全空缺单词：
-  - 所有位置显示为 “n. ••••••”，其中 4 个（18 个词以上为 5 个）留空；空位对应的单词打乱后显示在底部（固定在底栏，小屏也始终可点）。
-  - 按顺序点选补全；点空位可指定下一个要填的位置，点已填的位置可撤回；当前空位会自动滚动到可见处。
-  - 答错会清空已填的词，但空位和单词顺序不变；切到后台或截屏也会清空。
-
-**本次测试发现并修复的问题**
-- 忽略编号（如 “1.”）的规则原本按 Unicode 数字判断，导致 “一”“十” 等中文数字助记词被丢弃；现只忽略 ASCII 数字。
-- 上述跨语言歧义原本会被静默导入为另一个钱包；现改为优先精确拼写，有歧义时请用户选择。
-- 备份密码表单中按 Return 不会跳到确认框（该表单已在 Revision 3 移除）。
-- 小屏上补全用的单词被底栏遮住，需先滚动才能点击；现固定在底栏。当前空位的高亮被系统的禁用样式变灰；现已修正。
-- 导入页文案仍写 “English words”，已改为支持十种语言。
-- 辅助功能大字号下：助记词状态会被截断，现改为换行显示；二维码页两个按钮改为纵向排列；“Security Tips” 移到底栏主按钮上方（与 Ownbit 布局一致），任何字号下都可点击。
-- 用歧义短语制作的加密备份在恢复时会再次询问语言（Revision 3 改为：扫描的助记词二维码按原拼写导入）。
-
-## 测试结果
-
-| 检查 | 结果 | 范围 |
+| F-01 | HIGH | A Safe `DELEGATECALL` does not transfer `value` (the Executor hands value to `call` only), but the code displayed it as an amount paid; MultiSend had the same fault, and because the headline listed only three calls, a real transfer in the fourth or later would vanish from the main screen | `evm.js`: a `DELEGATECALL` passes `0n` to `decodeCall`, and the ignored value gets its own field and a warning; MultiSend accumulates `moved` only for a `CALL`; and **any call spending native currency is always in the headline**, so truncation can no longer hide a transfer |
+| F-02 | HIGH | SPL Token Burn and BurnChecked were written only into Details, never into `movements`, and never raised the risk level. So "burn 1,000,000 USDC and send 1 lamport" showed as 0.000000001 SOL on the main card, with no risk acknowledgement required | `solana.js`: a burn enters `movements` as a first-class destructive effect, **a burn always leads the summary** (the same rule as a Bitcoin burn), `riskLevel='high'` forces acknowledgement, and a HIGH RISK warning is emitted |
+| F-03 | MEDIUM | `ReviewText.shortDecimal` carried by computing `Int(whole) + 1`. When the integer part of a fee equals `Int.max` that traps on overflow, **crashing while the review page is being drawn** — before anything has been authorized | `ReviewText.swift`: the whole part carries as a string and is never parsed into an `Int`. A request can name any fee the engine can represent, and the renderer should not depend on amounts being reasonable to stay alive |
+| F-04 | LOW | Revision 9's Bitcoin burn fix wrote `note: undefined`; `stable()` refuses `undefined`, so it threw "Expected a plain JSON object." before the plan was even hashed, making **every transaction containing a burn output unsignable** | `bitcoin.js`: an absent optional field simply omits the key. The regression test goes through the full `resolveSigningPlan`, not just `bitcoinDisplay` |
+
+Regressions: [engine/test/audit-bts-2026-1018.test.mjs](engine/test/audit-bts-2026-1018.test.mjs)
+and `BitToolSignerTests/ReviewTextTests.swift`.
+
+> F-04's lesson is worth recording: testing `bitcoinDisplay`'s return value cannot see the problem,
+> because `JSON.stringify` silently drops `undefined`. The test has to go all the way through
+> `resolveSigningPlan`.
+
+**2. The Bitcoin high-fee rule.** The old rule — over 0.01 BTC, or over 1% of the inputs — fired on
+almost every small payment, because a small transaction's fee is naturally a large share of it, and
+the result is training people to tick the box without reading. The new rule: **over 0.01 BTC, or
+(over half the amount being sent and over 0.0001 BTC)**. That 0.0001 BTC floor exists precisely to
+keep small payments quiet. See
+[engine/test/bitcoin-fee-warning.test.mjs](engine/test/bitcoin-fee-warning.test.mjs).
+
+**3. A "Contact us" section on the About page**: the operating entity and `support@bittool.com`. The
+address is copyable text rather than a `mailto:` link — the app opens neither a browser nor a mail
+client.
+
+**4. Simplified the wrong-password message**: "The password is incorrect, or the encrypted wallet has
+been modified." became "The password is incorrect." AES-GCM cannot distinguish a wrong key from
+tampered ciphertext, so the original wording was literally accurate, but for someone who simply
+mistyped it is just alarming. Tampering still fails closed; it just no longer gets its own wording.
+
+**5. The camera reappeared after tapping Done on a finished signature (a Revision 9 regression).** The
+scan button's "already handled" marker lived in `ScanHomeView`'s `@State`, and that view is destroyed
+when a request arrives and rebuilt once signing finishes, so the `@State` reset to zero and the camera
+opened again. The marker moved to `AppRouter`, which survives the whole flow, and is consumed by
+`consumeScanRequest()`. The regression test
+[BitToolSignerTests/ScanRequestRouterTests.swift](BitToolSignerTests/ScanRequestRouterTests.swift)
+walks "request → review → result → Done" and requires that none of those four steps opens the camera.
+
+## Revision 9 (18 October 2026): 21 languages, localized engine text, animated pairing QR, Connect renamed Pair, wallet directory
+
+**1. Languages completed to 21.** Added uk, es-419, it, pt-BR, pt-PT, pl, id, tr, th, vi and fil — 11
+new — joining the existing en, zh-Hans, zh-Hant, ja, ko, ru, de, fr, es and ar for 21 in total,
+matching BitTool Wallet's language count. pt-BR/pt-PT and es/es-419 were each written out separately
+rather than mechanically substituted: the two Portuguese variants differ systematically in
+palavra-passe vs senha, ecrã vs tela, ficheiro vs arquivo and in progressive forms ("A descodificar…"
+vs "Decodificando…"), and the two Spanish variants in billetera vs cartera, monto vs importe and
+Configuración vs Ajustes. `knownRegions` was extended to 22 entries, including Base.
+
+**2. The engine's review text is now translated too.** The engine (JavaScript) still writes English
+only — that text is what the request fingerprint covers and what a rebuilt engine must reproduce byte
+for byte, so it cannot vary with the language. Translation happens **at the last moment, as the text
+is drawn**: the new [BitToolSigner/Models/ReviewText.swift](BitToolSigner/Models/ReviewText.swift)
+provides `phrase` for whole phrases (Details field labels, `display.action`, counterparty labels),
+`label` for field names carrying a bracketed unit ("Amount (USDC)" translates only the stem), and
+`headline` for titles shaped as a fixed phrase plus an engine-supplied value, such as
+"Method 0x3593564c". When no translation exists it falls back to the engine's own English, so a label
+added to the engine later shows in English rather than disappearing. The string list
+[engine/data/interface-strings.json](engine/data/interface-strings.json) grew from 548 to **742**
+entries: 558 from Xcode's extraction plus 184 static field names, display actions, counterparty
+labels, review titles and resultTypes pulled out of the engine source.
+
+**3. Fee ceilings show at most 8 decimal places.** The review page used to print
+`0.000396834604360128 ETH` verbatim. `ReviewText.shortDecimal` cuts to 8 places and **rounds up**
+(adding one to the last kept digit when anything dropped was non-zero, carrying into the whole part
+if needed), because this is a "no more than" ceiling and rounding down would understate it. Details
+still carries the exact value.
+
+**4. Leaving the scan page turned the interface dark.** `QRScannerView` used
+`.preferredColorScheme(.dark)` to give the camera interface dark material, but that is a
+**window-level** preference: when the app's appearance setting is "follow the system" the root passes
+`nil`, meaning "no preference", so after the modal closed there was no preference to override it and
+the window stayed dark. Changed to `.environment(\.colorScheme, .dark)`, which affects only the scan
+page's own view tree and leaves the window alone.
+
+**5. Interface text that had been missed.** `QRScannerView`'s `title` and `hint` became
+`LocalizedStringKey` ("Scan Request", "Scan Recovery QR" and two hint lines had been plain `String`,
+so they were always drawn as written); the recovery-phrase input's status line ("12–24 words · any
+BIP39 language", "1 word", "%lld words", "Unknown: %@") moved to `String(localized:bundle:)`; and the
+address detail title `%@ address #%lld`, Solana's `%@ account` and the `Sign with %@` button were
+given the same treatment.
+
+**6. Regressions.** [BitToolSignerTests/ReviewTextTests.swift](BitToolSignerTests/ReviewTextTests.swift)
+covers falling back to English when no translation exists, preserving the engine-filled value in a
+prefix translation, and the fee truncation's carry (`0.999999999 → 1.00000000`) alongside the cases
+it must leave alone (no fraction, no unit, already short). The new wallet-level pairing shape is
+asserted in `engine/test/wallet-pairing.test.mjs` and `BitToolSignerTests/SessionTests.swift`: an xpub
+for each of the four script types, three Solana addresses, no `m/48'`, and at least two frames.
+
+**7. The wallet-level QR became animated and carries every address type.** It used to export only
+Bitcoin BIP84 (bc1q) and a single Solana address. `accounts` now carries **four Bitcoin account
+xpubs** — `p2wpkh` (bc1q, m/84'), `p2tr` (bc1p, m/86'), `p2sh-p2wpkh` (3, m/49') and `p2pkh`
+(1, m/44') — plus EVM and TRON xpubs and **three Solana addresses** (standard, trust, legacy;
+Ed25519 derivation is hardened, so a watch-only wallet cannot derive one from another and all three
+must be sent). The two `m/48'` multisig profiles are excluded: multisig needs every cosigner's public
+key and the threshold, which is what the Coin Level cosigner export is for. The payload therefore grew
+from 755 bytes to **1,561**, which does not fit in one QR code, so it became a **multi-frame animated
+`ur:bytes`** (400-byte fragments; the test wallet is 4 frames of 831 characters, with the fragment
+length taken as `min(400, ⌈payload/2⌉)` to guarantee at least 2 frames). The cap was raised from 1,024
+to 4,096 bytes. The verification section now lists the first address of **every exported account**:
+four Bitcoin, EVM, TRON and three Solana — nine rows.
+
+> **BitTool Wallet must be updated to match**: the `accounts` array went from 4 entries to 7, a
+> decoder must read each entry by its `chain` and `script` fields rather than by index, Solana entries
+> gain a `profile` field, and all frames must be collected before decoding. The protocol document
+> [docs/Wallet-Pairing-v1.md](docs/Wallet-Pairing-v1.md) is updated, and the test vectors and SHA-256
+> regenerated.
+
+**8. Connect was renamed Pair.** Buttons and titles changed from Connect to Pair — `Connect Wallet` →
+`Pair Wallet`, `Connect Bitcoin` → `Pair Bitcoin`, `Connect a Wallet` → `Pair a Wallet` — along with
+the two sentences of body text that refer to the button by name. Three reasons: first, the text that
+explains the feature already said pairing (`Pairing level`, `wallet pairing`, "Pair BitTool Signer
+with a watch-only wallet…") and only the button said Connect, so the app contradicted itself; second,
+connecting is precisely what an offline signer **never** does, and the app elsewhere says it never
+goes online while the button said "Connect"; third, Connect Wallet in the dApp world means attaching
+your wallet to a website, which is the opposite direction from this (exporting public keys to a
+watch-only wallet), so borrowing the term invites a misreading.
+
+> Only user-facing text changed. Accessibility identifiers (`connect.level`, `connect.copy`,
+> `wallet.connect.*`), type names (`ConnectView`, `PairingLevel`) and code comments were left alone to
+> avoid a pointless diff. Terms with a different meaning, such as `Network connections` in Settings
+> and "the app never connects", are unaffected.
+
+**9. Duplicate addresses in the pairing verification list (a Revision 9 regression).** After item 7
+raised the exported accounts from 4 to 9, the four Bitcoin rows on the page all showed the same bc1q
+address and the same path, and so did the three Solana rows. The engine was in fact returning nine
+distinct addresses; the fault was `WalletPairingPayload.Line`'s `var id: String { chain }` — one chain
+used to mean one row, and with four rows per chain `ForEach` saw duplicate ids and drew only the first
+row's content. The fix: the engine's `verify` entries gained a `profile`
+(`native`/`taproot`/`nested`/`legacy`, and `standard`/`trust`/`legacy` for Solana) and `id` became
+`chain + "/" + profile`. Each row now also names which account it is — "Bitcoin · Taproot",
+"Solana · Trust" — reusing the `AccountProfile` names from the Coin Level selector so both pages say
+the same thing; the heading changed from "check the first address of each chain" to "of each account",
+since a chain now has more than one.
+
+> `profile` appears only in `verify` (interface data), not in the CBOR payload, so the protocol's test
+> vectors and SHA-256 are unchanged and BitTool Wallet is unaffected by this item. The regression
+> assertions are in `SessionTests`: the nine rows' ids, addresses and paths must all be pairwise
+> distinct, and the Bitcoin and Solana profile order must be correct.
+## Revision 8 (17 October 2026): welcome page bottom spacing, staying on iOS 17
+
+**1. The welcome page's legal links sit closer to the bottom.** `bottomActionBar` gained a
+`bottomPadding` parameter (still 8 by default) and the welcome page passes 0. An action bar that ends
+with a Terms of Use / Privacy Policy line does not need the padding a button does. Measured on an
+iPhone 16 Pro at @3x: the gap below the links went from 130 px to 106 px, that is **43.3 pt → 35.3 pt**,
+exactly the 8 pt removed. **The remaining ~34 pt is the system home indicator safe area; compressing
+it further would draw under the gesture bar, so it stays.** The other three call sites (the create
+flow, the signature result page and the welcome page's onboarding branch) are unchanged.
+
+**2. iOS 17 remains the minimum.** The Revision 7 assessment's conclusion — do not lower it — was
+adopted, no code changed, and the assessment is kept in
+[docs/DeploymentTarget.md](docs/DeploymentTarget.md) in case the question is reopened.
+
+**3. Restored a deployment target Xcode had changed on its own.** During the iOS 15 assessment
+`IPHONEOS_DEPLOYMENT_TARGET` was temporarily set to 15.0 and restored from a backup after building;
+afterwards Xcode, with the project open, took it upon itself to change the two **project-level**
+configurations to `$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)` while the four target-level ones stayed
+at 17.0. The symptom was iOS 17 and 18 simulators disappearing from the destination list, leaving only
+26.4 and 27.x. Restored to 17.0; `project.pbxproj` is byte-identical to its pre-assessment state and
+the simulator list is back to normal.
+
+## Revision 7 (17 October 2026): default Pair level, Activity input and output
+
+**1. Tapping a chain opens Coin Level.** The Bitcoin / Ethereum & EVM / TRON / Solana rows on a
+wallet's detail page now open **Coin Level** with that chain already selected — choosing a chain is
+itself a coin-level choice. Revision 4's "default to Wallet Level" is kept for the entry points that
+**do not** name a chain: the Connect button on a wallet card, "Connect a Wallet" on the creation
+completion page, and the Wallet Level row on the detail page, all three of which now use the
+`connectWallet` route. One omission was fixed in passing: the wallet-level route had not been wired to
+the prefetched QR code, and both routes are now wired, so switching from a chain page to Wallet Level
+is also complete on the first frame.
+
+**2. Activity shows input and output.** Each signature now records **the request that was signed** (the
+canonical JSON the engine reviewed) and **the signature produced** (QR frames plus export text), so the
+detail page gained two sections:
+
+- **Input**: a few key lines — operation, amount, counterparty, fee — an "All Decoded Fields" link to a
+  full page (reusing the review page's summary card, contract notice, warnings and Details), and the
+  expandable raw request. Those key lines are not a stored summary: opening the page **hands the stored
+  request back to the engine for a fresh review**, so the fields are the same ones the review page
+  showed, and the recomputed request fingerprint must equal the one in the record — if it does not, no
+  decoded content is shown. Decoded fields therefore cost no extra storage and can never drift from the
+  raw request.
+- **Output**: `Show QR Code` displays that signature QR again (useful when the other wallet failed to
+  scan it; scanning again produces nothing new), `Export as File`, and the expandable raw signature.
+
+Storage: `SigningReceipt` gained `requestJSON`, `responseFrames` and `responseText`, with a 32 KiB cap
+per payload (over that, the record stores no payload at all rather than truncating), and payloads are
+kept only for the **last 25** records, with older records keeping every other field and losing only the
+payload. The file cap rose from 256 KiB to 2 MiB, and each record is validated on read. The file itself
+is still `completeFileProtection`, 0o600 and excluded from backups. Both stored items are public data —
+a request and a signature — involving no secret, and a test checks that no recovery phrase, password or
+private key appears in the record file.
+
+**3. The request fingerprint is uppercase.** On the same card the wallet "Fingerprint" was uppercase
+(`store.fingerprint(for:)` always was) while "Request fingerprint" was lowercase: two things called a
+fingerprint, inconsistently. `HashText` now displays uppercase throughout (display only; comparison
+remains case-insensitive).
+
+**4. A test-tooling problem.** The new known-contract UI test passed reliably on its own and failed
+reliably inside the full suite. The cause was not in the app: `typeText` drops characters when the
+simulator is under load (the whole suite running as parallel clones), so the 400-character UR text
+failed validation and presented as "the review page never appeared". It now reads `field.value` back
+after typing and retypes on a mismatch (`typePayload(_:into:in:)`), and all three long-payload pastes
+use it.
+
+**5. The minimum OS assessment (decided: do not lower).** Lowering iOS 17 to iOS 15 was assessed and
+**iOS 17 was kept**, with no code changed; the record is in
+[docs/DeploymentTarget.md](docs/DeploymentTarget.md). In short: the toolchain accepts iOS 15.0;
+reaching **iOS 16** is about 63 mechanical replacements with no architectural change (gaining the
+iPhone 8); reaching **iOS 15** additionally requires rewriting `NavigationStack` as `NavigationView`,
+and navigation is exactly where post-signing state transitions are most tightly coupled. The
+recommendation at the time was to take iOS 16 first and make iOS 15 its own project; the decision is
+now to do neither.
+
+## Revision 6 (17 October 2026): known public contracts
+
+Ownbit's WalletConnect known-contract library was brought over and used in two places: **signature
+review** and **Settings browsing**. Details in [docs/KnownContracts.md](docs/KnownContracts.md).
+
+**1. The library.** From the Ownbit security centre
+(`wallet-ios-core/scripts/security-center/known_contracts.json`, sourceVersion 1, 9 October 2026):
+**1,720 addresses across 307 projects** — Ethereum 329, Base 217, BNB Smart Chain 194, Polygon 191,
+Arbitrum 186, OP Mainnet 169, Solana 262, TRON 139, Avalanche 6 — plus 27 CREATE2 deterministic
+deployments (Permit2, Seaport, the ERC-4337 EntryPoint, Multicall3, Safe and others) that have the same
+address on every EVM network, used as a fallback when a per-chain lookup misses and annotated in the
+review as "the same address on every EVM network". HyperEVM (999, 132 entries) was dropped because the
+app does not review that network. `scripts/build-known-contracts.py` validates address format, category
+and duplicates, then writes two projections: a columnar string for the engine (139 KiB, split only on
+first use, so a request that touches no contract pays nothing) and the complete JSON for in-app browsing
+(277 KiB).
+
+**Being listed means only "this address is a deployment the project itself published", not that a
+request is safe** — a known contract can drain an account just as well. The difference is being able to
+tell "the Permit2 everyone uses" from "an address nobody has seen", which is exactly what an imitation
+contract relies on.
+
+**2. Applied at signing time.** The lookup is on **the address a request would authorize**, which is not
+necessarily the contract being called: `approve` looks up the spender, `setApprovalForAll(…, true)` the
+operator, an EIP-712 message its `spender` or `operator` if present and otherwise
+`domain.verifyingContract`, and anything else the called contract. A `SafeTx` verifying contract is
+skipped outright: every Safe is deployed by its own user, so "not on the list" would be pure noise.
+
+On a hit the review gains a field such as `Spender (known contract)` and `review.contract` carries the
+name, project and category. On a miss the token registry is consulted first — an address the token
+registry already recognizes is shown as that token rather than "unknown" — and otherwise a warning is
+issued, with **only an unlisted spender or operator** raising the risk level to `warning`. An unlisted
+ordinary contract does not raise it: the vast majority of contracts are new or private deployments, and
+flagging them all would drain the signal of meaning.
+
+**3. Solana.** One Solana transaction is many instructions with no single counterparty, so
+`review.contract` is not set; instead a `Program (known)` line is added for programs **the engine does
+not decode itself** — writing "Raydium AMM v4 — Raydium · dex" beside an instruction that would
+otherwise be raw bytes. Programs the engine does decode (System, Token, Token-2022, ATA, Compute
+Budget, Memo, Stake, Squads, and the Metaplex and marketplace programs) keep their own names, because
+their Action field says more than a list label would. An unlisted Solana program raises no extra alarm:
+whether an instruction was decoded is itself the signal, and an undecoded instruction is already high
+risk.
+
+**4. How the review page shows it.** When the address is already in the summary card's counterparty box
+(authorization-type requests), the notice sits on the line below it; when they differ — a token transfer
+authorizes the token contract, not the recipient — it gets its own card. Four states: listed is amber
+with a seal icon (**not green** — putting a green tick beside an address that is being granted an
+unlimited allowance would claim more than the list can support), an unlisted spender or operator is red,
+an unlisted ordinary contract is a grey question mark, and one the token registry recognizes uses the
+accent colour.
+
+**5. Settings merged into Networks, Tokens & Contracts.** The former "Networks & Tokens" expanded to
+browse tokens and known contracts together. Each network page uses a segmented control to switch
+between them, sharing one search field (contracts are searchable by name, project, category or
+address), and the switcher is hidden when only one side has content (Gnosis has only tokens).
+Deterministic deployments get their own "All EVM networks" row.
+
+**6. Tests this round.** Engine **179/179** (one new Solana known-program case: a hit is named, an
+unlisted program raises no extra alarm, and a program the engine decodes itself is not renamed); native
+unit **156/156** (new `KnownContractTests`, 14 cases: the packed file's record integrity and declared
+counts, every chain reachable in Settings, `ReviewContract` parsing and fallback, and whether the
+summary already shows that address); UI automation **16/16** (new
+`testApprovalNamesAKnownSpenderAndFlagsAnUnlistedOne`: a real `eth-sign-request` QR code walking an
+unlimited USDT approval to Permit2 and an approval to an unlisted address, asserting the corresponding
+notice does and does not appear; `testSettingsReferencePagesAndGuide` extended to contract browsing and
+search). The screenshot tour gained `28/29-review-known-contract` and `44c/44d/44e-contracts`.
+
+**7. Fixed in passing.** The Info.plist camera and Face ID usage descriptions could previously only be
+English, because they come from build settings and do not go through `Localizable.strings`.
+`translations/<language>.json` gained an `infoPlist` section, which `scripts/write-localizations.py`
+writes out as `InfoPlist.strings`. `AppNameTests` changed accordingly: system prompts may be
+translated, but the app name may not.
+
+## Revision 5 (17 October 2026): interface language, delete confirmation, assorted fixes
+
+**1. Interface language (Settings › Appearance › Language).** A language picker was added under Theme.
+Switching takes effect immediately with no restart — the chosen language applies to the whole view tree
+through `.environment(\.locale)` (`AppLanguage` plus `LanguageEnvironment`). Arabic also switches
+`layoutDirection`, mirroring the entire interface right to left (tab order, in-row alignment and back
+arrows all flip). Navigation bar titles are cached by the system, so switching language rebuilds the
+whole tree once and returns to the first tab.
+
+The language list follows BitTool Wallet's, **21 in total** (en, zh-Hans, zh-Hant, ja, ko, ru, uk, es,
+es-419, de, fr, it, pt-BR, pt-PT, pl, id, tr, th, vi, fil, ar). The picker lists only languages that are
+**actually translated**, so there is no case of choosing one and still seeing English. *(At the time of
+this revision only zh-Hans, zh-Hant and ar were done, at 388 strings each; Revision 9 completed all 21,
+and the list now stands at 773 strings.)*
+
+The string list is no longer produced by hand-written regular expressions: Xcode's own extraction
+(`xcodebuild -exportLocalizations`) gives the authoritative list, which is then merged with the static
+text the engine produces (see Revision 9), in
+[engine/data/interface-strings.json](engine/data/interface-strings.json).
+[scripts/write-localizations.py](scripts/write-localizations.py) turns `translations/<language>.json`
+into `.lproj/Localizable.strings`, refusing a file that misses an entry or alters a `%@` or `%lld`
+specifier — a misplaced specifier would make the runtime format against the wrong value.
+
+To make the translation thorough, every component and local helper that took display text as a `String`
+was changed to `LocalizedStringKey` (`Callout`, `DetailLine`, `WalletGroup`, `StepRow`,
+`PayloadDisclosure`, `SetupScaffold`, `ProfileMenu`, the onboarding `Page`, the Scan page's
+`optionTile`, the password requirement rows, and the address page's group titles and footnotes).
+Dynamic text returned by the engine goes through the `verbatim:` entry points and is left as it is.
+
+Still English at this point: **the review text the JS engine generates** (warnings, field names and risk
+explanations — several hundred strings, and the most security-relevant) and the Terms and Privacy Policy
+(English by decision). Revision 9 addressed the first of those.
+
+**2. Deleting a wallet became Face ID plus password.** Tapping Delete Wallet first ran Face ID where the
+device supported it (cancelling aborts; if biometrics are unavailable or fail it continues to the
+password), then prompted for the password, and only the correct wallet password actually deleted
+anything. The password field used to be an inline row in the form, which was easy to overlook. The trash
+icon rendered dark on the red button and was forced to white. *(Revision 11 narrowed the Face ID step to
+apply only when App Lock is enabled.)*
+
+**3. The passphrase field can dismiss the keyboard.** That field carries its own Done toolbar
+(`inputAccessoryView`), because it sits right against the bottom action bar and the page has no other way
+to dismiss the keyboard. It also gained `frame(maxWidth: .infinity)` to stop the UIKit text field
+shrinking to its content width.
+
+**4. Settings adjustments.** Offline Setup Guide was removed from Reference (the onboarding pages still
+appear on first use); Open Source in About was renamed **Fully Open Source**.
+## Revision 4 (16 October 2026): rebranding and legal documents
+
+The app was renamed from **BitSigner** to **BitTool Signer**, the former BitTool became **BitTool
+Wallet**, the operating entity is **BITTOOL PTE. LTD.**, the sites are [bittool.com](https://bittool.com),
+[bittool.com/signer](https://bittool.com/signer) and [bittool.com/wallet](https://bittool.com/wallet),
+and the contact address is support@bittool.com. The app has not shipped, so the rename was done
+completely and without compatibility shims:
+
+**1. Project and identifiers.** `BitToolSigner.xcodeproj` and every target, scheme and source directory
+were renamed; the bundle id became `com.bittool.signer` (with `.tests` and `.uitests`) and the display
+name `BitTool Signer`. The Keychain service, the encryption AAD, the public index AAD, the UI tests'
+arguments and environment variables, and the local directory (`Application Support/BitToolSigner/…`)
+all moved to `com.bittool.signer.*`. The wallet identity domain separator became
+`BitTool-Signer/WalletKeyId/v1`, and the `walletKeyId` vectors were updated with it (including the
+fixed vectors in the tests). **Development wallets already on a device therefore cannot be opened any
+more and have to be imported again from the recovery phrase.**
+
+**2. Pairing protocol.** The wallet-level payload's `protocol` became `bittool-signer-wallet`, the
+signature receipt transport `bittool-signer-json`, and the device name third-party wallets display
+inside `crypto-account` / `crypto-multi-accounts` `BitTool Signer`. Both
+[docs/Wallet-Pairing-v1.md](docs/Wallet-Pairing-v1.md) and
+[docs/bittool-handoff/](docs/bittool-handoff/) gained a rename notice at the top and their fixtures
+were regenerated with the new names — **the parsing on the BitTool Wallet side needs updating to
+match**.
+
+**3. Icons.** Both apps share the BitTool mark (a ring plus a solid node), with the geometry measured
+directly from the Wallet icon (ring 288–372, node radius 94.8 centred at (828.5, 511.5)). Wallet uses
+the light version (ink mark on white), Signer the dark one (white mark on `#0A0A0C`).
+`scripts/make-brand-assets.py` was rewritten to need no third-party library: every shape is a circle,
+so it rasterizes by coverage directly and writes the PNG with zlib.
+
+**4. Terms of Use (v1.1).** Rewritten to the requirement that liability is zero and the user is
+responsible for their own funds, following common practice for self-custody wallets. New sections cover
+self-custody, the risks you accept, your indemnity to us, and dispute resolution, and the limitation of
+liability states **total liability of zero with no compensation** (preserving non-excludable statutory
+rights and consumer protections). Governing law is Singapore. The Privacy Policy was updated to v1.1 in
+step, adding the operating entity and contact details. Both documents give
+BITTOOL PTE. LTD. / support@bittool.com / https://bittool.com/signer.
+
+**5. Pair defaults to wallet level.** The Pair page opens on **Wallet Level**, with Coin Level as the
+second option. Prefetching switched to the wallet-level QR code (it had been the Bitcoin coin-level
+one), so the first push still shows a complete page on the first frame; Coin Level loads when selected.
+*(Revision 7 narrowed this: entry points that name a chain open Coin Level instead.)*
+
+**6. The local simulator environment.** Xcode on this Mac is **26.4**, but the only installed iOS 26
+runtime is still a **beta (23A5276e)**. A build made with the 26.4 SDK crashes with `SIGABRT` on that
+older beta runtime at `glassEffect` (`GlassCircle`), unable to find type metadata — unrelated to the
+rename, and everything passes on the iOS 18.6 runtime instead. This round's verification therefore ran
+on **iPhone 16 Pro · iOS 18.6** (UI 15/15 and the screenshot tour passing). Re-verifying the Liquid
+Glass path needs a released iOS 26 runtime matching 26.4 installed in Xcode.
+
+**7. The app's name.** It is **BitTool Signer** in every language and is not translated. The name is set
+in exactly one place, `INFOPLIST_KEY_CFBundleDisplayName` in the project (the store listing name is
+entered per language in App Store Connect). The app deliberately **declares no additional languages**:
+declaring them makes the system's own controls (permission dialog buttons, the keyboard, the share
+sheet) follow the device language while the app interface stays English, which looks half-translated.
+`AppNameTests` guards this.
+
+**8. BIP39 passphrase visibility and AutoFill.** The passphrase fields in create and import gained an
+eye button on the right to reveal the text, which re-conceals automatically when the app goes to the
+background. A mistyped passphrase produces no error — it silently opens a different wallet — so being
+able to read it back and check is essential. The field moved to a UIKit `UITextField`
+(`MaskedTextField`): concealment is just a property of that field rather than a different view, and for
+newly created secrets (the passphrase and a new password) iOS **AutoFill is disabled**, because
+AutoFill's strong-password flow replaces whatever the user typed. The other password fields remain
+SwiftUI `SecureField` and were not changed. The passphrase field also sets an empty `passwordRules`,
+which removes the iOS strong-password generator entirely.
+
+**9. Welcome page selling points.** The second point changed from "Sign with QR codes" to **Fully open
+source** ("Every line that touches your keys is published. Read it, or rebuild it and compare."), with
+QR signing folded into the third point; the second onboarding page still introduces QR compatibility in
+full.
+
+**10. The "Wireless Data" prompt in China.** The app contains no networking code and links neither
+CFNetwork nor Network.framework (verifiable with `otool -L`). On iPhones sold in mainland China, iOS
+gives every app a wireless-data switch and asks on first use; that prompt comes from the system, not
+the app. The offline guide gained a line — if iOS asks whether to allow wireless data, choose Don't
+Allow — and the Privacy Policy a short section explaining it.
+
+## Revision 3 (22 September 2026): pairing, backup and NFT review
+
+This round implemented the user's ten pieces of feedback. (Item 8 ended mid-sentence with "another
+thing, now tapping:" and could not be acted on.)
+
+**1. "Connect a Wallet" hung after creation finished.** Confirmed as an app bug. The connect page used
+to be pushed onto the wallet navigation stack at the same moment the creation sheet was dismissed, so
+two transitions ran at once and the push animation stalled halfway. The route is now recorded first and
+pushed after the sheet has fully closed (`onDismiss`). A UI test goes from the completion page into the
+connect page and confirms the QR code loads and chain switching works.
+
+**2. The selected chain was not visible at the top of the pairing page.** The selected item became a
+light block with an accent-coloured border, its icon full-colour and slightly enlarged, while unselected
+items have desaturated, more transparent icons and grey text; both are unmistakable in light and dark
+mode. At large type sizes only the icons show, and VoiceOver still reads the chain name.
+
+**3. TRON address index.** Raised from 0–99 to 0 through 2³¹−1, the BIP32 non-hardened ceiling. The
+pairing page offers a stepper and direct entry, with the path shown underneath at all times, and clamps
+to the maximum when the limit is exceeded. The engine derives from the account node on demand and the
+address page scrolls indefinitely. `tron-sign-request` always carries a path, so a signing request for
+any index can match; a request with an address but no path is still compared only against the cached
+0–99.
+
+**4. Sparrow, BlueWallet and XPUB.** A survey confirmed both import account xpubs (`crypto-account`) by
+default and can sign by QR with `crypto-psbt`, so Bitcoin's default became Account XPUB. It also found
+that the previous "Public Key" mode (the `/0/0` leaf public key with no chain code) does not conform to
+BCR-2020-015 and could not be imported by any wallet surveyed, so it was removed from the interface and
+the engine.
+
+**5. Supported wallets.** Ownbit was removed. Each wallet and each export was checked against official
+documentation, source code, or Keystone's official guides and firmware, then an independent reviewer
+tried to refute each entry, and only confirmed ones were kept. The Pair page and Settings ›
+Compatibility split them into "can sign by QR" and "watch-only"
+(`BitToolSigner/Models/CompatibleWallets.swift`, with the evidence in
+[docs/Compatibility.md](docs/Compatibility.md)).
+- Bitcoin signing: Sparrow, BlueWallet, Nunchuk, Bitcoin Keeper, BULL Bitcoin, Specter, Bitcoin Safe,
+  ZEUS (no Legacy); multisig coordinators: Sparrow, BlueWallet, Nunchuk, Keeper, Specter, Bitcoin Safe;
+  address watching: BlueWallet, Electrum.
+- EVM signing: MetaMask, Rabby, imToken, TokenPocket (EIP-4527), Ambire; address watching: Rabby,
+  TokenPocket, OKX Wallet, Trust Wallet.
+- Solana signing: Solflare, Helium Wallet; address watching: Phantom, Backpack, Jupiter, OKX Wallet,
+  TokenPocket.
+- TRON is watch-only: TokenPocket, TronLink, OKX Wallet, OneKey. **TokenPocket does support watching
+  TRX and SOL addresses**, but its cold-wallet signing uses a proprietary protocol, and no mainstream
+  hot wallet currently generates a `tron-sign-request` from a plain-address export.
+- Safe was removed (the old iOS app is archived and the new one has no QR signer); Backpack's Solana
+  signing flow has no official documentation and dropped to watch-only. Fourteen official wallet icons
+  were added and the Ownbit and Safe icons removed ([sources](docs/WalletLogoSources.md)).
+
+**6. Token registry expansion.** From 358 entries to **596** (Ethereum 196, BNB Smart Chain 112,
+Arbitrum 67, Base 86, TRON 14, Solana 121). A new discovery script,
+`scripts/discover-token-candidates.py`, loosened the thresholds; one reviewer picked the mainstream
+tokens per network and an independent checker re-verified each against primary sources, dropping 28
+(deprecated ERC-20s, low-tier memes, tokens launched only weeks earlier, one that had just been
+exploited). All 596 were re-checked by the build script against CoinGecko mappings, independent lists
+or issuer documentation, on-chain decimals and symbols, and every icon was inspected by eye. TRON gained
+nothing: every mainstream, active TRC-20 that CoinGecko maps to TRON was already included. The build
+script gained two things: issuer documentation (`officialSource`, where the original page must contain
+the address) counts as an independent source, and CoinGecko "broken image" placeholders are rejected by
+hash.
+
+**6b. Further expansion from the CoinMarketCap top 2000.** On top of the 596 manually vetted entries,
+tokens from the CoinMarketCap top 2000 deployed on supported chains were added, for **3,350** in total
+(Ethereum 1,008, BNB Smart Chain 876, Solana 585, Base 333, Arbitrum 225, Polygon 137, Avalanche 75, OP
+Mainnet 53, Gnosis 32, TRON 26). The listing decides only *which* tokens are included and supplies the
+name, symbol and icon; **decimals are always read on-chain** (EVM `decimals()`, Solana
+`getMultipleAccounts`, TRON `triggerconstantcontract`), and 3,242 of 3,250 contracts answered — the rest
+were simply not included. The symbol is whatever the contract's own `symbol()` reports (2,276 entries);
+of the 235 that disagree with the listing, 161 differ only in case or punctuation (`frxUSD`, `$MBG`) and
+most of the rest are bridged or wrapped versions (Avalanche's `LINK.e`, `UNI.e`, `DAI.e`, plus `wROSE`,
+`pONT`, `axlSAGA`, and the pre-rename `LUNA` and `UST`) — showing the listing's name would present them
+as the original token. The 486 contracts overlapping the original 596 were an independent check: the
+on-chain decimals matched the manually vetted values **in every case**. New scripts:
+`scripts/refresh-cmc-snapshot.py` (the API key is read only from the `CMC_API_KEY` environment variable
+and never written into the repository) and `scripts/build-expanded-registry.py` (manual entries always
+win). The review interface treats old and new entries identically with no extra annotation; inclusion
+has never implied endorsement.
+
+**6c. Icons became a content-addressed pack file.** All 596 `token_*.imageset` folders left
+Assets.xcassets (the asset catalogue went from 10.9 MB to 484 KB), and the icons for 3,350 records
+deduplicated by byte SHA-256 down to **1,985 images** (the same token on several chains shares one),
+assembled into a single `TokenIcons.pack` (10.7 MiB) plus a `TokenIcons.index.json` offset table, which
+`TokenIconStore` reads by mmap and decodes on demand. Two thousand loose small files would each occupy
+a full filesystem block on the device, about 4 MB more.
+
+The engine's slim registry changed to "store each network and program string once, plus one
+tab-separated string per row" (313 KiB), so entering a new VM allocates a single string and the table is
+only split and built on the first lookup by a request that genuinely involves a token. Measured in the
+simulator: 66–75 ms per VM start (47–59 ms with 596 entries), and under 1 ms for the first token lookup.
+
+**7. NFT display.** A dedicated NFT review was added (see "How NFTs are shown in the review" in
+[docs/Compatibility.md](docs/Compatibility.md)).
+- EVM and TRON: ERC-721/1155 and TRC-721 transfers and approvals; `approve` and `transferFrom` show both
+  readings when the selector is identical to ERC-20's; `setApprovalForAll(true)` gets a red warning;
+  ERC-1155 batches are merged; over-long token IDs are abbreviated and also shown in full; NFT calls
+  inside a MultiSend are annotated one by one.
+- NFT marketplace signatures: Seaport 1.5/1.6 (including bulk orders) and LooksRare v2 are decoded into
+  "you give / you receive / someone else receives", with red warnings for phishing shapes — a zero
+  price, a price falling to zero, any token being selectable, an order that never expires, an ERC-20
+  disguised as an NFT; Blur's blind-signed Merkle root is marked undecoded and high risk.
+- Solana: a 0-decimal, quantity-1 SPL transfer ("likely NFT"), Metaplex Token Metadata TransferV1,
+  Bubblegum compressed NFTs, Core TransferV1, Token-2022 transfer hooks, NFT delegate/lock/burn, and
+  marketplace program names.
+- The review card gained NFT icons, an NFT contract (not verified) or Mint/Asset ID address box, the
+  complete token ID, and give/receive/others lists. Every constant was checked against official
+  repositories and independently reviewed; NFT display never uses a green "verified" indicator.
+
+**8. Tap to Reveal.** A single tap now reveals, with no confirmation dialog. A screenshot, a move to the
+background or a screen recording still conceals immediately, and content cannot be revealed again until
+the screenshot warning is acknowledged.
+
+**9. The QR code.** Changed to a plaintext phrase QR (words separated by spaces, without the
+passphrase), blurred by default and revealed on a tap, with its purpose explained above and a red
+warning below, and no save or share. Importing by scan now uses the spelling in the QR code and no
+longer asks for the language. The previous encrypted backup (`BSBK1:`), its password form and the photo
+library write permission were all removed.
+
+**10. Recovery cards (2 of 3).** "Word Cards" became recovery cards: three cards each hiding a third of
+the words (shown as xxxx), any two of which reconstruct the phrase. The layout depends only on the word
+count (three positions per row, one hidden per row), so it is identical when reopened or generated on
+another device; concealed by default, revealed on a tap. At 12 and 15 words a single card is missing
+only 40 or 50 bits, and the interface says a single card still needs to be kept safe.
+
+**Problems found and fixed during testing and review**
+- The pairing page was sending the TRON index to Bitcoin, EVM and Solana as well, so changing the TRON
+  index made the other chains error out and show no QR code (found by independent review).
+- With Recovery Cards or Security Tips open, the concealed phrase view underneath was still listening
+  for screenshots: one screenshot triggered two warnings and could break Tap to Reveal. The lower
+  session is now suspended while covered by a sheet.
+- The three-column word grid truncated eight-letter words to "…" on 375 pt iPhones (SE, mini), present
+  since Revision 2, which could have led to copying a word down wrongly. The column count is now
+  computed from the actual width and font size, dropping to two columns or one when needed, in all
+  three places: backup, cards and the fill-in check.
+- At 12 and 15 words the card explanation said losing one card was still safe, which contradicts the
+  entropy arithmetic; rewritten per word count.
+- Address index row: at six digits or more the label wrapped to two lines and the path was truncated;
+  the input width did not follow the font size; and beyond the ceiling the number shown disagreed with
+  what was exported. All fixed.
+- The multisig toggle state carried over to the EVM page, making EVM show "Cosigner account path".
+  Fixed.
+- An error scanning a recovery phrase displayed the signing-request wording. Now distinguished by
+  purpose.
+- "Hide QR Code" on the QR page could not be tapped when it sat under the bottom bar; moved directly
+  below the QR code.
+- Token build: CoinGecko's image for DoubleZero (2Z) was a broken-image placeholder that the automatic
+  check did not catch; that token was dropped and the placeholder is now blocked by hash. A
+  non-standard 404 marker left in another tool's cache crashed the build and was cleaned up.
+
+### Revision 3 follow-ups (same day)
+
+- **One font size per word grid, every word complete.** Each cell used to shrink independently to fit
+  its word, so long words were smaller than short ones and still produced "proper…" when they did not
+  fit. A grid now uses a single size: the largest that fits the longest word completely, not below 80%
+  of the normal size; smaller than that, it drops to two columns or one. The phrase grid, the recovery
+  cards and the fill-in check all behave the same.
+- **Wallet-level pairing.** Implemented from the user's *BitTool Signer Wallet-Level QR Pairing Protocol
+  v1* draft, with a Coin Level (default, the existing per-chain formats) / Wallet Level switch at the top
+  of the Pair page. At the user's subsequent request, Wallet Level had exactly one form: a single static
+  QR code (one `ur:bytes`, not framed or animated) carrying only the Bitcoin (BIP84), EVM and TRON
+  account xpubs and one Solana address (`m/44'/501'/0'/0'`; Ed25519 derivation is hardened, so there is
+  no xpub), with no Simple/Full wording in the interface. The test wallet's payload was 755 bytes and
+  1,533 QR characters (version 23, error correction L). *(Revision 9 replaced this with seven accounts,
+  three Solana addresses and four animated frames.)* The encoding is `ur:bytes` plus canonical CBOR
+  (RFC 8949 §4.2.1, with field names identical to the JSON keys) and an added `masterFingerprint`
+  field; the exact rules and test vectors are in
+  [docs/Wallet-Pairing-v1.md](docs/Wallet-Pairing-v1.md). The wallet supported by default is **BitTool
+  Wallet** (BITTOOL PTE. LTD., iOS; listed at the user's direction, with the official icon added and its
+  source recorded), shown on both the Pair page and Settings › Compatibility. The Solana address comes
+  from the existing standard preset, the public index stays at version 1, and existing wallets need no
+  Repair. (An intermediate version exported ten Solana accounts and raised the public index to version 2
+  for it; that was withdrawn at the user's request.)
+- **Background tasks.** The three "running" tasks the user saw were checked: no process was running and
+  all the work had finished. Two were leftover listener records from completed subtasks and were cleaned
+  up.
+- **A device stuck on the launch screen with a dark background card.** Not an app bug. Two Xcode Run
+  actions overlapped at 14:58, and after the second failed to attach a debugger it left an orphaned
+  debugserver on the phone; every subsequent Run then stopped at "Launching suspended and the debugger
+  is responsible for resuming", with the app process suspended and not one line of code executed, so the
+  phone kept showing the system launch image, which does not follow the app's appearance setting.
+  Clearing the debug session restored normal behaviour. The appearance combinations were then verified
+  one by one in the simulator (system light/dark × app setting System/Light/Dark, including switching
+  the system appearance while backgrounded): the background card always follows the app setting, and
+  only turns dark when the app setting is System and the phone itself switches to dark, which is
+  correct. As hardening, the privacy shield window now explicitly uses the app's appearance setting and
+  updates live when it changes, and while recording or mirroring the shield explains "Hidden while your
+  screen is recorded or mirrored" rather than looking like a stuck launch.
+- **Address type right-hand padding.** It had been a menu-style Picker whose built-in padding differs
+  between iOS versions, leaving the value and chevron almost touching the card's right edge. It became a
+  Menu with a custom label, 14 pt on each side, with the whole row tappable; at accessibility type sizes
+  it stacks vertically, and VoiceOver reads both the current value and the explanation. Pair and
+  Addresses share it.
+- **The TRON address list no longer shows the derivation path.** The group header changed from
+  "Receive · m/44'/195'/0'/0/i" to "Receive · TRX and TRC-20 tokens", matching Bitcoin's
+  "Receive · Native SegWit" and EVM's "Receive · All EVM networks", and the Bitcoin footer dropped its
+  "(…/0/i)". The UI tests and screenshot tour gained the TRON address list.
+- **The first push into Pair stalled mid-animation.** Measured in the simulator with timing probes rather
+  than XCUITest, to avoid its accessibility queries interfering: on the first entry the JS engine starts
+  cold, the pairing result returns halfway through the slide-in animation, and the main thread then
+  inserts the QR code and verification card and relays out the whole page (about 300 pt of movement with
+  a fade), while CoreImage/Metal renders a QR code for the first time in the same moment. The fix: once
+  wallets are on screen, and while the app is foreground, unlocked and not being recorded, the QR code
+  Pair opens on by default is generated for each wallet in the background (the Bitcoin Native SegWit
+  account xpub, using only the device's own authenticated public index, held in memory only), so opening
+  Pair arrives with a finished result and calls no engine, renders no QR code and relays out nothing
+  during the push. QR codes now render on the CPU (one pixel per module, negligible cost), avoiding
+  Metal's first initialization, and when prefetching misses, the first result no longer fades in.
+  Measured on the first push: previously 286–329 ms of stall at the start plus another 75–83 ms
+  mid-animation; now a single ~190 ms at the start (a Debug build, first construction of the page) and no
+  mid-animation stall. Prefetched results and the warm JS context are cleared on backgrounding, App Lock
+  and screen recording — the documentation had said the warm VM was released in the background, but the
+  code never called it, which is now fixed — and regenerated on returning to the foreground.
+
+### Revision 3 follow-ups (second round)
+
+- **Wallet identity became the fingerprint.** On wallet cards, the detail page, the review page's signing
+  wallet, the password entry header and Activity details, the former "Wallet ID" (a truncated
+  `walletKeyId`) became **Fingerprint**, showing the BIP32 master fingerprint such as `C6A5A927`,
+  identical to `masterFingerprint` in the Wallet Level payload and to the Master fingerprint on the Pair
+  page. Signing records now store the fingerprint too. Internal identity and request matching still use
+  `walletKeyId`; the fingerprint is display only. The wallet picker before App Lock unlocks shows names
+  only: a fingerprint also appears in exported PSBTs and xpubs, and is not exposed before unlocking.
+- **Every Coin Level QR code gained a Payload section.** The verification card gained a "Format" line
+  (such as `ur:crypto-account · CBOR · 162 bytes`) below the fingerprint and a collapsed
+  "Payload (JSON)" / "Payload (Text)". The content comes from the engine re-decoding the frames it has
+  just generated, with field names from the BC-UR registry; see "The QR payload view" in
+  [docs/Compatibility.md](docs/Compatibility.md). A fingerprint in a UR is a 32-bit integer, and the
+  Payload section notes the corresponding hexadecimal form. Wallet Level uses the same component.
+  Copying became "Copy Payload" to the local, expiring clipboard, and selecting the whole text into the
+  general clipboard is no longer allowed.
+- **The review page's signing wallet card was trimmed.** When Details already lists the request's signing
+  address and derivation path (EVM, Solana, TRON), the signing wallet card no longer repeats them.
+  Bitcoin PSBT details carry no signing path, so it is still shown there.
+- **Format and Master fingerprint order unified.** Both Coin Level and Wallet Level verification cards
+  now run Format, then Master fingerprint, then Payload.
+- **Terms of Use and Privacy Policy became bundled documents (v1.0).** Settings › About and the welcome
+  page footer used to be web links to `bittool.com/signer`, which opened a browser — the footer line
+  "Legal links open in your browser." existed to warn about exactly that, and has been removed. That
+  contradicted "offline throughout", and before launch the links did not even resolve. Both English
+  documents, `BitToolSigner/Resources/TERMS_OF_USE.txt` and `PRIVACY_POLICY.txt`, are now bundled and
+  read inside the app (a page from Settings › About, a sheet from the welcome page), are selectable and
+  copyable, and contain no URL anywhere. This is a deliberate change to D27 of the
+  [Revision 1 specification](docs/Modification-Spec-2026-09-21.md).
+  - The Privacy Policy corresponds line by line to actual behaviour: no data collected, no networking
+    code, no third-party SDK; what is stored locally (the encrypted phrase and passphrase, authenticated
+    public wallet data, up to 100 Activity records, preferences), file protection and backup exclusion;
+    the camera opens only while scanning and keeps no frames; Face ID returns only success or failure;
+    copying goes only to the local clipboard and expires after two minutes; the interface is covered on
+    backgrounding, recording and mirroring; and deleting a wallet or the app deletes the device key from
+    the Keychain with it.
+  - Three placeholders — `[Publisher legal name]`, `[Governing law jurisdiction]` and `[Contact email]` —
+    had to be filled in before submission, and a unit test checks that no other placeholder and no URL
+    appears.
+  - The first draft was checked sentence by sentence against the code by several reviewers, which
+    corrected a few inaccurate statements: the plaintext phrase QR on the backup page is an exception
+    that *does* leave the device; preferences live in UserDefaults and therefore do enter device backups
+    (only wallet files, public data and Activity do not); deleting a wallet does not delete its Activity
+    records, which display as "Deleted wallet"; the device key may survive in the Keychain after the app
+    is deleted; the Activity record fields were completed; the failed-attempt counter file was added; and
+    file import and export can land in a cloud directory under Files. The Terms gained explanations of
+    the passphrase and of forgetting the password, Apple's minimum EULA clauses, and a corrected list of
+    surviving clauses.
+  - Settings › Third-Party Licenses was fixed in passing: the original file had three "undefined
+    undefined" entries and one "[object Object]". The new `scripts/build-third-party-licenses.mjs`
+    regenerates it from the 67 packages actually bundled per `engine/bundle-manifest.json` (including the
+    nested @noble/curves 1.2.0, @noble/hashes 1.3.2 and ethers 6.17.0), each with a name, version,
+    licence and the full licence text.
+- **The wallet detail page gained a Wallet Level row.** The Pair group has a row below the four chains,
+  "Wallet Level · One QR code for all four chains", which opens Pair at Wallet Level directly (the new
+  `WalletRoute.connectWallet` route).
+- **The signature result page** keeps a single primary button, **Done**. Below the result QR code is a new
+  card: Format, a collapsed "Payload (JSON)" (eth/sol/tron signatures show `request-id` and `signature`;
+  Bitcoin shows `psbt_base64` and a `decoded` section using Bitcoin Core `decodepsbt` field names,
+  ordered first so it stays visible when a large PSBT is truncated), and "Export as File" demoted to a
+  secondary action.
+
+## Revision 2.1 (22 September 2026): multilingual phrase import and the new backup flow
+
+Two additions this round: importing BIP39 phrases in other languages, and rebuilding the phrase backup
+flow following Ownbit's latest approach, styled with this app's own colours and components.
+
+**Multilingual import**
+- All 10 official BIP39 wordlists: English, 简体中文, 繁體中文, 日本語, 한국어, Español, Français,
+  Italiano, Čeština, Português.
+- The wordlists are taken byte for byte from bitcoin/bips with pinned SHA-256 hashes, checked word by
+  word against two independent sources (@scure/bip39 and ethers). Validation, including the checksum,
+  moved to a native implementation.
+- The language is detected as you type, the status line names it, and candidate words come from that
+  language.
+- Accents may be omitted, capitals are accepted, numbering and commas are allowed, Chinese may be
+  entered without spaces and Japanese with full-width spaces. The app always converts back to the
+  official spelling before computing a seed, and the vault stores NFC.
+- One set of unaccented words can be valid in two languages and correspond to two different wallets (the
+  instance found in testing: Italian "nomina solido comodo …", which is also valid Spanish once
+  accented). The app then asks which language the backup was written in rather than guessing. If accents
+  were typed, the exact spelling is used.
+- The phrase input moved to the system keyboard so Apple's Chinese, Japanese and Korean input methods
+  can be used; third-party keyboards remain refused app-wide.
+
+**The new backup flow**
+- The top of the backup page switches between Words and QR:
+  - Words are blurred by default and shown after confirmation.
+  - "Word Cards" showed one large word at a time (changed to 2-of-3 recovery cards in Revision 3).
+  - "Security Tips" collects the safety guidance in one place.
+  - The "I've Written Them Down in Order" button at the bottom becomes available only after the words
+    have been shown once.
+- The QR page once produced an encrypted backup QR code (changed in Revision 3, at the user's request, to
+  a plaintext phrase QR, with the encrypted backup removed).
+- The check page became fill-in-the-blanks:
+  - Every position shows as "n. ••••••" with 4 left blank (5 for 18 words or more); the words for those
+    blanks appear shuffled at the bottom, pinned to the bottom bar so they stay tappable on small
+    screens.
+  - Tap them in order to fill the blanks; tapping a blank chooses which position to fill next, and
+    tapping a filled position takes the word back; the current blank scrolls itself into view.
+  - A wrong answer clears what was filled in but leaves the blanks and the word order unchanged;
+    backgrounding or a screenshot also clears it.
+
+**Problems found and fixed this round**
+- The rule that ignores numbering such as "1." was testing for Unicode digits, which discarded Chinese
+  phrases containing 一 and 十; it now ignores ASCII digits only.
+- The cross-language ambiguity above used to be imported silently as a different wallet; exact spelling
+  now wins, and the user is asked when it is ambiguous.
+- Pressing Return in the backup password form did not move to the confirmation field (that form was
+  removed in Revision 3).
+- On small screens the words used for filling in were hidden behind the bottom bar and needed scrolling
+  to tap; they are now pinned to it. The current blank's highlight was greyed out by the system's
+  disabled style; fixed.
+- The import page still said "English words"; changed to say ten languages are supported.
+- At accessibility type sizes: the phrase status line was truncated and now wraps; the QR page's two
+  buttons stack vertically; and "Security Tips" moved above the bottom bar's primary button, matching
+  Ownbit's layout, so it is tappable at any size.
+- An encrypted backup made from an ambiguous phrase asked for the language again on restore (changed in
+  Revision 3: a scanned phrase QR is imported with its own spelling).
+## Test results
+
+Current as of Revision 11 (18 October 2026).
+
+| Check | Result | Scope |
 |---|---|---|
-| JS 引擎（Node） | **173/173 通过** | 协议、公开索引、resolver、四链签名、`hardening.test.mjs`（Revision 2 审查问题回归）；Revision 3 新增钱包级配对（单个静态二维码、3 个 xpub + 1 个 Solana 地址、canonical CBOR）、NFT 显示（EVM 与 Solana）、TRON 任意索引、BTC 默认 Account XPUB，以及二维码载荷视图（22 种 Connect 导出、17 种签名返回；重新解码帧、UR 与签名与 Keystone 解析器核对、原始字节中无私钥）；Token 表逐项核对全部 3,350 条记录（地址形态、唯一性、链上 decimals、图标包无空洞且每张图的哈希等于其 id、Solana 的 token program 绑定） |
-| 原生单元测试 | **117/117 通过**（Swift Testing 计数） | 真实 JavaScriptCore bridge、载荷视图解析与签名结果载荷、签名记录保存指纹、vault 与公开索引 HMAC、钱包级配对（只读公开索引、单个静态二维码、恰好 3 个 xpub 和 1 个 Solana 地址、公开索引版本 1）、Connect 预生成（仅在允许时生成、挂起时清除、过期结果丢弃）、隐私遮罩窗口跟随 App 外观、恢复卡片 2-of-3 布局、单词网格统一字号、恢复隐私（直接显示、截屏提示）、扫码用途、兼容钱包列表（含 BitTool Wallet、无 Ownbit）、NFT 显示、十种 BIP39 语言 |
-| UI 自动化 | **15/15 通过**（同一次完整运行） | iPhone 17 Pro · iOS 26.4 模拟器，隔离 fixture，公开无资金向量；含 Connect 链选中态、TRON 任意索引、Wallet Level（“one Solana address”、BitTool Wallet）、TRON 地址列表不显示派生路径、钱包卡片显示指纹、Coin Level 载荷展开、签名结果页只有 Done 主按钮且载荷与导出在卡片内、备份页恢复卡片与明文二维码 |
-| 截图巡检 | **全部通过** | iPhone 17 Pro 浅色／深色（120 张）、iPhone SE 第三代 iOS 17.2 浅色（60 张），新增 TRON 地址列表、使用条款与隐私政策 |
-| Release 真机构建 | **通过** | `generic/platform=iOS`，未签名，App 19 MB |
-| Bundle | 854,090 bytes | SHA-256 `36a00e6a35405519baf58595d09029ed099626beb52f37634fea71db5fc6d72b`，见 [engine/bundle-manifest.json](engine/bundle-manifest.json) |
+| JS engine (Node) | **210/210 passed** | Protocols, the public index, the resolver, signing on four chains, `hardening.test.mjs` (the Revision 2 review regressions), wallet-level pairing, NFT display for EVM and Solana, TRON arbitrary indices, the Bitcoin Account XPUB default, the QR payload view (22 Pair exports and 17 signature returns; frames are re-decoded, and URs and signatures are cross-checked against Keystone's parser), the Bitcoin fee policy, and both rounds of review findings (`audit-bts-2026-1018` and `-r2`). The token registry test checks all 3,350 records item by item: address shape, uniqueness, on-chain decimals, the icon pack having no holes with each image's hash equal to its id, and Solana's token program binding |
+| Native unit tests | **168 tests in 23 suites passed** | The real JavaScriptCore bridge, payload view parsing and signature result payloads, signing records storing the fingerprint, the vault and public index HMAC, wallet-level pairing (public index read-only, four Bitcoin script types, three Solana addresses, public index version 1), Pair prefetching (generated only when permitted, cleared on suspension, expired results discarded), the privacy shield window following the app's appearance, the 2-of-3 recovery card layout, one font size per word grid, recovery privacy (direct reveal, screenshot warning), scan purpose, the compatible wallet list, NFT display, the ten BIP39 languages, the vault password reset, and App Lock gating of the delete confirmation |
+| UI automation | **17 tests, 1 known flake** | iPhone 17 Pro · iOS 26.4 simulator, isolated fixtures, public unfunded vectors. Run serially, 16 of 17 pass; `testApprovalNamesAKnownSpenderAndFlagsAnUnlistedOne` fails intermittently because `typeText` drops characters from a long payload under load, and passes when rerun on its own. Its known-contract assertions, which run before the failing line, pass even in the failing run |
+| Screenshot tour | **Passed** | iPhone 17 Pro light and dark (120 shots) and iPhone SE 3rd generation on iOS 17.2 light (60 shots) |
+| Release device build | **Passed** | `generic/platform=iOS`, unsigned; also archives successfully as Release 1.0.0 (1) with a dSYM |
+| Clean-room engine rebuild | **Byte-identical** | `npm ci --ignore-scripts` plus `npm run build` in a throwaway copy of the commit reproduces the shipped `signer.js` exactly |
+| Bundle | 1,181,026 bytes | SHA-256 `6933d0d8a6f60faa8222506ac0bd7eef80eb884c9f73e31e9f354b4740f21077`, see [engine/bundle-manifest.json](engine/bundle-manifest.json) |
 
-UI 自动化流程：引导只出现一次且保留导入意图；导入并封存钱包；创建（隐藏式备份、重新显示、后台隐藏、按顺序补全空缺单词、顺序错误后空位不变、撤回已填单词、后台清除已填单词与密码）；备份页的 Recovery Cards（2/3）、Security Tips 与助记词明文二维码；导入不带重音的西班牙语助记词并识别语言，以及意大利语／西班牙语歧义时请用户选择；“再看一遍助记词”回到同一草稿；导入草稿跨后台保留；粘贴请求 → 自动匹配 → 风险确认 → 后台清除授权 → 错误密码 → 签名 → Activity → 清空；拒绝请求；整张扫码卡片打开相机；Connect / Addresses 只用公开数据；改密码（错误密码有提示、留在原页面、旧密码失效、后台不崩溃）；改名后删除最后一个钱包回到欢迎页；App Lock 冷启动、Face ID 取消、错误密码、钱包密码解锁、短暂后台不再锁；Settings（App Lock 需生物识别成功、Networks & Tokens 列表与搜索、兼容页跨后台保留、离线指南）。
+The UI automation flows: onboarding appears once and preserves the import intent; importing and sealing
+a wallet; creating (concealed backup, re-reveal, concealment on backgrounding, filling blanks in order,
+blanks unchanged after a wrong order, taking a filled word back, clearing filled words and passwords on
+backgrounding); the backup page's Recovery Cards (2 of 3), Security Tips and plaintext phrase QR;
+importing an unaccented Spanish phrase with language detection, and being asked to choose on an
+Italian/Spanish ambiguity; "show the phrase again" returning to the same draft; an import draft
+surviving backgrounding; paste a request → automatic match → risk acknowledgement → authorization
+cleared on backgrounding → wrong password → sign → Activity → clear; rejecting a request; the whole scan
+card opening the camera; Pair and Addresses using public data only; changing the password (a wrong
+password reports and stays on the page, the old password stops working, no crash on backgrounding);
+renaming and then deleting the last wallet returns to the welcome page; importing an existing phrase
+resets that wallet's password in place; App Lock cold launch, Face ID cancellation, wrong password,
+unlocking with the wallet password, and no re-lock after a brief backgrounding; and Settings (App Lock
+requiring successful biometrics, the Networks & Tokens list and search, the compatibility page surviving
+backgrounding, the offline guide).
 
-## 本轮主要变更
+## Main changes of the rebuild
 
-### 界面
+### Interface
 
-- 新结构 `Features/{Main, Wallets, Setup, Onboarding, Sign, Activity, Settings, Lock}` 与共用 `Design/`，删除旧 `Views/`。
-- 底部 4 个 Tab：Wallets · Scan · Activity · Settings。Tab Bar 始终展开，滚动后也不收起，保证 Activity 和 Settings 随时一步可达。
-- 设计系统：系统分组背景、卡片、Liquid Glass 主次按钮（iOS 17/18 为填充／描边胶囊按钮）、底部操作栏（iOS 26 `safeAreaBar`）、Callout、状态胶囊、地址分组显示（首尾加粗）、复制提示，以及可被 VoiceOver 读出的状态提示。
-- 钱包卡片：按密钥身份生成的色块头像、名称、主指纹（Revision 3 后续由 Wallet ID 改为 Fingerprint）、网络图标，以及 Connect / Addresses 快捷入口。详情页包含四链配对、收款地址、助记词、改密码、改名、删除与修复。
-- 创建／导入：统一的步骤页面；输入助记词时实时计数并检查单词；候选词在键盘上方；支持 SeedQR；BIP39 passphrase 可选；密码强度与要求清单；完成页可直接去配对。
-- 签名：扫码卡片整体可点；审核页依次为摘要（金额、对方地址、网络与代币图标）→ 警告 → 签名钱包 → 完整字段 → 请求指纹；风险确认和 Sign 固定在底部；授权 sheet 单独输入密码；结果页显示动画 QR 并可导出文件。
-- Activity 按日期分组，有详情页，可清空；Settings 含 Face ID 锁、外观、Networks & Tokens（可搜索）、兼容说明、离线指南、Open Source 与法律文档。
-- 品牌：App 图标、启动画面与应用内标识按原有 “B + 闪电签名带” 概念重新绘制为精确矢量（[design/Brand.md](design/Brand.md)，`scripts/make-brand-assets.py` 可重复生成）。BTC、ETH、BNB Chain、Arbitrum、Base、TRON、Solana 七个网络图标为矢量重绘。
-- 文案统一为 “this device”，适配 iPhone 与 iPad；相机权限说明改为实际用途（扫描签名请求和助记词二维码）。
+- A new structure, `Features/{Main, Wallets, Setup, Onboarding, Sign, Activity, Settings, Lock}` with a
+  shared `Design/`, replacing the old `Views/`.
+- Four tabs at the bottom: Wallets · Scan · Activity · Settings. The tab bar stays expanded and does not
+  collapse on scroll, so Activity and Settings are always one step away.
+- A design system: system grouped backgrounds, cards, Liquid Glass primary and secondary buttons (filled
+  and outlined capsules on iOS 17/18), a bottom action bar (`safeAreaBar` on iOS 26), callouts, status
+  pills, grouped address display with bold first and last groups, copy confirmations, and status
+  announcements VoiceOver can read.
+- Wallet cards: an avatar colour derived from the key identity, the name, the master fingerprint (changed
+  from Wallet ID to Fingerprint during Revision 3), network icons, and Pair / Addresses shortcuts. The
+  detail page covers pairing for all four chains, receiving addresses, the recovery phrase, changing the
+  password, renaming, deleting and repair.
+- Create and import: unified step pages; live word counting and checking while entering a phrase;
+  candidate words above the keyboard; SeedQR support; an optional BIP39 passphrase; password strength and
+  a requirements checklist; and a completion page that leads straight to pairing.
+- Signing: the whole scan card is tappable; the review page runs summary (amount, counterparty, network
+  and token icons) → warnings → signing wallet → full fields → request fingerprint; the risk
+  acknowledgement and Sign are pinned to the bottom; the authorization sheet takes the password on its
+  own; and the result page shows an animated QR code and can export a file.
+- Activity groups by date, has a detail page and can be cleared; Settings holds App Lock, appearance,
+  Networks & Tokens with search, compatibility notes, the offline guide, Open Source and the legal
+  documents.
+- Brand: the app icon, launch screen and in-app mark were redrawn as precise vectors from the original
+  "B plus lightning signature band" concept ([design/Brand.md](design/Brand.md), reproducible with
+  `scripts/make-brand-assets.py`). The seven network icons for BTC, ETH, BNB Chain, Arbitrum, Base, TRON
+  and Solana are vector redraws.
+- Text standardized on "this device" to suit both iPhone and iPad, and the camera permission description
+  changed to its actual purpose: scanning signing requests and recovery phrase QR codes.
 
-### 安全、逻辑、JS 与密码学
+### Security, logic, JavaScript and cryptography
 
-内部审查发现的问题均已修复，并有回归测试（明细见 [docs/Security.md](docs/Security.md#2026-09-21-review-fixes)）：
+Every problem found by internal review was fixed with a regression test (details in
+[docs/Security.md](docs/Security.md#2026-09-21-review-fixes)):
 
-- **F1（严重）**：EIP-712 值必须与声明类型严格一致。此前真值字符串可能被当作 `bool: true` 签名，而界面显示的是字符串。
-- **F2**：`eth-signature` 的 `v`：legacy 交易为 EIP-155，typed 交易为 y-parity。
-- **F3–F6、F10–F12**：Safe gas refund、原生币附带金额、手续费、TRON call value 与 fee limit、非文本 TRON 消息、Solana durable nonce、Token 表外代币转账都会在审核中显示，需要时提高风险等级；摘要不再把不同转账的金额和地址拼在一起。
-- **F7、F14**：拒绝歧义的整数和地址写法；按声明的 domain 顺序计算 separator；未使用的类型被忽略。
-- **F8**：App Lock 的后台计时改用设备休眠期间也继续走的时钟。
-- **F9**：vault 格式 2 以存储的原始 header 字节作为 AES-GCM 认证数据。
-- **F13**：动画 QR 在每次扫码的独立上下文中增量收集，结果与批量解码一致，并拒绝混入其他请求的帧。
-- **F15**：支持 `ur:psbt` 请求（以同类型响应）以及多行折叠的 Base64 PSBT 文件。
-- **F16**：Release 版只开放固定的引擎操作白名单。
-- **F17**：公开索引文件使用 Keychain 密钥做 HMAC-SHA256 认证，被篡改时要求修复。
-- **F18**：Taproot（BIP340）签名使用新的 32 字节辅助随机数。
-- BTC 找零只认可由签名钱包自身公钥重新派生出的输出。
+- **F1 (critical)**: EIP-712 values must match their declared types strictly. A truthy string could
+  previously be signed as `bool: true` while the interface displayed a string.
+- **F2**: `eth-signature`'s `v` is EIP-155 for legacy transactions and y-parity for typed ones.
+- **F3–F6, F10–F12**: Safe gas refunds, native currency sent with a call, fees, TRON call value and fee
+  limit, non-text TRON messages, Solana durable nonces and transfers of tokens outside the registry are
+  all shown in the review and raise the risk level where appropriate; a summary no longer joins one
+  transfer's amount to another's address.
+- **F7, F14**: ambiguous integer and address spellings are refused; the separator is computed in the
+  declared domain order; unused types are ignored.
+- **F8**: App Lock's background timer uses a clock that keeps counting while the device sleeps.
+- **F9**: vault format 2 uses the stored raw header bytes as AES-GCM authenticated data.
+- **F13**: animated QR codes are collected incrementally in a context of their own per scan, the result
+  matches batch decoding, and frames from another request are refused.
+- **F15**: `ur:psbt` requests are supported, answered with the same type, as are multi-line wrapped
+  base64 PSBT files.
+- **F16**: Release builds expose only a fixed allowlist of engine operations.
+- **F17**: the public index file is authenticated with HMAC-SHA256 under a Keychain key and requires
+  repair when tampered with.
+- **F18**: Taproot (BIP340) signatures use fresh 32-byte auxiliary randomness.
+- Bitcoin change is only acknowledged for outputs re-derived from the signing wallet's own public keys.
 
-性能与引擎边界：BIP39 seed 改为原生 CommonCrypto 计算。JSC 在 iOS 上没有 JIT，JS 版 PBKDF2 约 0.6 秒，原生只需几毫秒；创建、导入、签名因此明显更快。凡涉及秘密或外部输入的操作都使用全新 JS 上下文；只有读取本机公开索引的地址页和配对页复用一个预热上下文，进入后台即丢弃。
+Performance and engine boundaries: the BIP39 seed moved to native CommonCrypto. JavaScriptCore has no
+JIT on iOS, so PBKDF2 in JavaScript took about 0.6 seconds where native takes a few milliseconds, making
+creation, import and signing markedly faster. Every operation touching a secret or external input uses a
+fresh JS context; only the address and pairing pages, which read the device's own public index, reuse one
+warm context, and that is discarded on entering the background.
 
-### Token 表与图标
+### Token registry and icons
 
-- 离线 Token 表共 **3,350 条**，分两层。人工核定层 596 条（Ethereum 196、BNB Smart Chain 112、Arbitrum One 67、Base 86、TRON 14、Solana 121）：按“各网络实际价值”（CoinGecko 市值与链上供应量 × 价格取较小值）排序，要求交易量、持有人数量和至少一个独立列表佐证，排除股票代币、基金、凭证类代币、已废弃合约和受制裁资产。榜单层 2,754 条来自 CoinMarketCap 前 2000，只用于决定收录范围和提供名称/符号/图标，decimals 全部从链上读取，符号以合约自报为准。两层在界面上不作区分，收录都不代表背书。来源、选取方式与排除理由见 [docs/TokenRegistrySources.md](docs/TokenRegistrySources.md)，可用 `scripts/build-token-registry.py` 与 `scripts/build-expanded-registry.py` 复现。
-- 覆盖的网络从 6 个增加到 10 个：Polygon、Avalanche C-Chain、OP Mainnet、Gnosis 上的代币现在也能按名称和小数位显示，不再只显示原始数值。
-- 图标共 1,985 张（按内容去重，最大 128 px），打包为单个 `TokenIcons.pack` 加偏移表，整套约 10.7 MiB，App 以 mmap 读取、按需解码，永不联网下载。Networks & Tokens 页按网络分组、按排名显示，热门代币在前，并支持按符号、名称或地址搜索。
-- 兼容页的钱包图标均为官方 App 图标或官方仓库图标，Revision 3 为 23 个（[来源](docs/WalletLogoSources.md)）。
+- The offline token registry holds **3,350 entries** in two layers. The manually vetted layer has 596
+  (Ethereum 196, BNB Smart Chain 112, Arbitrum One 67, Base 86, TRON 14, Solana 121), ordered by actual
+  value per network (the lesser of CoinGecko market capitalization and on-chain supply × price) and
+  requiring volume, holder count and at least one independent listing as corroboration, excluding equity
+  tokens, funds, receipt tokens, deprecated contracts and sanctioned assets. The listing layer's 2,754
+  entries come from the CoinMarketCap top 2000 and decide only inclusion and the name, symbol and icon;
+  decimals are all read on-chain and symbols are whatever the contract reports. The two layers are not
+  distinguished in the interface, and inclusion never implies endorsement. Sources, selection and
+  exclusion reasons are in [docs/TokenRegistrySources.md](docs/TokenRegistrySources.md), reproducible with
+  `scripts/build-token-registry.py` and `scripts/build-expanded-registry.py`.
+- Coverage grew from 6 networks to 10: tokens on Polygon, Avalanche C-Chain, OP Mainnet and Gnosis now
+  display with a name and decimals instead of a raw figure.
+- There are 1,985 icons (deduplicated by content, at most 128 px), packed into a single
+  `TokenIcons.pack` plus an offset table, about 10.7 MiB in all, which the app reads by mmap and decodes
+  on demand, never downloading anything. The Networks & Tokens page groups by network and orders by rank,
+  with popular tokens first, and searches by symbol, name or address.
+- The compatibility page's wallet icons are all official app or repository icons, 23 of them as of
+  Revision 3 ([sources](docs/WalletLogoSources.md)).
 
-## 测试中发现并修复的问题
+## Problems found and fixed during testing
 
-- **崩溃**：在“查看助记词” sheet 显示内容时切到后台，App 必然崩溃（UIKit `NSInternalInconsistencyException`，两个导航栏争用同一导航项）。原因是 `.privacySensitive()` 包在 sheet 的 `NavigationStack` 外层：iOS 26 在后台截图时会遮盖隐私内容，从而触发这一冲突。已移到内部内容上，并用 UI 测试复现后验证修复。
-- **错误被吞掉**：改密码或删除钱包时输入错误密码，界面没有任何提示。原因是 store 先调用了 `suspend()` 使会话失效，sheet 再比对会话时丢弃了错误。现在先校验密码，失败时正常显示错误（此前也不会误删，只是没有任何提示）。
-- 改密码成功后导航被重置回钱包列表。现在留在原页面，并显示 “Password Changed” 提示。
-- 备份校验页的 “Show the Phrase Again” 位于内容底部，与 iOS 26 悬浮底栏重叠，点击中心会落在底栏上。已移入底栏，位于 Continue 下方。
-- Networks & Tokens 点击网络无法进入（被推入的页面中使用了值类型 NavigationLink）；iOS 26 下 Token 搜索框默认收起、辅助功能也读不到。现在搜索框始终显示。
-- SF Symbols：备份提示使用了不存在的 `camera.slash`，图标空白；Wallets Tab 的 `wallet.bifold` 需要 iOS 18，iOS 17 上会缺图标。已换为有效符号，并按系统版本回退。全部 74 个符号已对照系统符号表核对。
-- iOS 17 与小屏（iPhone SE）：禁用状态的主按钮文字在浅灰底上几乎看不见（Sign、Continue、Change Password），现改为灰色文字，忙碌指示同样处理；授权 sheet 在中等高度下文字被截断，改为可滚动内容 + 固定底部 Sign；引导页插图在矮屏上缩小，要点不再被底栏遮住；Activity 标题允许两行；设置中 “Offline Setup Guide” 和法律链接的文字被染成主题绿，已与相邻行统一为正文颜色。
-- 创建流程中推入的步骤把 “Back” 与 “Cancel” 挤在左侧；推入步骤的 Cancel 已移到右侧。
-- 视觉问题：卡片按钮文字断行出现连字符；导入状态被底部栏遮挡；候选词被挡住；风险确认离 Sign 太远；空状态图标太淡；设置行样式不一致。均已修正。
-- 旧截图流程的风险确认控件类型写错，导致从未真正签过名。已随 UI 测试一并重写。
+- **Crash**: backgrounding the app while the "view recovery phrase" sheet was showing its content crashed
+  reliably (a UIKit `NSInternalInconsistencyException`, two navigation bars contending for one navigation
+  item). The cause was `.privacySensitive()` wrapped outside the sheet's `NavigationStack`: iOS 26
+  conceals privacy-sensitive content when taking a background snapshot, which triggered the conflict. It
+  moved onto the inner content, and the fix was verified after reproducing it with a UI test.
+- **Swallowed errors**: entering a wrong password when changing the password or deleting a wallet showed
+  no message at all. The store called `suspend()` first, invalidating the session, and the sheet then
+  discarded the error when comparing sessions. The password is now validated first and a failure displays
+  normally. (Nothing was ever wrongly deleted; there was simply no feedback.)
+- Navigation reset back to the wallet list after a successful password change. It now stays on the page
+  and shows "Password Changed".
+- "Show the Phrase Again" on the backup verification page sat at the bottom of the content and overlapped
+  the iOS 26 floating bottom bar, so tapping its centre hit the bar instead. It moved into the bar, below
+  Continue.
+- Tapping a network in Networks & Tokens did nothing (a value-type NavigationLink inside a pushed page),
+  and on iOS 26 the token search field was collapsed by default and unreachable by accessibility. The
+  search field is now always visible.
+- SF Symbols: a backup hint used a non-existent `camera.slash`, leaving a blank icon, and the Wallets
+  tab's `wallet.bifold` requires iOS 18 and was missing on iOS 17. Both were replaced with valid symbols
+  and given version-appropriate fallbacks. All 74 symbols were checked against the system symbol list.
+- iOS 17 and small screens (iPhone SE): disabled primary button text was nearly invisible on a light grey
+  background (Sign, Continue, Change Password) and is now grey text, with the busy indicator handled the
+  same way; the authorization sheet truncated its text at the medium detent and became scrollable content
+  with a fixed Sign at the bottom; onboarding illustrations shrink on short screens so the points are no
+  longer hidden behind the bar; the Activity title may wrap to two lines; and "Offline Setup Guide" and
+  the legal links in Settings were tinted theme green and now match the body colour of adjacent rows.
+- Pushed steps in the create flow crowded Back and Cancel together on the left; Cancel moved to the right
+  on pushed steps.
+- Visual issues: hyphenation when card button text wrapped; the import status hidden behind the bottom
+  bar; candidate words obscured; the risk acknowledgement too far from Sign; empty-state icons too faint;
+  inconsistent settings row styles. All corrected.
+- The old screenshot flow used the wrong control type for the risk acknowledgement, so it had never
+  actually signed anything. Rewritten along with the UI tests.
 
-## 界面检查
+## Interface review
 
-截图巡检（`BitToolSignerUITests/ScreenshotTour.swift`）覆盖欢迎、引导、导入、密码、创建与备份（隐藏状态）、钱包列表与详情、改密码／查看助记词／删除 sheet、四链 Connect、地址与地址详情、Scan、粘贴、审核（上中下三段与已确认）、授权、签名结果、Activity 与详情、Settings、Networks & Tokens（ETH／SOL／TRON）、兼容页、离线指南和 App Lock。设备与环境：iPhone 17 Pro 浅色和深色（iOS 26，Liquid Glass）；iPhone SE 第三代（iOS 17.2，最小屏幕与旧版样式）；iPad Air 11 英寸（顶部浮动 Tab、表单式 sheet、可读宽度）；AccessibilityL 大字号（徽章自动改为纵向排列、按钮文字可换行、卡片按钮收为图标）。巡检中发现的问题都已修复并复查，见上一节。截图只使用公开测试钱包，不含任何助记词内容。
+The screenshot tour (`BitToolSignerUITests/ScreenshotTour.swift`) covers welcome, onboarding, import,
+password, create and backup (concealed), the wallet list and detail page, the change password / view
+phrase / delete sheets, Pair for four chains, addresses and address details, Scan, paste, review (top,
+middle, bottom and acknowledged), authorization, the signature result, Activity and its details,
+Settings, Networks & Tokens (ETH, SOL, TRON), the compatibility page, the offline guide and App Lock.
+Devices and environments: iPhone 17 Pro light and dark (iOS 26, Liquid Glass); iPhone SE 3rd generation
+(iOS 17.2, the smallest screen and the older styling); iPad Air 11-inch (floating top tabs, form-style
+sheets, readable width); and AccessibilityL type (badges stack vertically, button text wraps, card
+buttons collapse to icons). Problems found during the tour were fixed and re-checked, as listed above.
+The tour uses public test wallets only and contains no recovery phrase content.
 
-## 仍需外部验收
+## Still requiring external acceptance
 
-- **真机**：Keychain 与设备密码、Face ID 成功／失败／锁定、相机扫码、截屏与录屏遮盖、文件保护与备份排除、重装、断电中改密码、后台 119／120 秒边界。
-- **第三方钱包往返**：Connect 页列出的“可扫码签名”钱包（Sparrow、BlueWallet、Nunchuk、Bitcoin Keeper、BULL Bitcoin、Specter、Bitcoin Safe、ZEUS、MetaMask、Rabby、imToken、TokenPocket、Ambire、Solflare、Helium Wallet）的配对 → 请求 → 签名 → 回扫，以及“仅观察”钱包的地址导入，每条都要记录版本号。官方文档与源码证据不等于已完成真机互通。
-- **NFT 市场签名**：用 OpenSea、LooksRare 实际导出的 `eth_signTypedData_v4` 请求在真机验收 Seaport/LooksRare 解码。
-- **独立安全审计**、依赖审查、可复现构建，以及 TestFlight／App Store 签名分发。
-- Token 排名反映 2026-09-21 的数据快照，只影响浏览顺序，不影响签名与风险判断。
+- **Real devices**: the Keychain and the device passcode, Face ID success/failure/lockout, camera
+  scanning, screenshot and recording concealment, file protection and backup exclusion, reinstalling,
+  changing the password across a power loss, and the 119/120-second background boundary.
+- **Third-party wallet round trips**: pairing → request → signing → scanning back for every wallet listed
+  as "can sign by QR" (Sparrow, BlueWallet, Nunchuk, Bitcoin Keeper, BULL Bitcoin, Specter, Bitcoin Safe,
+  ZEUS, MetaMask, Rabby, imToken, TokenPocket, Ambire, Solflare, Helium Wallet), plus address import for
+  the watch-only wallets, each recorded with a version number. Official documentation and source evidence
+  is not the same as completed real-device interoperability.
+- **NFT marketplace signatures**: verify Seaport and LooksRare decoding on a real device using
+  `eth_signTypedData_v4` requests actually exported by OpenSea and LooksRare.
+- **An independent security audit**, a dependency review, and TestFlight / App Store signed distribution.
+  Reproducible builds are now covered for the engine artifact — see
+  [docs/Reproducible-Build.md](docs/Reproducible-Build.md) — but the App Store executable itself cannot be
+  reproduced byte for byte, and that document explains why.
+- Token rankings reflect a data snapshot and affect browsing order only, never signing or risk assessment.
