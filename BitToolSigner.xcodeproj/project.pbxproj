@@ -419,7 +419,7 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "BitTool Signer";
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSCameraUsageDescription = "BitTool Signer scans signing requests from your other wallet and recovery-phrase QR codes. Camera images are processed on this device and never leave it.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Use Face ID to open BitTool Signer. Signing requires your wallet password.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -469,7 +469,7 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "BitTool Signer";
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSCameraUsageDescription = "BitTool Signer scans signing requests from your other wallet and recovery-phrase QR codes. Camera images are processed on this device and never leave it.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Use Face ID to open BitTool Signer. Signing requires your wallet password.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -514,7 +514,7 @@
 				DEVELOPMENT_TEAM = F5X3QH95Y6;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "BitTool Signer";
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSCameraUsageDescription = "BitTool Signer scans signing requests from your other wallet and recovery-phrase QR codes. Camera images are processed on this device and never leave it.";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MACOSX_DEPLOYMENT_TARGET = 26.4;
@@ -543,7 +543,7 @@
 				DEVELOPMENT_TEAM = F5X3QH95Y6;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "BitTool Signer";
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSCameraUsageDescription = "BitTool Signer scans signing requests from your other wallet and recovery-phrase QR codes. Camera images are processed on this device and never leave it.";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MACOSX_DEPLOYMENT_TARGET = 26.4;
@@ -571,7 +571,7 @@
 				DEVELOPMENT_TEAM = F5X3QH95Y6;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "BitTool Signer";
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSCameraUsageDescription = "BitTool Signer scans signing requests from your other wallet and recovery-phrase QR codes. Camera images are processed on this device and never leave it.";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MACOSX_DEPLOYMENT_TARGET = 26.4;
@@ -599,7 +599,7 @@
 				DEVELOPMENT_TEAM = F5X3QH95Y6;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "BitTool Signer";
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSCameraUsageDescription = "BitTool Signer scans signing requests from your other wallet and recovery-phrase QR codes. Camera images are processed on this device and never leave it.";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MACOSX_DEPLOYMENT_TARGET = 26.4;
