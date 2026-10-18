@@ -201,7 +201,7 @@ Test Case '-[BitToolSignerUITests.BitToolSignerUITests testSettingsSheetsSurvive
 <unknown>:0: error: -[BitToolSignerUITests.BitToolSignerUITests testSettingsSheetsSurviveBackground] : Failed to tap "Done" Button: Find single matching element. Multiple matching elements found for <XCUIElementQuery: 0x600002125ef0>.
 Test Case '-[BitToolSignerUITests.BitToolSignerUITests testSettingsSheetsSurviveBackground]' failed (12.296 seconds).
 Test Case '-[BitToolSignerUITests.BitToolSignerUITests testWalletPasswordRotationClosesFormAndProtectsBackup]' started.
-/Users/tanguopeng/Documents/bitsigner-ios/BitSigner/BitToolSignerUITests/BitToolSignerUITests.swift:577: error: -[BitToolSignerUITests.BitToolSignerUITests testWalletPasswordRotationClosesFormAndProtectsBackup] : XCTAssertTrue failed
+<repo>/BitToolSignerUITests/BitToolSignerUITests.swift:577: error: -[BitToolSignerUITests.BitToolSignerUITests testWalletPasswordRotationClosesFormAndProtectsBackup] : XCTAssertTrue failed
 Test Case '-[BitToolSignerUITests.BitToolSignerUITests testWalletPasswordRotationClosesFormAndProtectsBackup]' failed (23.325 seconds).
 Test Case '-[BitToolSignerUITests.BitToolSignerUITests testWelcomeOnboardingRetainsImportIntent]' started.
 Test Case '-[BitToolSignerUITests.BitToolSignerUITests testWelcomeOnboardingRetainsImportIntent]' passed (22.175 seconds).

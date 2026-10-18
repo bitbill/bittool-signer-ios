@@ -10,7 +10,7 @@ Test Case '-[BitToolSignerUITests.BitToolSignerUITests testFirstImportCommitsThe
 Test Case '-[BitToolSignerUITests.BitToolSignerUITests testSettingsSheetsSurviveBackground]' started.
 Test Case '-[BitToolSignerUITests.BitToolSignerUITests testSettingsSheetsSurviveBackground]' passed (15.208 seconds).
 Test Case '-[BitToolSignerUITests.BitToolSignerUITests testWalletPasswordRotationClosesFormAndProtectsBackup]' started.
-/Users/tanguopeng/Documents/bitsigner-ios/BitSigner/BitToolSignerUITests/BitToolSignerUITests.swift:580: error: -[BitToolSignerUITests.BitToolSignerUITests testWalletPasswordRotationClosesFormAndProtectsBackup] : XCTAssertTrue failed
+<repo>/BitToolSignerUITests/BitToolSignerUITests.swift:580: error: -[BitToolSignerUITests.BitToolSignerUITests testWalletPasswordRotationClosesFormAndProtectsBackup] : XCTAssertTrue failed
 Test Case '-[BitToolSignerUITests.BitToolSignerUITests testWalletPasswordRotationClosesFormAndProtectsBackup]' failed (23.863 seconds).
 Test Case '-[BitToolSignerUITests.BitToolSignerUITests testWelcomeOnboardingRetainsImportIntent]' started.
 Test Case '-[BitToolSignerUITests.BitToolSignerUITests testWelcomeOnboardingRetainsImportIntent]' passed (24.502 seconds).

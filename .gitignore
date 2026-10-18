@@ -17,3 +17,6 @@ output/
 *.cer
 *.certSigningRequest
 *.mobileprovision
+# Compiled Python embeds the absolute path it was built from.
+__pycache__/
+*.pyc
