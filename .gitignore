@@ -20,3 +20,6 @@ output/
 # Compiled Python embeds the absolute path it was built from.
 __pycache__/
 *.pyc
+# Release artifacts: regenerated per release, and the manifest hashes every
+# tracked file, so committing it would change the hash it reports.
+release/
