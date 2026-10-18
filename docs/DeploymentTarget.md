@@ -1,66 +1,98 @@
-# 最低系统版本评估：iOS 17 能不能降到 iOS 15
+# Deployment target assessment: could iOS 17 drop to iOS 15?
 
-> **已决定（2026-10-17）：保持最低 iOS 17，不降。** 下文是支撑这个决定的评估，留作记录；如果以后要重开这件事，从这里接着看即可。
+> **Decided, 17 October 2026: stay on iOS 17.** What follows is the assessment behind that
+> decision, kept as a record. If the question is ever reopened, start here.
 
-**评估结论：能降，但 iOS 16 才是划算的那一步；iOS 15 要多付一次导航架构重写，而且和“安全产品”这个定位相冲突。评估期间代码未改（临时改过部署目标构建一次，构建后已还原）。**
+**Conclusion: it is possible, but iOS 16 is the step that pays for itself. iOS 15 additionally
+costs a navigation-architecture rewrite, and it conflicts with positioning this as a security
+product. No code was changed during the assessment — the deployment target was altered for a
+single build and then restored.**
 
-测量方法：把 `IPHONEOS_DEPLOYMENT_TARGET` 临时改成 15.0 真实构建一次（构建后已还原），再对全部 48 个 Swift 文件（10,878 行）逐个 API 清点。
+Method: temporarily set `IPHONEOS_DEPLOYMENT_TARGET` to 15.0 and run a real build (restored
+afterwards), then audit the APIs of all 48 Swift files (10,878 lines) one by one.
 
-## 工具链本身没有拦路
+## The toolchain itself is not in the way
 
-Xcode 26.4 接受 iOS 15.0 的部署目标，没有任何 "deployment target too low" 警告。构建停在 `SwiftEmitModule` 阶段，报了 9 个错误——但那一阶段只检查**声明的签名**，函数体根本没轮到类型检查，所以那 9 个远不是全部。真实工作量要靠 API 清点。
+Xcode 26.4 accepts a deployment target of iOS 15.0 with no "deployment target too low"
+warning. The build stops at `SwiftEmitModule` with 9 errors — but that phase only checks
+**declared signatures**; function bodies are never type-checked, so those 9 are nowhere near
+the full count. The real work has to be established by auditing APIs.
 
-不构成障碍的部分：JavaScriptCore（iOS 7）、CryptoKit（13）、LocalAuthentication、`.privacySensitive()`（15）、`@AppStorage`（14）、async/await（回溯部署到 13）。关键的一点是**全仓库没有用 `@Observable`**（`ObservableObject` 一以贯之），否则这件事根本不用讨论。
+Not obstacles: JavaScriptCore (iOS 7), CryptoKit (13), LocalAuthentication, `.privacySensitive()`
+(15), `@AppStorage` (14), async/await (back-deployed to 13). The decisive point is that
+**nothing in the repository uses `@Observable`** — `ObservableObject` is used throughout.
+Otherwise there would be nothing to discuss.
 
-## 工作量清点
+## Work inventory
 
-### 降到 iOS 16 要处理的（iOS 17 API）
+### Needed to reach iOS 16 (iOS 17 APIs)
 
-| API | 出现次数 | 替代方案 |
+| API | Occurrences | Replacement |
 |---|---:|---|
-| `.onChange(of:) { old, new in }` 双参数形式 | 37 | 改回 iOS 14 的单参数形式；需要旧值的地方自己存一份 |
+| `.onChange(of:) { old, new in }`, the two-parameter form | 37 | Back to the iOS 14 single-parameter form, keeping a copy of the old value where it is needed |
 | `.sensoryFeedback` | 8 | `UIImpactFeedbackGenerator` |
-| `.symbolEffect` / `.contentTransition(.symbolEffect)` | 8 | 去掉，或 `#available` 包起来 |
-| `UIScene.isSceneCaptured` | 5 | `UIScreen.isCaptured`（iOS 11）+ `capturedDidChangeNotification` |
-| `ContentUnavailableView` | 3 | 自己写一个空状态视图 |
-| `AVCaptureDevice.RotationCoordinator` | 2 | 回到已废弃的 `videoOrientation` |
+| `.symbolEffect` / `.contentTransition(.symbolEffect)` | 8 | Drop, or wrap in `#available` |
+| `UIScene.isSceneCaptured` | 5 | `UIScreen.isCaptured` (iOS 11) plus `capturedDidChangeNotification` |
+| `ContentUnavailableView` | 3 | Write an empty-state view |
+| `AVCaptureDevice.RotationCoordinator` | 2 | Back to the deprecated `videoOrientation` |
 
-共约 **63 处**，全是逐点替换，**不动架构**。唯一需要小心的是 `isSceneCaptured`：它是安全功能（录屏／投屏时遮盖助记词、挂起签名会话），替代品 `UIScreen.isCaptured` 是全屏而非按 scene 粒度，在 iPad 多窗口下语义略宽——对这个 App 反而更保守，可以接受。
+About **63 sites**, all point replacements, **with no architectural change**. The one to be
+careful with is `isSceneCaptured`: it is a security feature (concealing the recovery phrase and
+suspending the signing session during screen recording or mirroring), and the replacement
+`UIScreen.isCaptured` is whole-screen rather than per-scene, so its meaning is slightly broader
+under iPad multi-window — which for this app is more conservative, and therefore acceptable.
 
-### 再降到 iOS 15 还要多付的（iOS 16 API）
+### Additionally needed to reach iOS 15 (iOS 16 APIs)
 
-| API | 出现次数 | 替代方案 |
+| API | Occurrences | Replacement |
 |---|---:|---|
-| `NavigationStack` + `navigationDestination` | 16 + 3 | **重写成 `NavigationView` + `NavigationLink(isActive:)`** |
-| `Grid` / `GridRow` | 14 | `VStack`/`HStack` 手工对齐 |
+| `NavigationStack` plus `navigationDestination` | 16 + 3 | **Rewrite as `NavigationView` plus `NavigationLink(isActive:)`** |
+| `Grid` / `GridRow` | 14 | `VStack`/`HStack` aligned by hand |
 | `Duration` / `Task.sleep(for:)` | 5 | `Task.sleep(nanoseconds:)` |
-| `AnyLayout` | 4 | 按尺寸类别分支，写两套布局 |
-| `.scrollBounceBehavior`（16.4） | 4 | 去掉 |
-| `ProposedViewSize` | 3 | 自己算尺寸 |
-| `.presentationDetents` | 3 | 自定义 sheet 高度或全屏 |
-| `ViewThatFits` | 2 | 按尺寸类别分支 |
+| `AnyLayout` | 4 | Branch on size class and write two layouts |
+| `.scrollBounceBehavior` (16.4) | 4 | Drop |
+| `ProposedViewSize` | 3 | Compute sizes directly |
+| `.presentationDetents` | 3 | A custom sheet height, or full screen |
+| `ViewThatFits` | 2 | Branch on size class |
 | `.scrollContentBackground` | 2 | `UITableView.appearance()` |
-| `.scrollIndicators` / `.presentationDragIndicator` | 1 + 1 | 去掉 |
-| `Locale.Language.characterDirection` | 1 | `Locale.characterDirection(forLanguage:)`（iOS 8） |
+| `.scrollIndicators` / `.presentationDragIndicator` | 1 + 1 | Drop |
+| `Locale.Language.characterDirection` | 1 | `Locale.characterDirection(forLanguage:)` (iOS 8) |
 
-共约 **55 处**，但其中 `NavigationStack` 那一条不是"替换"而是**改架构**：`AppRouter` 现在靠类型化的路由值做程序化 push/pop（创建完成后跳 Connect、删钱包后回欢迎页、`navigationResetEpoch` 整栈重置），iOS 15 的 `NavigationView` 只有 `isActive` 绑定，这些流程都要重新设计，而且 iPad 上 `NavigationView` 默认是 split view，还得额外压成 stack。多条 UI 测试直接断言返回栈行为，也要跟着改。
+About **55 sites**, but the `NavigationStack` line is not a replacement — it is **an
+architectural change**. `AppRouter` currently drives programmatic push and pop from typed route
+values (jumping to Pair after creation completes, returning to the welcome page after a wallet
+is deleted, resetting the whole stack via `navigationResetEpoch`). iOS 15's `NavigationView`
+offers only `isActive` bindings, so all of those flows would need redesigning, and on iPad
+`NavigationView` defaults to a split view that would have to be forced into a stack. Several UI
+tests assert back-stack behaviour directly and would have to change with it.
 
-## 换来多少设备
+## What it buys in devices
 
-| 最低版本 | 新增覆盖的机型 |
+| Minimum version | Models additionally covered |
 |---|---|
-| iOS 17（现状） | iPhone XS / XR（2018）及以后 |
-| iOS 16 | 多覆盖 iPhone 8 / X（2017） |
-| iOS 15 | 再多覆盖 iPhone 6s / SE 一代（2015–2016） |
+| iOS 17 (current) | iPhone XS / XR (2018) and later |
+| iOS 16 | Adds iPhone 8 / X (2017) |
+| iOS 15 | Adds iPhone 6s / SE first generation (2015–2016) |
 
-对一个离线签名器来说，"拿旧 iPhone 专门当签名设备"是真实用法，所以降版本有实际意义，不是纯凑数。
+For an offline signer, keeping an old iPhone purely as a signing device is a real use pattern,
+so lowering the target has genuine value rather than just padding a number.
 
-## 建议
+## Recommendation
 
-**降到 iOS 16，不降到 15。**
+**Drop to iOS 16, not to 15.**
 
-- iOS 16 那 63 处是机械替换，没有架构风险，收益是 2017 年的 iPhone 8——二手市场上最便宜、量最大的那一档。
-- iOS 15 额外的代价集中在导航重写，而导航正好是"签名后回到哪里""删钱包后回到哪里"这类**与安全状态耦合**的地方，是全仓库最不该为了兼容性而动的部分。
-- 还有一条与机型无关的理由：iOS 15 机型早已停止接收安全更新。把一台不再打补丁的设备推荐成专用签名设备，和这个 App 自己的安全主张是矛盾的；iPhone 8（iOS 16）同样如此，所以无论降到哪一档，引导页都应该说明"专用设备请尽量用仍在维护的系统"。
+- The 63 iOS 16 sites are mechanical replacements with no architectural risk, and the payoff is
+  the iPhone 8 from 2017 — the cheapest and most plentiful tier on the second-hand market.
+- The extra cost of iOS 15 is concentrated in the navigation rewrite, and navigation is exactly
+  where "where do we return to after signing" and "where do we return to after deleting a
+  wallet" live — **coupled to security state**, and the last part of the repository that should
+  be disturbed for the sake of compatibility.
+- There is also a reason unrelated to models: iOS 15 devices stopped receiving security updates
+  long ago. Recommending a device that is no longer patched as a dedicated signing device
+  contradicts the app's own security claims. The same applies to the iPhone 8 on iOS 16, so
+  whichever tier is chosen, the onboarding pages should say that a dedicated device ought to run
+  a version still being maintained.
 
-如果最终要做，顺序建议：先降 16 并跑通全部测试与截图巡检，观察一轮；iOS 15 单独立项，因为它要动导航。
+If this is eventually done, the suggested order is: drop to 16 first, get the full test suite
+and the screenshot tour passing, and live with it for a round. iOS 15 should be its own project,
+because it touches navigation.

@@ -4,7 +4,7 @@ BitTool Wallet and BitTool Signer share one mark: a ring broken by a solid node 
 
 Brand line: **Air-gapped signing. For everyone.** Chinese: **离线签名，人人可用。**
 
-Names: **BitTool Signer** (BitTool 签名器) and **BitTool Wallet** (BitTool 钱包), published by BITTOOL PTE. LTD. — [bittool.com](https://bittool.com), [bittool.com/signer](https://bittool.com/signer), [bittool.com/wallet](https://bittool.com/wallet).
+Names: **BitTool Signer** and **BitTool Wallet**, published by BITTOOL PTE. LTD. — [bittool.com](https://bittool.com), [bittool.com/signer](https://bittool.com/signer), [bittool.com/wallet](https://bittool.com/wallet).
 
 ## Assets
 

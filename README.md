@@ -1,29 +1,33 @@
-# BitTool Signer iOS · 1.0.0
+# BitTool Signer for iOS · 1.0.0
 
-**BitTool Signer**（BitTool 签名器），BITTOOL PTE. LTD. 出品的离线签名 App，与 **BitTool Wallet**（BitTool 钱包）配套使用：[bittool.com](https://bittool.com) · [bittool.com/signer](https://bittool.com/signer) · [bittool.com/wallet](https://bittool.com/wallet)。两个 App 共用同一个标记，签名器用深色版本，钱包用浅色版本。本仓库即 App 的开源代码：[https://github.com/bitbill/bittool-signer-ios](https://github.com/bitbill/bittool-signer-ios)。图标下的名称按设备语言显示（`BitToolSigner/<语言>.lproj/InfoPlist.strings`，共 10 种），App 界面本身为英文。
+**BitTool Signer** is an offline, air-gapped transaction signer published by BITTOOL PTE. LTD., meant to be used alongside **BitTool Wallet**: [bittool.com](https://bittool.com) · [bittool.com/signer](https://bittool.com/signer) · [bittool.com/wallet](https://bittool.com/wallet). Both apps share one mark; the signer uses the dark version and the wallet the light one. This repository is the app's source: [github.com/bitbill/bittool-signer-ios](https://github.com/bitbill/bittool-signer-ios).
 
-SwiftUI + JavaScriptCore 离线签名器，最低 iOS 17，iOS 26 使用 Liquid Glass。Revision 3（2026-09-22）按反馈修复了连接页卡住、加入 NFT 审核、扩充 Token 表与钱包列表并改用 Ownbit 式备份；Revision 2（2026-09-21）在尚未发布的工程上做了全面重构：界面按原生设计重写，安全、逻辑、JS 引擎与密码学经过审查和加固，测试全面补齐。App 未上线，因此本轮直接采用新的存储格式，不迁移旧开发数据。
+SwiftUI with a JavaScriptCore engine, iOS 17 minimum, Liquid Glass on iOS 26 with native fallbacks on iOS 17 and 18. The app opens no network connection at any point: the signing engine, the token registry and every icon are bundled.
 
-**测试结果、修复清单与仍需外部验收的范围见 [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md)。工程可编译、测试通过，不等于已获第三方钱包兼容认证或独立安全审计。**
+The interface is available in **21 languages**. The app is called BitTool Signer in all of them — the name is not translated; only the camera and Face ID permission prompts are localized.
 
-## 许可与审查
+**Test results, the fix log and the limits of what has actually been verified are in [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md). A project that compiles and passes its tests is not the same thing as one certified compatible by third-party wallets, or independently audited.**
 
-代码以 [MIT License](LICENSE) 发布（BITTOOL PTE. LTD., 2026）。
+## License and review
 
-**怎么核对你装的 App 就是这份源码**：见 [docs/Reproducible-Build.md](docs/Reproducible-Build.md)。
-简短版——App Store 的可执行文件被 Apple 重新签名并带 FairPlay 加密，**无法**字节级复现；
-但全部交易解析与签名逻辑都在一个不加密的资源文件 `signer.js` 里，它可以从你自己下载的
-`.ipa` 中取出，和你用 `npm ci --ignore-scripts && npm run build` 从源码重建的结果逐字节比较。
-`scripts/release-manifest.sh` 生成发布清单（commit、全部跟踪文件的哈希、在干净克隆里重建出的
-引擎哈希），第三方在同一个 tag 上自己跑一遍即可 `diff` 比对。
+Released under the [MIT License](LICENSE) (BITTOOL PTE. LTD., 2026).
 
-代码经过 AI 辅助的安全审查，发现的问题已修复并补了回归测试（见
-[IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md)）。
-**那不是第三方独立安全审计**，也不构成任何安全保证；独立审计仍在待办清单里。
+The code has been through AI-assisted security review; the findings were fixed and covered by regression tests (see [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md)). **That is not a third-party independent audit** and guarantees nothing. An independent audit is still on the list.
 
-## 运行
+### Checking that the app you installed is this source
 
-打开 `BitToolSigner.xcodeproj`，选择 BitTool Signer scheme。真机创建钱包需要设置系统锁屏密码，并配置自己的 Development Team。JavaScript 引擎、Token 表和全部图标都随包提供，运行时不联网。
+See [docs/Reproducible-Build.md](docs/Reproducible-Build.md). The short version: an App Store executable **cannot** be reproduced byte for byte — Apple re-signs it and FairPlay-encrypts it, and the Swift toolchain makes no determinism promise. What can be checked is the part that decides what you are signing. Every transaction parser, risk rule and signing plan lives in one unencrypted resource, `signer.js`, which you can extract from an `.ipa` you downloaded yourself and compare against a build from this source:
+
+```sh
+cd engine && npm ci --ignore-scripts && npm run build
+shasum -a 256 ../BitToolSigner/Resources/signer.js
+```
+
+`scripts/release-manifest.sh` writes a release manifest: the commit, the hash of every tracked file in a fixed order, and an engine hash rebuilt from a clean dependency install in a throwaway copy of that commit. Run it on the same tag and `diff` the two.
+
+## Building
+
+Open `BitToolSigner.xcodeproj` and pick the BitTool Signer scheme. Creating a wallet on a real device needs a device passcode and your own development team.
 
 ```sh
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
@@ -37,41 +41,55 @@ npm test
 npm run build
 ```
 
-开发时安装依赖需要网络；App 运行时不下载依赖、不执行远程代码。截图巡检见 `BitToolSignerUITests/ScreenshotTour.swift`：设置 `TEST_RUNNER_BITTOOL_SIGNER_SHOT_DIR` 可把浅色／深色截图写到本机目录；设置 `TEST_RUNNER_BITTOOL_SIGNER_EXTRA_ARGS` 可附加启动参数（例如更大的动态字体）。
+Installing dependencies needs a network; the app downloads nothing and executes no remote code at runtime. For the screenshot tour see `BitToolSignerUITests/ScreenshotTour.swift`: `TEST_RUNNER_BITTOOL_SIGNER_SHOT_DIR` writes light and dark screenshots to a local directory, and `TEST_RUNNER_BITTOOL_SIGNER_EXTRA_ARGS` passes extra launch arguments, larger dynamic type for instance.
 
-## 界面结构
+## The interface
 
-底部四个 Tab：**Wallets · Scan · Activity · Settings**。
+Four tabs: **Wallets · Scan · Activity · Settings**.
 
-- **Wallets**：所有钱包并列，没有“当前钱包”。卡片显示身份色块、名称、主指纹（Fingerprint，与配对二维码中的 masterFingerprint 相同）和支持的网络，并直达 Connect / Addresses。详情页包含四条链和 Wallet Level 的配对入口、收款地址、查看助记词、改密码、改名和删除；点某条链直接进该链的 Coin Level，点“钱包级”或卡片上的 Connect 进 Wallet Level。Connect 页顶部可切换 Coin Level（各链标准格式）与 Wallet Level（一个二维码包含 BTC、ETH/EVM、TRON 的账户级 xpub 和 1 个 Solana 地址，格式见 [docs/Wallet-Pairing-v1.md](docs/Wallet-Pairing-v1.md)）；链选择器用强调色描边标出当前链；BTC 默认导出 Account XPUB；TRON 可导出任意地址索引（0 到 2³¹−1）。
-- **Scan**：整张扫码卡片都可点击，也可粘贴或导入文件。审核页顺序为摘要 → 风险提示 → 签名钱包 → 完整字段 → 请求指纹；风险确认和 Sign 按钮固定在底部。每次签名单独输入该钱包的密码。请求授权出去的地址（approve 的 spender、setApprovalForAll 的 operator、EIP-712 的 spender 或 verifying contract）会与内置的 1,720 个**已知公开合约**离线比对：命中就写出它是谁（例如 `Permit2 — Uniswap · infra`），没命中就直说不在名单里，未收录的 spender／operator 还会抬高风险等级（见 [docs/KnownContracts.md](docs/KnownContracts.md)）。收录只是辨识部署，不代表请求安全。 NFT 转账、授权和市场挂单（Seaport、LooksRare、Blur，以及 Solana 的 Metaplex/Bubblegum/Core）有专门的审核卡片：NFT 合约或 Mint、完整 Token ID、“你给出 / 你收到 / 其他人收到”，并对常见钓鱼特征给红色警告。
-- **Activity**：本机签名记录，按日期分组；BitTool Signer 不广播交易。每条记录都能看到**输入与输出**：输入是当初签的那份请求（打开时重新交给引擎审核一遍，字段与审核页一致，请求指纹必须对得上，也可展开原文），输出是产出的那份签名（可重新显示二维码给对方钱包扫、可导出文件、可展开原文）。只为最近 25 条保留原文，更早的记录只留摘要；存的都是公开数据，文件带完整加密保护、不进备份。
-- **Settings**：Face ID 锁、外观与界面语言（简体中文／繁體中文／العربية，阿拉伯语为从右到左布局；其余语言陆续补齐）、Networks, Tokens & Contracts（离线 Token 表 3,350 条覆盖 10 条链，以及 1,720 个已知公开合约地址，均可搜索）、兼容说明（按“可扫码签名 / 仅观察”列出核实过的钱包）、离线设备指南、Open Source（开源说明、仓库地址、本机构建信息与第三方声明）、版本与运营主体。
-- 首次使用：欢迎页 → 三页引导（只出现一次，保留创建／导入意图）→ 创建四步（生成 → 备份助记词 → 按顺序补全空缺单词 → 设置密码）或导入两步（输入并校验 → 设置密码）。
-- 备份助记词（参考 Ownbit 方案，沿用本 App 配色）：顶部可切换“单词 / 二维码”。单词、二维码和助记词卡片都默认遮盖，点一下就直接显示（不再弹确认框）；截屏、切到后台或录屏时立即重新遮盖。“二维码”是助记词明文二维码，只用于在私密环境下迁移到自己的另一台设备，不提供保存或分享。“Recovery Cards”把助记词分成三张卡片，每张隐去三分之一，任意两张即可恢复；12/15 词时提示单张卡片泄露过多。“Security Tips”集中列出安全提示；底部“I’ve Written Them Down in Order”进入检查。检查页只遮盖大部分单词，其中 4–5 个位置留空，需按顺序点选打乱的单词补全。
-- 导入支持 BIP39 全部 10 种语言：English、简体中文、繁體中文、日本語、한국어、Español、Français、Italiano、Čeština、Português。自动识别语言并校验 checksum；西班牙语、法语可不输入重音，中文可不加空格。若同一组词在两种语言中都有效（会得到两个不同钱包），App 会请你选择备份所用的语言。输入时，候选词显示在键盘上方，也支持扫描助记词二维码（含 BitTool Signer 自己的助记词二维码）和 SeedQR。
+- **Wallets** — every wallet side by side; there is no "current wallet". A card shows an identity colour, the name, the master fingerprint (the same `masterFingerprint` the pairing QR carries) and the networks it supports, with direct links to Pair and Addresses. The detail page covers all four chains plus wallet-level pairing, receiving addresses, revealing the recovery phrase, changing the password, renaming and deleting. Tapping a chain opens Coin Level for it; tapping Wallet Level, or Pair on the card, opens Wallet Level.
 
-BTC、ETH、BNB Chain、Arbitrum、Base、TRON、Solana 的网络图标和 App 图标都是矢量重绘（见 [design/Brand.md](design/Brand.md)），其余代币图标来自核对过的官方来源与 CoinMarketCap 榜单图，按内容去重后打包在一个文件里（见 [docs/TokenRegistrySources.md](docs/TokenRegistrySources.md)）。
+  The Pair page switches between **Coin Level** (each chain's own standard format) and **Wallet Level**, which exports in one animated multi-frame QR code: account xpubs for **four Bitcoin script types** — `p2wpkh` (bc1q), `p2tr` (bc1p), `p2sh-p2wpkh` (3) and `p2pkh` (1) — an EVM xpub, a TRON xpub, and **three Solana addresses** (standard, trust, legacy; Ed25519 derivation is hardened, so a watch-only wallet cannot derive one of them from another). The format is specified in [docs/Wallet-Pairing-v1.md](docs/Wallet-Pairing-v1.md). Bitcoin exports an Account XPUB by default, and TRON can export any address index from 0 to 2³¹−1.
 
-## 安全模型要点
+- **Scan** — the whole scan card is tappable, and a request can also be pasted or imported from a file. The review page runs summary → risk warnings → signing wallet → full fields → request fingerprint, with the risk acknowledgement and the Sign button pinned to the bottom. Every signature takes that wallet's own password.
 
-- 每个钱包独立加密：PBKDF2-HMAC-SHA256 600,000 次 + AES-256-GCM，外层再用仅本机 Keychain 设备密钥加密。vault 格式 2 以存储的原始 header 字节作为认证数据。
-- 使用条款与隐私政策（v1.0，英文）随 App 内置，在 Settings › About 与欢迎页内阅读，不跳转浏览器；App 全程不发起任何网络连接。
-- 地址与配对只读取本地公开索引，不解锁 seed。公开索引文件带 HMAC-SHA256 认证（Keychain 密钥），被篡改或缺失时进入“Repair”，输入一次密码即可重建。
-- 扫码 → 本地解析 → 按公钥自动匹配钱包 → 固定签名任务 → 每个任务单独输入密码。没有手动选签名钱包、全局解锁或免密签名。
-- BIP39 seed 由原生 CommonCrypto 计算后交给引擎。凡涉及秘密或外部输入的引擎操作都在全新的 JavaScriptCore 上下文中执行，Release 版只开放固定的操作白名单。
-- App Lock 可选，默认关闭，只保护界面，从不授权签名。冷启动、或后台满 120 秒（计时包含设备休眠）后需要重新验证。进入后台时立即清除密码、风险确认和已显示的助记词。
+  Any address a request would authorize — an `approve` spender, a `setApprovalForAll` operator, an EIP-712 spender or verifying contract — is compared offline against 1,720 bundled **known public contracts**. A hit names the deployment (`Permit2 — Uniswap · infra`); a miss says plainly that it is not on the list, and an unlisted spender or operator also raises the risk level (see [docs/KnownContracts.md](docs/KnownContracts.md)). Being listed identifies a deployment. It does not mean the request is safe.
 
-完整说明见 [docs/Security.md](docs/Security.md)。
+  NFT transfers, approvals and marketplace orders (Seaport, LooksRare, Blur, and Solana's Metaplex, Bubblegum and Core) get their own review cards: the NFT contract or mint, the complete token ID, "you give / you receive / someone else receives", and red warnings for the usual phishing shapes.
 
-## 文档
+- **Activity** — on-device signing records, grouped by date. BitTool Signer does not broadcast transactions. Each record shows both **input and output**: the input is the request as it was signed, handed back to the engine for a fresh review when opened, so the fields match the review page and the request fingerprint has to agree; the output is the signature produced, which can be shown again as a QR code for the other wallet to scan, exported as a file, or expanded as raw text. Only the last 25 records keep their raw payloads; older ones keep the summary. Everything stored is public data, in files with full encryption protection, excluded from backups.
 
-- [实施状态、测试结果与修复清单](IMPLEMENTATION_STATUS.md)
-- [安全模型与权限边界](docs/Security.md)
-- [协议、导出语义与兼容证据](docs/Compatibility.md)
-- [引擎 API 与测试](engine/README.md)
-- [Token 表来源与筛选](docs/TokenRegistrySources.md)、[钱包图标来源](docs/WalletLogoSources.md)
-- [发行验收](docs/Release-1.0.0.md)
-- [品牌与图标](design/Brand.md)
+- **Settings** — App Lock, appearance and interface language (21 languages; Arabic lays the whole interface out right to left), Networks, Tokens & Contracts (an offline registry of 3,350 tokens across 10 networks plus the 1,720 known public contract addresses, both searchable), compatibility notes listing the wallets that have been checked under "can sign by QR" and "watch-only", the air-gapped device guide, Open Source (what is published, the repository address, this build's own information, third-party notices), and the version and operating entity.
 
-`docs/validation` 中的旧报告只作历史记录，不代表本轮验收结果。
+- First run: welcome → three onboarding pages, shown once, preserving the create-or-import intent → then four steps to create (generate → back up the phrase → fill the blanks back in order → set a password) or two to import (enter and validate → set a password).
+
+- Backing up the recovery phrase: the top switches between **Words** and **QR**. Words, the QR code and the recovery cards are all concealed by default and reveal on a tap, then re-conceal immediately on a screenshot, a move to the background, or a screen recording. The QR code is a plaintext phrase QR, meant only for moving to another device of your own in private; it cannot be saved or shared. **Recovery Cards** splits the phrase across three cards, each hiding a third, so any two reconstruct it — with a warning at 12 and 15 words that a single card gives away too much. **Security Tips** collects the warnings in one place. The check at the end conceals most words and leaves 4–5 blanks to fill in order from a shuffled set.
+
+- Importing accepts all 10 BIP39 languages: English, 简体中文, 繁體中文, 日本語, 한국어, Español, Français, Italiano, Čeština, Português. The language is detected and the checksum validated as you type; Spanish and French work without accents, Chinese without spaces. When one set of words is valid in two languages — which would produce two different wallets — the app asks which language the backup was written in. Candidate words appear above the keyboard, and phrase QR codes (including the app's own) and SeedQR are both accepted.
+
+Network icons for BTC, ETH, BNB Chain, Arbitrum, Base, TRON and Solana, and the app icon itself, are redrawn as vectors (see [design/Brand.md](design/Brand.md)). The remaining token icons come from verified official sources and CoinMarketCap listing images, deduplicated by content and packed into a single file (see [docs/TokenRegistrySources.md](docs/TokenRegistrySources.md)).
+
+## The security model, in brief
+
+- Every wallet is encrypted on its own: PBKDF2-HMAC-SHA256 at 600,000 iterations, then AES-256-GCM, then an outer layer under a device key that never leaves this device's Keychain. Vault format 2 authenticates the stored header bytes as they are.
+- The Terms of Use and Privacy Policy (v1.1, English) are bundled and read inside Settings › About and from the welcome page. No browser is opened.
+- Addresses and pairing read only the local public index; they never unlock the seed. That file is authenticated with HMAC-SHA256 under a Keychain key, and if it is tampered with or missing the wallet enters Repair, which rebuilds it after one password entry.
+- Scan → parse locally → match the wallet by public key → fix the signing task → enter the password per task. There is no manual choice of signing wallet, no global unlock and no password-free signing.
+- The BIP39 seed is computed natively with CommonCrypto and then handed to the engine. Every engine operation that touches a secret or untrusted input runs in a fresh JavaScriptCore context, and Release builds expose only a fixed allowlist of operations.
+- App Lock is optional and off by default. It protects the interface and never authorizes a signature. It re-authenticates on a cold launch, or after 120 seconds in the background — a timer that keeps counting while the device sleeps. Moving to the background immediately clears passwords, risk acknowledgements and any revealed phrase.
+
+The full account is in [docs/Security.md](docs/Security.md).
+
+## Documentation
+
+- [Implementation status, test results and the fix log](IMPLEMENTATION_STATUS.md)
+- [Security model and permission boundaries](docs/Security.md)
+- [Reproducible builds: verifying a published build](docs/Reproducible-Build.md)
+- [Export compliance determination](docs/Export-Compliance.md)
+- [Protocols, export semantics and compatibility evidence](docs/Compatibility.md)
+- [Engine API and tests](engine/README.md)
+- [Token registry sources and selection](docs/TokenRegistrySources.md) · [wallet icon sources](docs/WalletLogoSources.md)
+- [Release acceptance](docs/Release-1.0.0.md)
+- [Brand and icons](design/Brand.md)
+
+Older reports under `docs/validation` are kept as history and do not describe the current state.

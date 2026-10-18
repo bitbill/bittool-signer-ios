@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-10-16T03:16:23.667Z",
+  "generatedAt": "2026-10-18T11:45:22.125Z",
   "nodeVersion": "v20.20.2",
   "sourceType": "Local working tree, not a release certification or Git commit snapshot",
   "files": [
     {
       "path": "engine/protocols.js",
-      "sha256": "1ea64e51b59ff339da17fd04e90babed13ee716b7cd88aa2a6b775e318a5ed50"
+      "sha256": "b74922ddcce79e6bf8ed24a00e970019ae57a8f057f7122e69750f227a92df4f"
     },
     {
       "path": "engine/src/bitcoin-policy.js",
@@ -13,11 +13,11 @@
     },
     {
       "path": "engine/src/bitcoin.js",
-      "sha256": "0a952110c29221df12d35b6505d954e2decbc518679f99b0cf386e629d5755fc"
+      "sha256": "78e56e69d75765078293274b9a49a3e9c31e0f642f2b416e9ab5f1f5cca58650"
     },
     {
       "path": "engine/src/evm.js",
-      "sha256": "771da874405b7b8b8bf081d5cec4dd710c509cf090b121d305e0dd123c1f0517"
+      "sha256": "e10b49ad5517c1d19ca3fc6b6309fa8e825a94c715644e9c47f87ccc8b86f7b7"
     },
     {
       "path": "engine/src/index.js",
@@ -26,6 +26,10 @@
     {
       "path": "engine/src/keys.js",
       "sha256": "9e79dac967ef18bee9288054b025485bb888c0f7d98ae10f74f0de1ae5f2b0f8"
+    },
+    {
+      "path": "engine/src/known-contracts.js",
+      "sha256": "4b50af0ef7c16764447447bb2fd4ef4a01875a1429468c3375915e43a576eb8d"
     },
     {
       "path": "engine/src/nft-orders.js",
@@ -37,15 +41,15 @@
     },
     {
       "path": "engine/src/public-index.js",
-      "sha256": "584bbccf5c0c06f89644d7e009fc9e780209d6e13ab3002b0087836b2c3b97c2"
+      "sha256": "14b4c9279c5da8ab6e8f4f93943f92c249e36cab94261b6710d0f7163a2cfc60"
     },
     {
       "path": "engine/src/resolver.js",
-      "sha256": "7e75a256e7e0bbfaee1a1df91c094d0f4834100d3605f4e00237fc9afcb88cbf"
+      "sha256": "fa8437f88cd1825807ef4064c177c13ad76508cce19e0df80be142a67cd04e80"
     },
     {
       "path": "engine/src/solana.js",
-      "sha256": "aaf77479980a9028a3cf567b3abd2cf6cd0919c0fab640935c651a3e70546ebd"
+      "sha256": "7ad89f4ca6ed81c02c3dea77ceeaa62bc56b78166492dd2619f023d42410c4a2"
     },
     {
       "path": "engine/src/token-registry.js",
@@ -53,7 +57,7 @@
     },
     {
       "path": "engine/src/tron.js",
-      "sha256": "fc7061227dc036603d91e446a003dd9e7cea039878301edd7f995bab16a7337b"
+      "sha256": "6a584514766713a584a591af3bc3af400eb0b473d33718834122e30e6039f156"
     },
     {
       "path": "engine/src/util.js",
@@ -65,7 +69,7 @@
     },
     {
       "path": "engine/test/wallet-pairing.test.mjs",
-      "sha256": "5ab2e1b5343520d4f9c39de9e8745b9c77bdd24ec01ac3e341227940b29d7d4f"
+      "sha256": "cce2d9a12dada171aa90609a9034fbb45ba2bc1277ab35fec0bc536ce005ef09"
     },
     {
       "path": "engine/package.json",
@@ -73,7 +77,7 @@
     },
     {
       "path": "engine/package-lock.json",
-      "sha256": "4f5eb7f4ffc7c61c2f261902e44cc78d46e3c890a367f2869d1bc33dda107ac9"
+      "sha256": "031b955333e807660d1f8424be44cbe346ae044cc4284b589a1256bd1b75d201"
     },
     {
       "path": "engine/data/token-registry.engine.json",
@@ -82,8 +86,8 @@
   ],
   "bundle": {
     "path": "BitToolSigner/Resources/signer.js",
-    "sha256": "b05a2c1cacaebf0d7e2be5c3361c69bbdafaf0f274c0d9def39390f5d9bbcfe4",
-    "bytes": 1038645
+    "sha256": "6933d0d8a6f60faa8222506ac0bd7eef80eb884c9f73e31e9f354b4740f21077",
+    "bytes": 1181026
   },
   "capabilities": {
     "version": "1.0.0",

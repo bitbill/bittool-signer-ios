@@ -1,37 +1,65 @@
-# 本次交付验证
+# Verification for this handoff package
 
-日期：2026-09-22。仅生成 BitTool Wallet 开发文档和公开互操作数据，没有修改 BitTool Signer 应用或签名引擎。
+Regenerated 18 October 2026 against the current code. This package only produces BitTool Wallet
+development documentation and public interoperability data; it does not modify the BitTool
+Signer app or its signing engine.
 
-## 已执行
+> **Regenerated, 18 October 2026.** The earlier version of this package described the
+> pre-Revision-9 pairing payload: three account xpubs plus a single Solana address, 755 inner
+> CBOR bytes. The shipping format now exports **seven accounts** — four Bitcoin script types,
+> EVM, TRON — and **three Solana addresses**. The fixtures and the baseline below have been
+> regenerated from current code. A receiving implementation built against the old numbers will
+> not interoperate.
 
-1. 实际读取用户的 `BitTool Signer_Wallet_Level_QR_Pairing_v1_v2.md`，对照当前 `protocols.js`、public index、resolver、四链签名实现和测试。
-2. 执行 `node --test test/wallet-pairing.test.mjs test/protocols.test.js`：**24 passed / 0 failed / 0 skipped**。这是最后采用的单 SOL 地址实现对应的测试结果。
-3. 执行 `generate-fixtures.mjs`：钱包级 UR 乱序组包、inner/outer CBOR 字节一致；**9 个真实签名往返样例通过**。
-4. 样例经过公开账户定位和固定签名任务，独立 CBOR 解码响应，检查 requestId 与 signature/PSBT bytes 原样保留。EVM 检查恢复地址（含 Legacy 多字节 v），SOL 检查 Ed25519，TRON 检查 secp256k1 签名，BTC 检查 BIP143 digest 上的 ECDSA 签名并完成 PSBT finalize/extract。
-5. 生成前后所有登记源文件摘要一致，随后再校验一次仍与快照一致。应用 bundle 的文件大小和 SHA-256 与 manifest 一致。
+## What was done
 
-## 本包基线
+1. Read the reference `BitTool Signer_Wallet_Level_QR_Pairing_v1_v2.md` against the current
+   `protocols.js`, public index, resolver, the four chain signing implementations and their
+   tests.
+2. Ran `node --test test/wallet-pairing.test.mjs test/protocols.test.js`:
+   **24 passed / 0 failed / 0 skipped.**
+3. Ran `generate-fixtures.mjs`: wallet-level UR reassembly out of order, inner and outer CBOR
+   bytes consistent; **9 real signing round-trip samples passed.**
+4. Each sample goes through public account location and a fixed signing task, decodes the
+   response as independent CBOR, and checks that the requestId and the signature or PSBT bytes
+   are preserved exactly. EVM checks the recovered address (including multi-byte legacy `v`),
+   Solana checks Ed25519, TRON checks the secp256k1 signature, and Bitcoin checks the ECDSA
+   signature over the BIP143 digest and then finalizes and extracts the PSBT.
+5. Every registered source file hashed identically before and after generation, and was
+   re-checked afterwards against the snapshot. The app bundle's size and SHA-256 match its
+   manifest.
+
+## Baseline for this package
 
 ```text
 Wallet pairing protocol: 1
 Current mode field: full
-BTC / EVM / TRON: account xpubs
-SOL: one explicit standard address, index 0
-Inner CBOR bytes: 755
-BC-UR frames: 4 (fragmentLength 200)
+BTC: four account xpubs (p2wpkh, p2tr, p2sh-p2wpkh, p2pkh)
+EVM / TRON: account xpubs
+SOL: three explicit addresses (standard, trust, legacy), index 0
+Inner CBOR bytes: 1561
+BC-UR frames: 4 (fragmentLength 400)
 Inner CBOR SHA-256:
-efdab5c36d0fc48fc62b2af4dd0f3aae7739fed6117c72462f2dccfb62185d44
+c8db82cd92e0cf45cb6329b2429494b04a3b6bad7653c9bed1d2a5ef10f4a5fc
 
-BitToolSigner/Resources/signer.js bytes: 849836
+BitToolSigner/Resources/signer.js bytes: 1181026
 Bundle SHA-256:
-23b11291453ef177aefe17715901932e3242994261b9d52f4d822b3480dba2af
+6933d0d8a6f60faa8222506ac0bd7eef80eb884c9f73e31e9f354b4740f21077
 ```
 
-精确生成时间、各源文件摘要与运行时版本见 `fixtures/source-snapshot.json`。源码是本地工作区版本，不是发布认证或 Git commit 快照。
+The exact generation time, each source file's digest and the runtime versions are in
+`fixtures/source-snapshot.json`. The source is the local working copy, not a release
+certification or a Git commit snapshot.
 
-## 验证范围
+## Scope of this verification
 
-- 未访问 BitTool Wallet 源码，未实现 BitTool Wallet 功能；本次交付是供其开发使用的 prompt 和向量。
-- 未进行 BitTool Wallet ↔ BitTool Signer 真机相机闭环、真钱广播或外部钱包认证，未宣称这些已通过。
-- 无 mode 向量是拟定的 BitTool Wallet 接收端兼容用例，当前 BitTool Signer reference decoder 仍要求 mode；不能把这份向量当作已由当前冷端导出的证据。
-- 公共向量覆盖协议基础路径，不代表所有 Token、NFT、多签、网络异常与 UI 验收已完成；完整待测清单写在 prompt 中。
+- The BitTool Wallet source was not accessed and no BitTool Wallet functionality was
+  implemented. This handoff is the prompt and the vectors for that work.
+- No real-device camera loop between BitTool Wallet and BitTool Signer was performed, no
+  real-value broadcast, and no external wallet certification. None of those is claimed to pass.
+- The no-`mode` vector is a proposed compatibility case for the BitTool Wallet receiving side.
+  The current BitTool Signer reference decoder still requires `mode`, so that vector must not be
+  treated as evidence of what the current cold side exports.
+- The public vectors cover the protocol's basic paths. They do not mean that every token, NFT,
+  multisig case, network error and UI acceptance item is complete; the full outstanding list is
+  in the prompt.

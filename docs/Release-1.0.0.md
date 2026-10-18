@@ -1,26 +1,56 @@
-# BitTool Signer 1.0.0 — 本轮实施与发行边界
+# BitTool Signer 1.0.0 — scope of this round and of the release
 
-基准：2026-09-21 Revision 2（全面重构）；工程版本 1.0.0 (1)，最低 iOS 17。未发布到 TestFlight / App Store。App 未上线，本轮使用新存储格式（vault 格式 2、带认证的公开索引），不迁移旧开发数据。
+Baseline: Revision 2 of 21 September 2026 (the full rebuild). Project version 1.0.0 (1),
+iOS 17 minimum. Because the app has not shipped, this round adopts the new storage format
+(vault format 2, an authenticated public index) with no migration of older development data.
 
-新规范的逐项实施、测试结果、截图及 bundle 校验值集中记录在 [IMPLEMENTATION_STATUS.md](../IMPLEMENTATION_STATUS.md)。旧报告保留历史记录，不用早期测试数代替本轮验收。
+Item-by-item implementation of the new specification, test results, screenshots and bundle
+checksums are collected in [IMPLEMENTATION_STATUS.md](../IMPLEMENTATION_STATUS.md). Older
+reports are kept as history; early test counts are not a substitute for this round's
+acceptance.
 
-## 本轮产品方向
+## Product direction for this round
 
-底部四个 Tab（Wallets · Scan · Activity · Settings）。多个独立钱包 → 公开数据浏览／配对 → 扫码自动匹配 → 固定签名任务逐次密码授权。Face ID 仅保护 App 页面。没有全局 Unlock Vault、手动切换签名钱包、TP 私有格式、联网功能或测试网产品入口。
+Four tabs at the bottom: Wallets · Scan · Activity · Settings. Several independent wallets →
+browsing and pairing public data → automatic matching on scan → fixed signing tasks, each
+authorized by its own password. Face ID protects app pages only. There is no global "unlock
+vault", no manual switching of the signing wallet, no TP proprietary format, no networking
+and no testnet entry point in the product.
 
-## 发行仍需的外部验收
+## External acceptance still required before release
 
-1. 使用实际 iPhone 验证设备 Keychain、移除锁屏密码、重装、备份排除、文件保护、Face ID 失败／取消、录屏／投屏、后台恢复及相机扫码。模拟器 fixture 不能代替这些结果。
-2. 针对每个拟宣称兼容的钱包，记录版本、平台、链和入口，完成配对、地址核对、构建请求、审核、签名、回扫、本地验签；分别覆盖支持的单签、多签、代币、NFT、消息和权限操作。
-3. BTC MuSig2 等尚不支持的 spend 不能以 PSBT 容器支持冒充；缺少可信上下文的 SOL ALT 或任意多签提案也不能伪称已完整解析。具体拒绝边界以 [引擎文档](../engine/README.md) 为准。
-4. 独立安全审计、模糊测试、依赖审查、可复现构建，以及 Apple 分发签名和所需商店材料。
+1. Verify on a real iPhone: the device Keychain, removing the lock-screen passcode,
+   reinstalling, backup exclusion, file protection, Face ID failure and cancellation, screen
+   recording and mirroring, restoring from the background, and camera scanning. Simulator
+   fixtures cannot stand in for these results.
+2. For every wallet whose compatibility is to be claimed, record the version, platform, chain
+   and entry point, then complete pairing, address checking, request construction, review,
+   signing, scanning back and local signature verification — covering, separately, the
+   single-signature, multisig, token, NFT, message and permission operations supported.
+3. Spends that are not yet supported, such as BTC MuSig2, must not be passed off as supported
+   merely because the PSBT container is; nor may a Solana address lookup table without
+   trusted context, or an arbitrary multisig proposal, be claimed as fully parsed. The
+   authoritative refusal boundaries are in the [engine documentation](../engine/README.md).
+4. An independent security audit, fuzzing, a dependency review, reproducible builds, and
+   Apple distribution signing with the store materials that requires.
 
-## 设备验收建议
+## Suggested device acceptance
 
-- 使用专用测试钱包，断开网络，确认创建／导入、地址、配对、扫码、匹配、签名和回传均工作；开启网络也不得出现产品网络提示或阻断。
-- 检查浅色／深色、小屏／大字号／VoiceOver，特别是 QR、长地址、风险说明和 App Lock 界面。
-- App Lock 开启后检查冷启动，以及后台 119 秒和 120 秒边界。无论是否触发锁页，签名密码都必须在进入后台时清空。
-- 错误助记词、弱密码、错误钱包密码、篡改请求、冲突签名元数据必须失败，且不泄漏秘密。
-- 同一助记词及相同 BIP39 passphrase 恢复后身份一致；不同 passphrase 产生不同身份。删除或篡改公开索引文件后，钱包显示 Repair，输入一次密码即可重建，加密文件和本机 UUID 不变。
+- Use a dedicated test wallet with the network disconnected, and confirm that creating and
+  importing, addresses, pairing, scanning, matching, signing and handing the result back all
+  work. With the network enabled there must still be no product-level network prompt or block.
+- Check light and dark, small screens, large type and VoiceOver — particularly QR codes, long
+  addresses, risk text and the App Lock screen.
+- With App Lock on, check a cold launch and the 119-second and 120-second background
+  boundaries. Whether or not the lock screen appears, the signing password must be cleared on
+  entering the background.
+- A wrong recovery phrase, a weak password, a wrong wallet password, a tampered request and
+  conflicting signature metadata must all fail, without leaking a secret.
+- The same phrase with the same BIP39 passphrase must restore to the same identity, and a
+  different passphrase to a different one. After the public index file is deleted or tampered
+  with, the wallet shows Repair and one password entry rebuilds it, leaving the encrypted file
+  and the local UUID unchanged.
 
-未完成的外部验收不能用版本号、SDK 自测或可编译状态替代。公开地址／恢复路径兼容不等同于扫码签名互通。
+Outstanding external acceptance cannot be substituted by a version number, by self-testing
+against the SDK, or by the fact that the project compiles. Compatibility of public addresses
+and recovery paths is not the same thing as QR signing interoperability.
