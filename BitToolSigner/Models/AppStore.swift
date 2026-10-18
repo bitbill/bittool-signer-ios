@@ -478,6 +478,39 @@ final class AppStore: ObservableObject {
         guard sensitive == sensitiveEpoch else { throw CancellationError() }
         return secret
     }
+    /// The wallet this exact recovery phrase and BIP39 passphrase already
+    /// belong to, if any. Public derivation only: nothing here reads a vault,
+    /// asks for a password or returns a secret.
+    func existingWallet(mnemonic: String, passphrase: String) async throws -> UUID? {
+        let epoch = securityEpoch
+        let canonical = try await validateMnemonic(mnemonic).phrase
+        let raw = try await engine.run(operation: "derivePublicIndex", parameters: ["seed": try BIP39Seed.hex(mnemonic: canonical, passphrase: passphrase)])
+        try requireSession(epoch)
+        let key = try WalletPublicMetadata(raw).walletKeyId
+        return publicWallets.first { $0.value.walletKeyId == key }?.key
+    }
+
+    /// Re-encrypts a wallet under a new password, authorized by its own recovery
+    /// phrase rather than by the password nobody remembers. The phrase must
+    /// derive this very wallet, which is checked here before anything is
+    /// written: without that check, one wallet's phrase could overwrite
+    /// another's stored secret.
+    func resetPassword(walletID: UUID, mnemonic: String, passphrase: String, newPassword: String) async throws {
+        guard let existing = publicWallets[walletID] else { throw AppIssue.message(String(localized: "This wallet needs repair before its password can be reset.", bundle: AppText.bundle)) }
+        let epoch = securityEpoch
+        let canonical = try await validateMnemonic(mnemonic).phrase
+        let raw = try await engine.run(operation: "derivePublicIndex", parameters: ["seed": try BIP39Seed.hex(mnemonic: canonical, passphrase: passphrase)])
+        try requireSession(epoch)
+        let derived = try WalletPublicMetadata(raw)
+        guard derived.walletKeyId == existing.walletKeyId else {
+            throw AppIssue.message(String(localized: "This recovery phrase belongs to a different wallet.", bundle: AppText.bundle))
+        }
+        try await vault.resetPassword(id: walletID, mnemonic: canonical, passphrase: passphrase, newPassword: newPassword)
+        // The password that was authorizing this session is gone.
+        suspend()
+        await reload()
+    }
+
     /// Only the password that opens the vault changes. Keys, the wallet ID,
     /// public data, reviewed requests and navigation all stay valid.
     func changePassword(walletID: UUID, current: String, new: String) async throws {

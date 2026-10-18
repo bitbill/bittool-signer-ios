@@ -298,7 +298,8 @@ function instruction(program,a,data,signers){
       if(burn){
         const shown=asset?asset.displayAmount:checked?decimal(amount,decimals):String(amount);
         const unit=asset?asset.symbol:checked?(shown==='1'?'token':'tokens'):(amount===1n?'raw unit':'raw units');
-        movements.push({amount:shown,symbol:unit,to:a[1],label:'Mint',destroys:true});
+        movements.push({amount:shown,symbol:unit,to:a[1],label:'Mint',destroys:true,
+          raw:amount,scale:asset?asset.decimals:checked?decimals:0});
         riskLevel='high';
         warnings.push(`HIGH RISK: This permanently destroys ${shown} ${unit}. Burning cannot be undone.`);
       }
@@ -393,10 +394,25 @@ export function parseSolana(request){
   const burns=movements.filter(m=>m.destroys);
   const single=movements.length===1?movements[0]:undefined,hint=single?decoded[single.source].display:undefined,lone=actions.length===1?actions[0]:undefined;
   const rest=movements.length-burns.length;
-  const burnDisplay=burns.length?{action:'Burn',amount:burns[0].amount,symbol:burns[0].symbol,
-    headline:(burns.length>1?`Destroys ${burns.length} assets`:`Destroys ${burns[0].amount} ${burns[0].symbol}`)
+  // Burns of one mint add up; burns of different mints do not, and a transfer
+  // beside them is a separate effect again. A single headline amount is shown
+  // only when one total describes the whole transaction — otherwise the first
+  // burn, which may be a dust amount, would stand in for everything.
+  const burnGroups=[];
+  for(const burn of burns){
+    const key=burn.to+'/'+burn.symbol+'/'+burn.scale;
+    const group=burnGroups.find(g=>g.key===key);
+    if(group){group.raw+=burn.raw;group.count++;}
+    else burnGroups.push({key,raw:burn.raw,scale:burn.scale,symbol:burn.symbol,to:burn.to,count:1});
+  }
+  const burnTotal=g=>decimal(g.raw,g.scale)+' '+g.symbol;
+  const whole=burnGroups.length===1&&!rest?burnGroups[0]:undefined;
+  const burnDisplay=burns.length?{action:'Burn',...(whole?{amount:decimal(whole.raw,whole.scale),symbol:whole.symbol}:{}),
+    headline:(whole?`Destroys ${burnTotal(whole)}`+(whole.count>1?` in ${whole.count} burns`:'')
+      :`Destroys ${burnGroups.slice(0,3).map(burnTotal).join(' + ')}`+(burnGroups.length>3?` (+${burnGroups.length-3} more assets)`:''))
       +(rest?` · ${rest} other transfer${rest>1?'s':''} below`:''),
-    counterpartyLabel:'Mint',counterparty:burns[0].to}:undefined;
+    counterpartyLabel:'Mint',counterparty:burnGroups.length===1?burnGroups[0].to:undefined}:undefined;
+  if(burnDisplay&&!burnDisplay.counterparty)delete burnDisplay.counterparty;
   const display=burnDisplay??(single&&hint?{action:lone?hint.action:'Sign Transaction',headline:hint.headline,counterpartyLabel:single.label,counterparty:single.to}
     :single?{action:lone?lone.action:'Sign Transaction',amount:single.amount,symbol:single.symbol,counterpartyLabel:single.label,counterparty:single.to}
     :movements.length>1?{action:'Sign Transaction',headline:movements.length+' transfers · review each below'}
@@ -406,7 +422,7 @@ export function parseSolana(request){
   const markets=[...new Set(decoded.map(d=>d.marketplace).filter(Boolean))];
   if(markets.length){display.action='NFT marketplace action';if(!hint&&movements.length<=1)display.headline=markets.join(' + ')+' · not decoded';}
   if(!display.headline)delete display.headline;display.fee=decimal(baseFee+priorityFee,9)+' SOL max';
-  const summary=burns.length?`Burn ${burns[0].amount} ${burns[0].symbol}`+(rest?` and ${rest} transfer${rest>1?'s':''}`:''):markets.length&&!movements.length?'NFT marketplace action (not decoded)':single?(hint?.summary??`${single.amount} ${single.symbol}`):movements.length>1?`${movements.length} transfers`:instructions.length===1?(actions[0]?.action??'1 instruction'):`${instructions.length} instructions`;
+  const summary=burns.length?`Burn ${burnGroups.slice(0,3).map(burnTotal).join(' + ')}`+(burnGroups.length>3?` and ${burnGroups.length-3} more assets`:'')+(rest?` and ${rest} transfer${rest>1?'s':''}`:''):markets.length&&!movements.length?'NFT marketplace action (not decoded)':single?(hint?.summary??`${single.amount} ${single.symbol}`):movements.length>1?`${movements.length} transfers`:instructions.length===1?(actions[0]?.action??'1 instruction'):`${instructions.length} instructions`;
   const title=instructions.length===1&&actions[0]?.action==='proposal approve'?'Approve a multisig proposal':'Sign Solana transaction';
   const asset=single&&assets.length===1&&single.symbol===assets[0].symbol?assets[0]:undefined;
   return {bytes,keys,required,signatures,signingBytesDigest:bytesToHex(sha256(bytes)),review:reviewResult(request,title,summary,fields,[...new Set(warnings)],{decodeStatus,riskLevel,network:NETWORK,display,...(asset?{asset}:{})})};

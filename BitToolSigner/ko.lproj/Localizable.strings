@@ -220,6 +220,7 @@
 "Each wallet signs with its own password. The final signature appears after every wallet has signed." = "각 지갑은 자체 암호로 서명합니다. 모든 지갑이 서명하면 최종 서명이 표시됩니다.";
 "Ed25519 message signature" = "Ed25519 메시지 서명";
 "Email" = "이메일";
+"Energy budget" = "에너지 예산";
 "Energy budget up to %@ · total fee not known offline" = "에너지 예산 상한 %@ · 총 수수료는 오프라인에서 알 수 없음";
 "Engine size" = "엔진 크기";
 "Enter a wallet name." = "지갑 이름을 입력하세요.";
@@ -272,12 +273,12 @@
 "Hook extra accounts" = "훅 추가 계정";
 "Hook validation account" = "훅 검증 계정";
 "How signing works" = "서명이 이루어지는 방식";
-"I have a backup of the recovery phrase" = "복구 구문을 백업했습니다";
+"I confirm I want to delete this wallet" = "삭제하려는 것을 확인합니다";
 "I understand the risks of this request" = "이 요청의 위험을 이해했습니다";
 "I understand this request can’t be fully verified" = "이 요청을 완전히 검증할 수 없음을 이해했습니다";
 "If iOS asks to allow wireless data, choose Don’t Allow: the app never connects" = "iOS가 무선 데이터 허용을 물으면 ‘허용 안 함’을 선택하세요. 이 앱은 절대 연결하지 않습니다";
 "If this wallet uses a BIP39 passphrase, the words alone cannot restore it." = "이 지갑이 BIP39 패스프레이즈를 쓴다면 단어만으로는 되살릴 수 없습니다.";
-"If you forget this password, delete the wallet and import it again with the recovery phrase." = "이 암호를 잊으면 지갑을 삭제하고 복구 구문으로 다시 가져오세요.";
+"If you forget this password, import this recovery phrase again to set a new one." = "비밀번호를 잊었다면 이 복구 구문을 다시 가져와 새로 설정할 수 있습니다.";
 "Ignored request keys" = "무시된 요청 항목";
 "Import Existing Wallet" = "기존 지갑 가져오기";
 "Import File" = "파일 가져오기";
@@ -404,6 +405,7 @@
 "One address works on Ethereum, BNB Smart Chain, Arbitrum, Base and other EVM networks." = "하나의 주소를 Ethereum, BNB Smart Chain, Arbitrum, Base 등 EVM 네트워크 전체에서 쓸 수 있습니다.";
 "One animated QR code for all four chains" = "네 개 체인을 모두 담은 애니메이션 QR 코드 하나";
 "Only enter your recovery phrase into a wallet you trust, on a device you control, when you restore it." = "복구 구문은 되살릴 때, 믿을 수 있는 지갑과 본인이 관리하는 기기에만 입력하세요.";
+"Only the password changes. The wallet keeps its name, addresses, paired wallets and history." = "비밀번호만 바뀝니다. 지갑의 이름, 주소, 페어링한 지갑, 활동 기록은 그대로 유지됩니다.";
 "Open BC-UR and PSBT QR standards" = "공개된 BC-UR 및 PSBT QR 표준";
 "Open Camera" = "카메라 열기";
 "Open Settings" = "설정 열기";
@@ -425,6 +427,7 @@
 "Partially decoded" = "일부만 해석됨";
 "Password" = "비밀번호";
 "Password Changed" = "비밀번호를 변경했습니다";
+"Password Reset" = "비밀번호를 재설정했습니다";
 "Password meets the requirements." = "비밀번호가 요건을 충족합니다.";
 "Passwords match" = "비밀번호 일치";
 "Paste Request" = "요청 붙여넣기";
@@ -505,6 +508,7 @@
 "Requests are decoded before you sign" = "서명하기 전에 요청을 해석합니다";
 "Require %@ to open BitTool Signer at launch and after 2 minutes in the background. Every signature still needs the wallet’s password." = "앱을 실행할 때와 백그라운드에서 2분이 지난 뒤 BitTool Signer를 열려면 %@이(가) 필요합니다. 서명에는 여전히 지갑 암호가 필요합니다.";
 "Required signers" = "필요한 서명자";
+"Reset Password" = "비밀번호 재설정";
 "Resource" = "리소스";
 "Return" = "줄바꿈";
 "Reveal the words first." = "먼저 단어를 표시하세요.";
@@ -666,13 +670,17 @@
 "This is the signature that was already created. Scanning it again signs nothing new." = "이미 만들어진 서명입니다. 다시 스캔해도 새로 서명되는 것은 없습니다.";
 "This only removes the local records. It does not affect any transaction." = "지워지는 것은 로컬 기록뿐입니다. 거래에는 영향을 주지 않습니다.";
 "This page is information only. Check any wallet yourself before trusting it with money. BitTool is not responsible for anything that happens through another wallet — bugs, hacks, scams or losses of any kind." = "이 페이지는 정보 제공용입니다. 자금을 맡기기 전에 직접 확인하세요. 다른 지갑을 통해 생긴 일—버그, 해킹, 사기, 어떤 형태의 손실이든—에 대해 BitTool은 책임지지 않습니다.";
+"This recovery phrase already belongs to a wallet on this device. Set a new password for it: the phrase you just entered is the proof, so the old password is not needed." = "이 복구 구문은 이미 이 기기의 지갑에 속해 있습니다. 새 비밀번호를 설정하세요. 방금 입력한 구문이 증명이므로 이전 비밀번호는 필요하지 않습니다.";
 "This recovery phrase and passphrase already belong to an existing wallet." = "이 복구 구문과 패스프레이즈 조합은 이미 있는 지갑의 것입니다.";
+"This recovery phrase belongs to a different wallet." = "이 복구 구문은 다른 지갑의 것입니다.";
 "This removes the encrypted wallet and its public data from this device. Funds are not affected, but you can only recover them with the recovery phrase and any BIP39 passphrase." = "이 기기에서 암호화된 지갑과 공개 데이터를 삭제합니다. 자산에는 영향이 없지만, 되살리려면 복구 구문과 (설정했다면) BIP39 패스프레이즈가 필요합니다.";
 "This request cannot be signed. Nothing has been signed." = "이 요청에는 서명할 수 없습니다. 아무것도 서명되지 않았습니다.";
 "This request does not belong to any wallet on this device. Check that you scanned the request for this wallet." = "이 요청은 이 기기의 어떤 지갑에도 속하지 않습니다. 이 지갑에 해당하는 요청을 스캔했는지 확인하세요.";
 "This signing request is already being processed." = "이 서명 요청은 이미 처리 중입니다.";
 "This wallet could not be found." = "이 지갑을 찾을 수 없습니다.";
 "This wallet format is not supported by this version of BitTool Signer." = "이 버전의 BitTool Signer는 이 지갑 형식을 지원하지 않습니다.";
+"This wallet is encrypted with your new password. Use it to authorize signatures from now on." = "이 지갑은 새 비밀번호로 암호화되었습니다. 이제부터 새 비밀번호로 서명을 승인하세요.";
+"This wallet needs repair before its password can be reset." = "이 지갑은 비밀번호를 재설정하기 전에 복구가 필요합니다.";
 "This wallet's public data is missing or damaged. Your encrypted recovery phrase is safe. Enter the wallet password once to rebuild it." = "이 지갑의 공개 데이터가 없거나 손상되었습니다. 암호화된 복구 구문은 안전합니다. 지갑 암호를 한 번 입력하면 다시 만들 수 있습니다.";
 "This wallet’s device key is unavailable. Restore your recovery phrase on this device." = "이 지갑의 기기 키를 사용할 수 없습니다. 이 기기에서 복구 구문으로 되살리세요.";
 "To" = "받는 주소";

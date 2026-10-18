@@ -349,10 +349,15 @@ private struct SetPasswordStep: View {
     @EnvironmentObject private var store: AppStore
     @FocusState private var focus: Field?
 
+    /// The wallet this recovery phrase already belongs to, once that is known.
+    private var resetting: UUID? { model.duplicateOf }
+
     var body: some View {
         SetupScaffold(step: model.intent == .create ? 4 : 2, total: model.intent == .create ? 4 : 2,
-                      title: "Set a Password",
-                      message: "The password encrypts this wallet on this device and authorizes every signature. It is not part of your recovery phrase.") {
+                      title: resetting == nil ? "Set a Password" : "Reset Password",
+                      message: resetting == nil
+                               ? "The password encrypts this wallet on this device and authorizes every signature. It is not part of your recovery phrase."
+                               : "This recovery phrase already belongs to a wallet on this device. Set a new password for it: the phrase you just entered is the proof, so the old password is not needed.") {
             VStack(spacing: 0) {
                 PasswordField(.walletPassword, text: $model.password, isNew: true)
                     .focused($focus, equals: .password).submitLabel(.next).onSubmit { focus = .confirmation }
@@ -365,21 +370,32 @@ private struct SetPasswordStep: View {
             .background(Palette.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             PasswordRequirementsView(password: model.password, confirmation: model.confirmation)
                 .padding(.horizontal, 4)
-            Callout("If you forget this password, delete the wallet and import it again with the recovery phrase.")
+            if let walletID = resetting {
+                // Which wallet is about to change has to be unmistakable: this
+                // is not a new wallet, and nothing else about it is touched.
+                VStack(alignment: .leading, spacing: 12) {
+                    WalletIdentityHeader(walletID: walletID)
+                    Callout("Only the password changes. The wallet keeps its name, addresses, paired wallets and history.")
+                }
+            } else {
+                Callout("If you forget this password, import this recovery phrase again to set a new one.")
+            }
         } footer: {
             if let error = model.error { Callout(verbatim: error, tone: .danger) }
             Button {
                 focus = nil
-                model.createWallet(store: store)
+                if resetting != nil { model.resetPassword(store: store) } else { model.createWallet(store: store) }
             } label: {
-                ActionLabel(model.intent == .create ? "Create Wallet" : "Import Wallet", busy: model.busy)
+                ActionLabel(resetting != nil ? "Reset Password"
+                            : model.intent == .create ? "Create Wallet" : "Import Wallet", busy: model.busy)
             }
             .prominentAction()
             .disabled(!model.passwordValid || model.busy)
             .accessibilityIdentifier("setup.finish")
         }
-        .navigationTitle("Password")
+        .navigationTitle(resetting == nil ? "Password" : "Reset Password")
         .navigationBarBackButtonHidden(model.busy)
+        .task { model.checkForExistingWallet(store: store) }
     }
 }
 
@@ -394,9 +410,12 @@ private struct SetupCompleteStep: View {
                 SymbolHero(systemImage: "checkmark.seal.fill", color: Palette.success, size: 64)
                     .padding(.top, 24)
                 VStack(spacing: 8) {
-                    Text(model.intent == .create ? "Wallet Created" : "Wallet Imported")
+                    Text(model.didResetPassword ? "Password Reset"
+                         : model.intent == .create ? "Wallet Created" : "Wallet Imported")
                         .font(.largeTitle.weight(.bold))
-                    Text("Your keys are encrypted on this device. Next, pair a watch-only wallet to receive funds and prepare transactions.")
+                    Text(model.didResetPassword
+                         ? "This wallet is encrypted with your new password. Use it to authorize signatures from now on."
+                         : "Your keys are encrypted on this device. Next, pair a watch-only wallet to receive funds and prepare transactions.")
                         .font(.body).foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                 }
@@ -409,16 +428,22 @@ private struct SetupCompleteStep: View {
         }
         .background(Palette.background)
         .bottomActionBar(maxWidth: 520) {
-                if let wallet = model.created {
+                if let wallet = model.created, !model.didResetPassword {
                     Button { finish(.connectWallet(wallet.id)) } label: {
                         ActionLabel("Pair a Wallet", systemImage: "qrcode")
                     }
                     .prominentAction()
                     .accessibilityIdentifier("setup.connect")
                 }
-                Button { finish(nil) } label: { ActionLabel("Done", prominent: false) }
-                    .secondaryAction()
-                    .accessibilityIdentifier("setup.done")
+                if model.didResetPassword {
+                    Button { finish(nil) } label: { ActionLabel("Done") }
+                        .prominentAction()
+                        .accessibilityIdentifier("setup.done")
+                } else {
+                    Button { finish(nil) } label: { ActionLabel("Done", prominent: false) }
+                        .secondaryAction()
+                        .accessibilityIdentifier("setup.done")
+                }
         }
         .navigationBarBackButtonHidden(true)
         .navigationTitle("")

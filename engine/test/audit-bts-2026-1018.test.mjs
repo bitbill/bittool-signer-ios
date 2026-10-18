@@ -84,9 +84,12 @@ test('F-02: a token burn leads the summary and demands acknowledgement', () => {
     { p: 4, a: [0, 3], d: sendLamports(1n) },
   ]) });
   assert.equal(review.display.action, 'Burn');
-  assert.equal(review.display.amount, '1000000');
-  assert.ok(review.display.headline.includes('Destroys'), review.display.headline);
-  assert.ok(review.summary.startsWith('Burn '), review.summary);
+  // The burn leads the card. Its quantity is in the headline rather than the
+  // single large amount, which R2-03 reserves for a transaction whose whole
+  // effect one number describes: here a lamport transfer moves as well.
+  assert.equal(review.display.amount, undefined);
+  assert.ok(review.display.headline.startsWith('Destroys 1000000 '), review.display.headline);
+  assert.ok(review.summary.startsWith('Burn 1000000 '), review.summary);
   assert.equal(review.riskLevel, 'high', 'destruction always needs explicit consent');
   assert.ok(review.warnings.some(w => w.startsWith('HIGH RISK') && w.includes('permanently destroys')));
 });

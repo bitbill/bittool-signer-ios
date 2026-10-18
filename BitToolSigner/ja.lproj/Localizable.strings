@@ -220,6 +220,7 @@
 "Each wallet signs with its own password. The final signature appears after every wallet has signed." = "各ウォレットはそれぞれのパスワードで署名します。すべてのウォレットが署名した後に、最終的な署名が表示されます。";
 "Ed25519 message signature" = "Ed25519 メッセージ署名";
 "Email" = "メール";
+"Energy budget" = "エネルギー予算";
 "Energy budget up to %@ · total fee not known offline" = "エネルギー上限 %@ · 手数料の総額はオフラインでは不明";
 "Engine size" = "エンジンのサイズ";
 "Enter a wallet name." = "ウォレット名を入力してください。";
@@ -272,12 +273,12 @@
 "Hook extra accounts" = "フックの追加アカウント";
 "Hook validation account" = "フック検証アカウント";
 "How signing works" = "署名のしくみ";
-"I have a backup of the recovery phrase" = "リカバリーフレーズをバックアップしました";
+"I confirm I want to delete this wallet" = "削除することを確認します";
 "I understand the risks of this request" = "このリクエストのリスクを理解しました";
 "I understand this request can’t be fully verified" = "このリクエストを完全には検証できないことを理解しました";
 "If iOS asks to allow wireless data, choose Don’t Allow: the app never connects" = "iOS がモバイルデータ通信の許可を尋ねたら「許可しない」を選んでください。このアプリは決して通信しません";
 "If this wallet uses a BIP39 passphrase, the words alone cannot restore it." = "このウォレットが BIP39 パスフレーズを使っている場合、単語だけでは復元できません。";
-"If you forget this password, delete the wallet and import it again with the recovery phrase." = "このパスワードを忘れた場合は、ウォレットを削除し、リカバリーフレーズで再度インポートしてください。";
+"If you forget this password, import this recovery phrase again to set a new one." = "パスワードを忘れた場合は、このリカバリーフレーズをもう一度インポートすれば再設定できます。";
 "Ignored request keys" = "無視されたリクエスト項目";
 "Import Existing Wallet" = "既存のウォレットをインポート";
 "Import File" = "ファイルを読み込む";
@@ -404,6 +405,7 @@
 "One address works on Ethereum, BNB Smart Chain, Arbitrum, Base and other EVM networks." = "1 つのアドレスが Ethereum、BNB Smart Chain、Arbitrum、Base など、EVM ネットワーク全体で使えます。";
 "One animated QR code for all four chains" = "4 つのチェーンすべてに対応する 1 つのアニメーション QR コード";
 "Only enter your recovery phrase into a wallet you trust, on a device you control, when you restore it." = "リカバリーフレーズを入力するのは、復元するときに、信頼できるウォレットと自分が管理する端末に対してだけにしてください。";
+"Only the password changes. The wallet keeps its name, addresses, paired wallets and history." = "変わるのはパスワードだけです。ウォレットの名前、アドレス、ペアリング済みのウォレット、履歴はそのまま残ります。";
 "Open BC-UR and PSBT QR standards" = "オープンな BC-UR と PSBT の QR 標準";
 "Open Camera" = "カメラを開く";
 "Open Settings" = "設定を開く";
@@ -425,6 +427,7 @@
 "Partially decoded" = "一部デコード済み";
 "Password" = "パスワード";
 "Password Changed" = "パスワードを変更しました";
+"Password Reset" = "パスワードを再設定しました";
 "Password meets the requirements." = "パスワードは要件を満たしています。";
 "Passwords match" = "パスワードが一致";
 "Paste Request" = "リクエストを貼り付け";
@@ -505,6 +508,7 @@
 "Requests are decoded before you sign" = "署名の前にリクエストをデコードします";
 "Require %@ to open BitTool Signer at launch and after 2 minutes in the background. Every signature still needs the wallet’s password." = "起動時と、バックグラウンドで 2 分経過した後に、BitTool Signer を開くには %@ が必要になります。署名にはこれまでどおりウォレットのパスワードが必要です。";
 "Required signers" = "必要な署名者";
+"Reset Password" = "パスワードを再設定";
 "Resource" = "リソース";
 "Return" = "改行";
 "Reveal the words first." = "先に単語を表示してください。";
@@ -666,13 +670,17 @@
 "This is the signature that was already created. Scanning it again signs nothing new." = "これはすでに作成済みの署名です。もう一度読み取っても、新たに何かに署名することはありません。";
 "This only removes the local records. It does not affect any transaction." = "消去されるのはローカルの記録だけです。取引には影響しません。";
 "This page is information only. Check any wallet yourself before trusting it with money. BitTool is not responsible for anything that happens through another wallet — bugs, hacks, scams or losses of any kind." = "このページは情報提供のみを目的としています。資金を預ける前にご自身で確認してください。他のウォレットを通じて起きたこと——不具合、ハッキング、詐欺、いかなる損失についても——BitTool は責任を負いません。";
+"This recovery phrase already belongs to a wallet on this device. Set a new password for it: the phrase you just entered is the proof, so the old password is not needed." = "このリカバリーフレーズは、この端末にあるウォレットのものです。新しいパスワードを設定してください。いま入力したフレーズが証明になるため、以前のパスワードは必要ありません。";
 "This recovery phrase and passphrase already belong to an existing wallet." = "このリカバリーフレーズとパスフレーズの組み合わせは、既存のウォレットのものです。";
+"This recovery phrase belongs to a different wallet." = "このリカバリーフレーズは別のウォレットのものです。";
 "This removes the encrypted wallet and its public data from this device. Funds are not affected, but you can only recover them with the recovery phrase and any BIP39 passphrase." = "この端末から、暗号化されたウォレットとその公開データを削除します。資産には影響しませんが、復元にはリカバリーフレーズと（設定していれば）BIP39 パスフレーズが必要です。";
 "This request cannot be signed. Nothing has been signed." = "このリクエストには署名できません。何も署名されていません。";
 "This request does not belong to any wallet on this device. Check that you scanned the request for this wallet." = "このリクエストは、この端末のどのウォレットのものでもありません。このウォレット宛てのリクエストを読み取ったか確認してください。";
 "This signing request is already being processed." = "この署名リクエストはすでに処理中です。";
 "This wallet could not be found." = "このウォレットが見つかりませんでした。";
 "This wallet format is not supported by this version of BitTool Signer." = "このバージョンの BitTool Signer は、このウォレット形式に対応していません。";
+"This wallet is encrypted with your new password. Use it to authorize signatures from now on." = "このウォレットは新しいパスワードで暗号化されました。今後は新しいパスワードで署名を承認してください。";
+"This wallet needs repair before its password can be reset." = "このウォレットはパスワードを再設定する前に修復が必要です。";
 "This wallet's public data is missing or damaged. Your encrypted recovery phrase is safe. Enter the wallet password once to rebuild it." = "このウォレットの公開データが欠けているか壊れています。暗号化されたリカバリーフレーズは無事です。ウォレットのパスワードを一度入力すれば作り直せます。";
 "This wallet’s device key is unavailable. Restore your recovery phrase on this device." = "このウォレットのデバイス鍵を利用できません。この端末でリカバリーフレーズから復元してください。";
 "To" = "宛先";

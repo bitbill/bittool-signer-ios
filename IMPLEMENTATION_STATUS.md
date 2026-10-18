@@ -1,4 +1,4 @@
-# BitTool Signer 实施状态 · Revision 10（2026-10-18）
+# BitTool Signer 实施状态 · Revision 11（2026-10-18）
 
 本轮按用户要求对尚未上线的 App 做全面重构：原生化并重做全部界面，Settings 放进 Tab Bar（共 4 个 Tab），审查并加固安全、逻辑、JS 引擎与密码学，重绘七个主网络图标，重建热门 Token 表与图标，补齐自动化测试。App 未上线，因此直接采用新存储格式，不兼容旧开发数据。[Revision 1 规范](docs/Modification-Spec-2026-09-21.md)中的产品决定（D01–D28）在 Revision 2 中全部保留；Revision 3 按用户的新要求改变了其中几项：BTC 默认导出改为 Account XPUB（移除叶子公钥模式）、TRON 可导出任意地址索引、移除 Ownbit 及其显示规则。
 
@@ -49,6 +49,42 @@ App 由 **BitSigner** 更名为 **BitTool Signer**（中文：BitTool 签名器�
 **3. passphrase 输入框可收起键盘**：该输入框自带 Done 工具条（`inputAccessoryView`），因为它紧贴底部操作栏，页面本身没有别的收起键盘的办法。同时给输入框加了 `frame(maxWidth: .infinity)`，避免 UIKit 文本框按内容宽度收缩。
 
 **4. Settings 调整**：Reference 里移除 Offline Setup Guide（引导页首次使用时仍会出现）；About 里 Open Source 改名 **Fully Open Source**。
+
+## Revision 11（2026-10-18 深夜）：R2 复审的三条未关闭发现、密码重置与删除确认
+
+**1. BTS-SEC-2026-1018 R2 的三条发现全部复现、全部修复**。R2 确认 F-01～F-04 的修复有效，但 F-01 只算「部分修复」——当时只改了「立即 value」，没有改递归与第二个入口：
+
+| 编号 | 级别 | 问题 | 修复 |
+| --- | --- | --- | --- |
+| R2-01 A | HIGH | MultiSend 里 `DELEGATECALL` 子调用的 `moves` 恒为 `0n`。可是 delegatecall **在 Safe 自己的账户上下文里执行**，它内部的 CALL 花的就是 Safe 的钱。于是「delegatecall 到另一个 MultiSend，里面付 40 ETH」在主卡片上一分钱都不显示，而且这条分支不算「花钱的调用」，会被标题的 3 条截断藏掉 | `decodeCall` 新增返回值 `forwards`：**这次调用的函数体会从执行账户支出多少原生币**（普通方法都是 `0n`，MultiSend 是它的 `moved`）。父级于是 `moved += op ? inner.forwards : innerValue`——CALL 只记交给它的 value（后代花的是对方的钱，不重复计），DELEGATECALL 记后代实际支出。标题的「必须显示」集合从「花钱的调用」扩大到「花钱的或 delegatecall 的调用」 |
+| R2-01 A' | HIGH | delegatecall 的函数体无法解码时，金额其实是**不完整**的，但界面不说 | 这种分支计数后把 `decodeStatus` 降为 `partiallyDecoded`，并给出 HIGH RISK：「显示的金额不完整，有 N 条 DELEGATECALL 分支用 Safe 自己的余额执行且函数体未完全解码」。审不出来就说审不出来，不假装 0 |
+| R2-01 B | HIGH | `execTransaction` 这个入口（第 236 行）把 `a[1]`（value）原样传给 `decodeCall`，**完全没看 `a[3]`（operation）**。SafeTx typed data 那一侧早就改对了，两个入口的结论因此相反：同一串字节，一边说「付了 100 ETH」，一边说「什么都没转」 | 与 SafeTx 同一套规则：`delegated ? 0n : a[1]`，被忽略的 value 单列字段并给出警告。两个入口现在说同样的话 |
+| R2-02 | LOW | 相对手续费规则拿 `fee*2 > outputTotal` 比，而 `outputTotal` **包含找零**。找零是回到自己钱包的钱，从来就没被「发送」。于是同样的支付、同样的手续费，只要多一个大额找零输出，警告就消失了 | 规则抽成 `highFeeWarning(fee, payment)` 一个函数，解析器与 resolver 共用。解析时不知道哪些是找零，先按 `outputTotal` 算；resolver 在**用签名钱包自己的公钥验证出找零之后**，用真正发出去的金额重算一次。找零只会让 `payment` 变小，所以重算只可能**加上**警告，不可能撤掉。全部输出都回到自己钱包时（归集／自转）单独一句：「所有输出都回到本钱包，手续费就是这笔交易的全部成本」 |
+| R2-02' | LOW | 同一个根因还有第二处：`review.summary`（「Send 1.0002 BTC」）也是按 `outputTotal` 算的，而它是**历史记录和签名回执显示的那一行**——主卡片早就只显示真实支付额，历史却虚报 | resolver 验证出找零后同时重算 summary，和卡片上的金额一致；全部回到自己钱包时写「所有输出都回到本钱包」而不是「Send 0 BTC」 |
+| R2-03 | LOW | Solana 的销毁摘要固定取 `burns[0]` 当主金额。于是「先销毁 0.000001 USDC，再销毁 100 万 USDC」主卡片上写的是 0.000001；「小额销毁 + 转 1000 SOL」也只显示那笔小额销毁 | 销毁按 **mint + 符号 + 小数位**分组求和：同一个 mint 的多笔销毁合并成一个总额（「销毁 1000000.000001 USDC，共 2 笔」）。**只有当一个数字能描述整笔交易时才显示主金额**——不同 mint，或销毁旁边还有转账，就不给主金额，改由标题逐项列出（「销毁 A + 销毁 B · 另有 1 笔转账见下」）。每笔销毁各自的精确 HIGH RISK 警告一条不少 |
+
+两条 Informational 也一起修了：**I-01** 历史记录里把 TRON 的能量预算标成「网络手续费」（审核页早就区分了 `feeKind`，历史页没跟上）；**I-02** `RepairWalletSheet` 的密码草稿只在页面消失时清除，现在和其它密码框一样，App 一进后台（`securityEpoch` 变化）就清掉。
+
+回归测试：[engine/test/audit-bts-2026-1018-r2.test.mjs](engine/test/audit-bts-2026-1018-r2.test.mjs)，16 个用例，三条发现各自覆盖「问题场景」与「原有正确行为不许回退」。其中 R2-01 的「CALL 的后代仍是对方的钱」是专门防过度修复的——把后代支出也算进 CALL 会重复计数、虚报支出。引擎 **210 个测试全通过**。
+
+> R2-01 暴露的一个结构问题值得记下：`decodeCall` 的三个 `return` 里有一个（不透明合约调用）漏了 `forwards`，`moved += undefined` 会抛 "Cannot mix BigInt and other types" ——又是在审核页绘制时崩溃，和 F-03 同一类。除了补上字段，累加处也写成 `inner.forwards ?? 0n`：少一个字段应该让金额显示成不完整，不该让 App 挂掉。
+
+**2. 忘记密码可以用助记词重置**（替代原来的「删掉钱包再导入一次」）
+
+- 密码页的提示文案改成：**如果忘记密码，重新导入这组助记词即可重置密码。**
+- 导入时如果助记词（含 passphrase，若有）与本机某个钱包**完全一致**，密码页自动切换成重置模式：标题变「重置密码」，按钮变「重置密码」，上面那句「忘记密码」的提示不再出现（此刻正在做的就是它说的事），并显示将被重置的是哪一个钱包 + 一句「只有密码会改变」。完成页写「密码已重置」，不再提示去配对钱包。
+- 新增 `WalletVault.resetPassword(id:mnemonic:passphrase:newPassword:)`：用现有的设备密钥和 header 元数据重新加密，所以**钱包保留原有的名称、创建时间、地址、已配对钱包和活动记录**——这正是「删掉再导入」会丢掉的东西。同时清掉失败次数计数器（刚用助记词证明过身份的人，不该还在为忘记的密码排队等待）。
+- 凭证是助记词而不是旧密码：**持有助记词的人本来就能完全控制这些资金**，所以这不多给任何权限，只是把「重新导入」这件事原地做掉。`AppStore.resetPassword` 在落盘前重新派生公开索引并比对 `walletKeyId`——否则这会变成「用 A 的助记词覆盖 B 的加密记录」的途径。
+
+**3. 删除钱包的生物识别只在开了 App Lock 时才要**。原来的判断是 `biometry.isAvailable`（设备有没有 Face ID），现在是 `isEnabled && biometry.isAvailable`（这个 App 用不用 Face ID）。把 App Lock 关掉就是在说「这个 App 不用 Face ID」，删除钱包不该把人刚拒绝掉的弹窗再端上来。脚注文案随之二选一；密码仍然是真正授权删除的那一步。
+
+**4. 删除确认的勾选项改成「我确认要删除」**（原为「我已备份助记词」）。那一页上方的红色说明已经讲清了「只能用助记词恢复」，勾选项要确认的是**这个删除动作本身**。
+
+回归测试：`WalletVault` 的重置覆盖「换了密码后旧密码失效、助记词与 passphrase 原样取回、名称与创建时间不变、不产生第二个钱包」「弱密码与不存在的钱包都要拒绝且不留痕」「重置清掉失败计数器」；`AppAccessController` 覆盖「App Lock 关着时不问生物识别、开着时问、关掉之后又不问」。新增 UI 测试 `testImportingAnExistingPhraseResetsItsPasswordInPlace` 把整条路走完：导入夹具钱包自己的助记词 → 页面变成「重置密码」且不再出现「忘记密码」提示 → 设新密码 → 「密码已重置」→ 钱包列表仍只有一个且同名 → 旧密码打不开、新密码能取回同一组助记词。
+
+字符串清单从 765 条增加到 **773 条**（新增 10 条、移除 2 条），20 种语言逐条补齐并通过 `scripts/write-localizations.py` 校验。
+
+**验证**：引擎 210/210；Swift 单元测试全通过；UI 测试串行跑 17 个，`testApprovalNamesAKnownSpenderAndFlagsAnUnlistedOne` 失败一次（第二段长载荷 `typeText` 在负载下掉字符，与[已知的 XCUITest 问题](IMPLEMENTATION_STATUS.md)同一个；单独重跑通过，且该用例失败前的已知合约断言本身是通过的）。
 
 ## Revision 10（2026-10-18 晚）：第二轮审查的四条发现、手续费规则与若干修正
 

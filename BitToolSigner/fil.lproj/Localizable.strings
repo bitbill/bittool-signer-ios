@@ -220,6 +220,7 @@
 "Each wallet signs with its own password. The final signature appears after every wallet has signed." = "Bawat wallet ay lumalagda gamit ang sarili nitong password. Lumilitaw ang huling lagda kapag nakalagda na ang lahat.";
 "Ed25519 message signature" = "Ed25519 na lagda ng mensahe";
 "Email" = "Email";
+"Energy budget" = "Badyet ng enerhiya";
 "Energy budget up to %@ · total fee not known offline" = "Badyet ng enerhiya hanggang %@ · hindi alam ang kabuuang bayad kapag offline";
 "Engine size" = "Laki ng engine";
 "Enter a wallet name." = "Maglagay ng pangalan ng wallet.";
@@ -272,12 +273,12 @@
 "Hook extra accounts" = "Dagdag na account ng hook";
 "Hook validation account" = "Validation account ng hook";
 "How signing works" = "Paano gumagana ang paglagda";
-"I have a backup of the recovery phrase" = "May backup ako ng recovery phrase";
+"I confirm I want to delete this wallet" = "Kinokompirma ko na gusto kong burahin";
 "I understand the risks of this request" = "Nauunawaan ko ang panganib ng kahilingang ito";
 "I understand this request can’t be fully verified" = "Nauunawaan kong hindi lubos na masusuri ang kahilingang ito";
 "If iOS asks to allow wireless data, choose Don’t Allow: the app never connects" = "Kung magtanong ang iOS kung papayagan ang wireless data, piliin ang “Don’t Allow”: hindi kailanman kumokonekta ang app";
 "If this wallet uses a BIP39 passphrase, the words alone cannot restore it." = "Kung gumagamit ng BIP39 passphrase ang wallet na ito, hindi kayang ibalik ito ng mga salita lamang.";
-"If you forget this password, delete the wallet and import it again with the recovery phrase." = "Kung makalimutan mo ang password na ito, burahin ang wallet at i-import itong muli gamit ang recovery phrase.";
+"If you forget this password, import this recovery phrase again to set a new one." = "Kapag nakalimutan mo ang password na ito, i-import muli ang recovery phrase na ito para magtakda ng bago.";
 "Ignored request keys" = "Mga field ng kahilingang binalewala";
 "Import Existing Wallet" = "Mag-import ng wallet";
 "Import File" = "Mag-import ng file";
@@ -404,6 +405,7 @@
 "One address works on Ethereum, BNB Smart Chain, Arbitrum, Base and other EVM networks." = "Isang address ang gumagana sa Ethereum, BNB Smart Chain, Arbitrum, Base at iba pang EVM network.";
 "One animated QR code for all four chains" = "Isang animated na QR code para sa lahat ng apat na chain";
 "Only enter your recovery phrase into a wallet you trust, on a device you control, when you restore it." = "Ilagay lang ang recovery phrase mo sa wallet na pinagkakatiwalaan mo, sa device na kontrolado mo, at kapag ibinabalik mo ito.";
+"Only the password changes. The wallet keeps its name, addresses, paired wallets and history." = "Password lang ang nagbabago. Mananatili ang pangalan, mga address, mga naka-pares na wallet at kasaysayan ng wallet.";
 "Open BC-UR and PSBT QR standards" = "Bukas na pamantayang QR na BC-UR at PSBT";
 "Open Camera" = "Buksan ang camera";
 "Open Settings" = "Buksan ang Mga setting";
@@ -425,6 +427,7 @@
 "Partially decoded" = "Bahagyang na-decode";
 "Password" = "Password";
 "Password Changed" = "Nabago ang password";
+"Password Reset" = "Na-reset ang password";
 "Password meets the requirements." = "Natutugunan ng password ang mga kinakailangan.";
 "Passwords match" = "Magkatugma ang mga password";
 "Paste Request" = "Idikit ang kahilingan";
@@ -505,6 +508,7 @@
 "Requests are decoded before you sign" = "Dine-decode ang mga kahilingan bago ka lumagda";
 "Require %@ to open BitTool Signer at launch and after 2 minutes in the background. Every signature still needs the wallet’s password." = "Humingi ng %@ para buksan ang BitTool Signer kapag binuksan ito at pagkatapos ng 2 minuto sa background. Kailangan pa rin ng password ng wallet sa bawat lagda.";
 "Required signers" = "Mga kinakailangang lumagda";
+"Reset Password" = "I-reset ang password";
 "Resource" = "Resource";
 "Return" = "Return";
 "Reveal the words first." = "Ipakita muna ang mga salita.";
@@ -666,13 +670,17 @@
 "This is the signature that was already created. Scanning it again signs nothing new." = "Ito ang lagdang nagawa na. Walang bagong nalalagdaan kapag ini-scan itong muli.";
 "This only removes the local records. It does not affect any transaction." = "Inaalis lang nito ang mga lokal na talaan. Walang epekto ito sa anumang transaksyon.";
 "This page is information only. Check any wallet yourself before trusting it with money. BitTool is not responsible for anything that happens through another wallet — bugs, hacks, scams or losses of any kind." = "Impormasyon lang ang pahinang ito. Suriin mo mismo ang alinmang wallet bago mo ipagkatiwala rito ang pera. Hindi mananagot ang BitTool sa anumang mangyari sa pamamagitan ng ibang wallet — mga bug, hack, scam o anumang uri ng pagkalugi.";
+"This recovery phrase already belongs to a wallet on this device. Set a new password for it: the phrase you just entered is the proof, so the old password is not needed." = "Pag-aari na ng isang wallet sa device na ito ang recovery phrase na ito. Magtakda ng bagong password para dito: ang phrase na kakapasok mo lang ang katibayan, kaya hindi na kailangan ang dating password.";
 "This recovery phrase and passphrase already belong to an existing wallet." = "Ang recovery phrase at passphrase na ito ay pag-aari na ng isang umiiral nang wallet.";
+"This recovery phrase belongs to a different wallet." = "Pag-aari ng ibang wallet ang recovery phrase na ito.";
 "This removes the encrypted wallet and its public data from this device. Funds are not affected, but you can only recover them with the recovery phrase and any BIP39 passphrase." = "Inaalis nito sa device na ito ang naka-encrypt na wallet at ang public data nito. Hindi apektado ang pondo, pero mababawi mo lang ito gamit ang recovery phrase at ang BIP39 passphrase kung mayroon.";
 "This request cannot be signed. Nothing has been signed." = "Hindi malalagdaan ang kahilingang ito. Walang nalagdaan.";
 "This request does not belong to any wallet on this device. Check that you scanned the request for this wallet." = "Ang kahilingang ito ay hindi pag-aari ng alinmang wallet sa device na ito. Tiyaking ang kahilingan para sa wallet na ito ang ini-scan mo.";
 "This signing request is already being processed." = "Pinoproseso na ang signing request na ito.";
 "This wallet could not be found." = "Hindi natagpuan ang wallet na ito.";
 "This wallet format is not supported by this version of BitTool Signer." = "Hindi suportado ng bersyong ito ng BitTool Signer ang format ng wallet na iyon.";
+"This wallet is encrypted with your new password. Use it to authorize signatures from now on." = "Naka-encrypt ang wallet na ito sa bago mong password. Gamitin iyon sa pagpayag sa mga lagda mula ngayon.";
+"This wallet needs repair before its password can be reset." = "Kailangang ayusin ang wallet na ito bago ma-reset ang password nito.";
 "This wallet's public data is missing or damaged. Your encrypted recovery phrase is safe. Enter the wallet password once to rebuild it." = "Nawawala o sira ang public data ng wallet na ito. Ligtas ang naka-encrypt mong recovery phrase. Ilagay nang isang beses ang password ng wallet para muling buuin ito.";
 "This wallet’s device key is unavailable. Restore your recovery phrase on this device." = "Hindi magamit ang device key ng wallet na ito. Ibalik ang recovery phrase mo sa device na ito.";
 "To" = "Kay";

@@ -82,13 +82,13 @@ export function decodeCall(to, data, value = 0n, depth = 0, context = {}) {
   const raw = hexToBytes(data || '0x', 65536);
   const withValue = (base) => value > 0n && network ? { ...base, amount: decimal(value, 18), symbol: network.symbol } : base;
   if (!raw.length && to) {
-    return { title: 'Native transfer', fields, warnings, decodeStatus: 'fullyDecoded', riskLevel: 'normal',
+    return { title: 'Native transfer', fields, warnings, decodeStatus: 'fullyDecoded', riskLevel: 'normal', forwards: 0n,
       display: network ? display('Send', { amount: decimal(value, 18), symbol: network.symbol, counterpartyLabel: 'To', counterparty: getAddress(to) }) : display('Send') };
   }
   if (!to) {
     return { title: 'Deploy contract', fields: [...fields, field('Deployment bytecode', data)],
       warnings: ['HIGH RISK: Deployment bytecode is opaque; runtime behavior and resulting permissions are not decoded.'],
-      decodeStatus: 'opaque', riskLevel: 'high', display: display('Deploy Contract', withValue({})) };
+      decodeStatus: 'opaque', riskLevel: 'high', forwards: 0n, display: display('Deploy Contract', withValue({})) };
   }
   let parsed;
   if (raw.length >= 4) try { parsed = ABI.parseTransaction({ data, value }); } catch { fail('CALLDATA', 'Malformed contract call.'); }
@@ -97,12 +97,12 @@ export function decodeCall(to, data, value = 0n, depth = 0, context = {}) {
     return { title: 'Unknown contract call', counterparty: { address: contract, role: 'contract' },
       fields: [...fields, field('Function selector', data.slice(0, 10)), field('Exact calldata', data)],
       warnings: ['HIGH RISK: This contract method is not decoded. The contract may move assets or change permissions.'],
-      decodeStatus: 'opaque', riskLevel: 'high',
+      decodeStatus: 'opaque', riskLevel: 'high', forwards: 0n,
       display: display('Contract Interaction', withValue({ headline: 'Method ' + data.slice(0, 10), counterpartyLabel: 'Contract', counterparty: contract })) };
   }
   check(ABI.encodeFunctionData(parsed.fragment, parsed.args).toLowerCase() === data.toLowerCase(), 'CALLDATA', 'Contract call uses a non-canonical or trailing encoding.');
   const a = parsed.args, fn = parsed.name;
-  let riskLevel = 'normal', decodeStatus = 'fullyDecoded', asset, callDisplay, title, summary;
+  let riskLevel = 'normal', decodeStatus = 'fullyDecoded', asset, callDisplay, title, summary, forwards = 0n;
   // The address this request puts in someone's hands: for an approval that is
   // the spender, otherwise the contract being called.
   let counterparty = { address: contract, role: 'contract' };
@@ -233,7 +233,15 @@ export function decodeCall(to, data, value = 0n, depth = 0, context = {}) {
     check(a[3] === 0n || a[3] === 1n, 'CALLDATA', 'Invalid Safe operation.');
     fields.push(field('Safe operation', a[3] ? 'DELEGATECALL' : 'CALL'), field('Existing signatures', a[9]));
     const refund = safeRefund(fields, warnings, { safeTxGas: a[4], baseGas: a[5], gasPrice: a[6], gasToken: a[7], refundReceiver: a[8] }, context);
-    const inner = decodeCall(a[0], a[2], a[1], depth + 1, context);
+    // Safe's Executor gives value to `call` only; `delegatecall` takes none.
+    // The same rule as the SafeTx typed-data path: an encoded value on a
+    // DELEGATECALL is never paid, so it is reported, never shown as an amount.
+    const delegated = a[3] === 1n;
+    const inner = decodeCall(a[0], a[2], delegated ? 0n : a[1], depth + 1, context);
+    if (delegated && a[1] > 0n) {
+      fields.push(field('Ignored delegatecall value', `${a[1]} wei encoded on a DELEGATECALL, which transfers nothing`));
+      warnings.push(`This Safe transaction encodes a value of ${a[1]} wei on a DELEGATECALL. The Safe does not transfer it; it is not part of the amount shown.`);
+    }
     fields.push(...inner.fields.map(f => field('Safe: ' + f.label, f.value)));
     warnings.push(...inner.warnings, 'Safe owners and threshold are not independently verified offline.');
     asset = inner.asset; decodeStatus = inner.decodeStatus;
@@ -243,7 +251,7 @@ export function decodeCall(to, data, value = 0n, depth = 0, context = {}) {
     if (inner.summary) summary = 'Safe: ' + inner.summary;
   } else if (fn === 'multiSend') {
     const reader = new Reader(hexToBytes(a[0], 65536));
-    let count = 0, moved = 0n; riskLevel = 'high';
+    let count = 0, moved = 0n, unknownDelegate = 0; riskLevel = 'high';
     const calls = [];
     while (reader.pos < reader.bytes.length) {
       check(++count <= 32, 'LIMIT', 'MultiSend contains too many calls.');
@@ -254,6 +262,12 @@ export function decodeCall(to, data, value = 0n, depth = 0, context = {}) {
       check(length <= 65536n, 'LIMIT', 'MultiSend calldata is too large.');
       const innerData = '0x' + bytesToHex(reader.take(Number(length)));
       const inner = decodeCall(destination, innerData, op ? 0n : innerValue, depth + 1, context);
+      // What this branch debits from the executing account. A CALL debits the
+      // value handed to it, and whatever the target then does is the target's
+      // own money. A DELEGATECALL debits nothing immediately but runs with the
+      // Safe's balance, so its own outgoing calls are the Safe paying — which
+      // is what `forwards` reports, through any depth of nested batches.
+      const spends = op ? (inner.forwards ?? 0n) : innerValue;
       if (op) {
         // MultiSend hands no value to a delegatecall. Showing the encoded
         // number as an amount paid would misstate what the batch does.
@@ -261,8 +275,10 @@ export function decodeCall(to, data, value = 0n, depth = 0, context = {}) {
           fields.push(field(`Call ${count} ignored value`, `${innerValue} wei encoded on a DELEGATECALL, which transfers nothing`));
           warnings.push(`Call ${count} encodes a value of ${innerValue} wei on a DELEGATECALL. MultiSend does not transfer it; it is not part of the amount shown.`);
         }
-      } else moved += innerValue;
-      calls.push({ index: count, inner, risk: op ? 'high' : inner.riskLevel, moves: op ? 0n : innerValue });
+        if (inner.decodeStatus !== 'fullyDecoded') unknownDelegate++;
+      }
+      moved += spends;
+      calls.push({ index: count, inner, risk: op ? 'high' : inner.riskLevel, moves: spends, delegates: !!op });
       fields.push(field(`Call ${count} operation`, op ? 'DELEGATECALL' : 'CALL'), ...inner.fields.map(f => field(`Call ${count}: ${f.label}`, f.value)));
       // Call-specific warnings are indexed; the shared generic notice is kept once.
       warnings.push(...inner.warnings.map(w => w === GENERIC_CALL_WARNING ? w : indexWarning(w, `Call ${count}`)));
@@ -271,18 +287,27 @@ export function decodeCall(to, data, value = 0n, depth = 0, context = {}) {
     }
     check(count > 0, 'CALLDATA', 'Empty MultiSend batch.');
     warnings.push('MultiSend target code and the current Safe policy are unverified offline.');
+    if (unknownDelegate > 0) {
+      decodeStatus = 'partiallyDecoded';
+      warnings.push(`HIGH RISK: The amount shown is incomplete. ${unknownDelegate} DELEGATECALL branch${unknownDelegate === 1 ? '' : 'es'} run with the Safe's own balance and ${unknownDelegate === 1 ? 'its body is' : 'their bodies are'} not fully decoded, so what ${unknownDelegate === 1 ? 'it' : 'they'} spend cannot be counted.`);
+    }
     // Headline lists the riskiest calls first (stable within the same risk).
     const describe = ({ inner }) => {
       const d = inner.display ?? {}, detail = d.headline ?? (d.amount !== undefined ? `${d.amount} ${d.symbol}` : undefined);
       return detail ? `${d.action ?? inner.title} (${detail})` : d.action ?? inner.title;
     };
     const ordered = [...calls].sort((p, q) => (RISK_ORDER[p.risk] ?? 0) - (RISK_ORDER[q.risk] ?? 0) || p.index - q.index);
-    // A call that spends native value is always described, whatever its risk
-    // rank: truncating the list must never be what hides a transfer.
-    const spending = ordered.filter(c => c.moves > 0n);
-    const shown = [...new Set([...spending, ...ordered])].slice(0, Math.max(3, spending.length));
-    const omitted = count - shown.length;
-    const headline = `${count} call${count === 1 ? '' : 's'}: ${shown.map(describe).join('; ')}${omitted > 0 ? ` (+${omitted} more)` : ''}`;
+    // A branch with an economic effect is always described, whatever its risk
+    // rank or position: truncating the list must never be what hides one. That
+    // is any branch that spends native currency, and every DELEGATECALL, whose
+    // body runs with the Safe's own balance and storage.
+    const material = ordered.filter(c => c.moves > 0n || c.delegates);
+    const filler = ordered.filter(c => !(c.moves > 0n || c.delegates));
+    const described = material.slice(0, 8);
+    const shown = [...described, ...filler].slice(0, Math.max(3, described.length));
+    const hidden = material.length - described.length, omitted = count - shown.length;
+    const headline = `${count} call${count === 1 ? '' : 's'}: ${shown.map(describe).join('; ')}`
+      + (omitted > 0 ? ` (+${omitted} more${hidden > 0 ? `, ${hidden} of them spending or delegating` : ''})` : '');
     // `moved` is what the batch forwards internally; `value` is what this
     // wallet actually pays to the batch contract. When both exist they are
     // shown separately — the amount is always what leaves the wallet.
@@ -292,6 +317,8 @@ export function decodeCall(to, data, value = 0n, depth = 0, context = {}) {
                                        headline: [`${headline}`, inner].filter(Boolean).join(' · ') })
       : display('Batch Transaction', { headline, ...(inner ? { amount: decimal(moved, 18), symbol: network.symbol } : {}) });
     summary = `Batch: ${headline}`;
+    // Running as a DELEGATECALL, this batch spends the caller's balance.
+    forwards = moved;
     if (value > 0n && network) {
       // The batch contract keeps whatever the inner calls do not forward, and
       // MultiSend has no refund path.
@@ -324,8 +351,11 @@ export function decodeCall(to, data, value = 0n, depth = 0, context = {}) {
       assetKind, assetContract, assetContractLabel, tokenId });
     if (summary) summary += ` (also sends ${nativeAmount(network, value)})`;
   }
+  // `forwards` is what the *executing* account pays out through this call's own
+  // body, which only a DELEGATECALL caller spends. Every decoded method moves
+  // the target contract's money rather than ours; a batch forwards `moved`.
   return { title, fields, warnings: [...new Set(warnings)], decodeStatus, riskLevel, display: callDisplay, counterparty,
-    ...(summary ? { summary } : {}), ...(asset ? { asset } : {}) };
+    forwards, ...(summary ? { summary } : {}), ...(asset ? { asset } : {}) };
 }
 
 // ---------------------------------------------------------------------------

@@ -14,6 +14,22 @@ const HIGH_FEE_ABSOLUTE=1000000n;
  * few thousand satoshis is simply what the network costs, and warning there
  * only teaches people to tick the box without reading. */
 const HIGH_FEE_FLOOR=10000n;
+/** The fee policy, as one function both the parser and the resolver call.
+ *
+ * `payment` is what actually leaves the wallet, so change must already be
+ * subtracted from it. The parser cannot know which outputs are change — that
+ * needs the signing wallet's own keys — so it passes the output total, and the
+ * resolver recomputes once ownership is verified. Change only ever makes
+ * `payment` smaller, so recomputing can add this warning but never remove one.
+ */
+export function highFeeWarning(fee,payment) {
+  if(fee>HIGH_FEE_ABSOLUTE)return'HIGH FEE: Fee exceeds 0.01 BTC, or it is more than half the amount being sent. Verify it carefully.';
+  if(fee<=HIGH_FEE_FLOOR)return undefined;
+  // Nothing leaves the wallet, so the fee is the entire cost of signing this.
+  if(payment===0n)return'HIGH FEE: Every output returns to this wallet, so the fee of '+decimal(fee,8)+' BTC is the whole cost of this transaction. Verify it carefully.';
+  if(fee*2n>payment)return'HIGH FEE: Fee exceeds 0.01 BTC, or it is more than half the amount being sent. Verify it carefully.';
+  return undefined;
+}
 const pathText=path=>'m/'+path.map(i=>(i&0x7fffffff)+(i>=0x80000000?"'":'')).join('/');
 const xOnly=pub=>pub.length===33?pub.slice(1):pub;
 function leaves(input) {
@@ -136,8 +152,11 @@ export function parseBitcoin(request) {
   }
   const fee=inputTotal-outputTotal;check(fee>=0n&&inputTotal<=2100000000000000n,'FEE','Bitcoin output total exceeds verified inputs.');
   fields.push(field('Total output',decimal(outputTotal,8)+' BTC'),field('Network fee',decimal(fee,8)+' BTC'));
-  // Large outright, or eating more than half of what is being sent.
-  if(fee>HIGH_FEE_ABSOLUTE||(fee>HIGH_FEE_FLOOR&&fee*2n>outputTotal))warnings.push('HIGH FEE: Fee exceeds 0.01 BTC, or it is more than half the amount being sent. Verify it carefully.');
+  // Large outright, or eating more than half of what is being sent. Change is
+  // not identified yet, so the share test uses the output total here; the
+  // resolver reruns it against the real payment once change is verified.
+  const highFee=highFeeWarning(fee,outputTotal);
+  if(highFee)warnings.push(highFee);
   parsed.fee=fee;
   parsed.review=reviewResult(request,'Sign Bitcoin transaction',`Send ${decimal(outputTotal,8)} BTC`,fields,warnings,{riskLevel:warnings.some(w=>w.startsWith('HIGH'))?'high':'warning',network:{name:'Bitcoin',symbol:'BTC'},display:bitcoinDisplay(parsed.outputs,fee)});
   return parsed;

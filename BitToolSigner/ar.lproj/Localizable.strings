@@ -220,6 +220,7 @@
 "Each wallet signs with its own password. The final signature appears after every wallet has signed." = "توقّع كل محفظة بكلمة المرور الخاصة بها. ويظهر التوقيع النهائي بعد أن توقّع جميع المحافظ.";
 "Ed25519 message signature" = "توقيع رسالة Ed25519";
 "Email" = "البريد الإلكتروني";
+"Energy budget" = "ميزانية الطاقة";
 "Energy budget up to %@ · total fee not known offline" = "سقف ميزانية الطاقة %@ · إجمالي الرسوم غير معروف دون اتصال";
 "Engine size" = "حجم المحرك";
 "Enter a wallet name." = "أدخل اسمًا للمحفظة.";
@@ -272,12 +273,12 @@
 "Hook extra accounts" = "حسابات الخطّاف الإضافية";
 "Hook validation account" = "حساب التحقق من الخطّاف";
 "How signing works" = "كيف يتم التوقيع";
-"I have a backup of the recovery phrase" = "لديّ نسخة احتياطية من العبارة الاحتياطية";
+"I confirm I want to delete this wallet" = "أؤكد أنني أريد الحذف";
 "I understand the risks of this request" = "أفهم مخاطر هذا الطلب";
 "I understand this request can’t be fully verified" = "أفهم أن هذا الطلب لا يمكن التحقق منه بالكامل";
 "If iOS asks to allow wireless data, choose Don’t Allow: the app never connects" = "إذا طلب iOS السماح بالبيانات اللاسلكية، فاختر «عدم السماح»: التطبيق لا يتصل أبدًا";
 "If this wallet uses a BIP39 passphrase, the words alone cannot restore it." = "إذا كانت هذه المحفظة تستخدم عبارة مرور BIP39، فالكلمات وحدها لا تستعيدها.";
-"If you forget this password, delete the wallet and import it again with the recovery phrase." = "إذا نسيت كلمة المرور هذه، احذف المحفظة واستوردها من جديد بالعبارة الاحتياطية.";
+"If you forget this password, import this recovery phrase again to set a new one." = "إذا نسيت كلمة المرور هذه، فاستورد هذه العبارة الاحتياطية مرة أخرى لتعيين كلمة مرور جديدة.";
 "Ignored request keys" = "حقول الطلب المتجاهَلة";
 "Import Existing Wallet" = "استيراد محفظة موجودة";
 "Import File" = "استيراد ملف";
@@ -404,6 +405,7 @@
 "One address works on Ethereum, BNB Smart Chain, Arbitrum, Base and other EVM networks." = "عنوان واحد يعمل على Ethereum و BNB Smart Chain و Arbitrum و Base وغيرها من شبكات EVM.";
 "One animated QR code for all four chains" = "رمز QR متحرك واحد لجميع الشبكات الأربع";
 "Only enter your recovery phrase into a wallet you trust, on a device you control, when you restore it." = "لا تُدخل عبارة الاسترداد إلا في محفظة تثق بها، على جهاز تتحكم فيه، وعند الاستعادة فقط.";
+"Only the password changes. The wallet keeps its name, addresses, paired wallets and history." = "كلمة المرور وحدها هي التي تتغير. تحتفظ المحفظة باسمها وعناوينها والمحافظ المقترنة بها وسجلّها.";
 "Open BC-UR and PSBT QR standards" = "معايير BC-UR وPSBT المفتوحة لرموز QR";
 "Open Camera" = "فتح الكاميرا";
 "Open Settings" = "فتح الإعدادات";
@@ -425,6 +427,7 @@
 "Partially decoded" = "فُكّ ترميزه جزئيًا";
 "Password" = "كلمة المرور";
 "Password Changed" = "تم تغيير كلمة المرور";
+"Password Reset" = "تم تعيين كلمة مرور جديدة";
 "Password meets the requirements." = "كلمة المرور تستوفي المتطلبات.";
 "Passwords match" = "كلمتا المرور متطابقتان";
 "Paste Request" = "لصق طلب";
@@ -505,6 +508,7 @@
 "Requests are decoded before you sign" = "تُفَك ترميز الطلبات قبل أن توقّع";
 "Require %@ to open BitTool Signer at launch and after 2 minutes in the background. Every signature still needs the wallet’s password." = "طلب %@ لفتح BitTool Signer عند التشغيل وبعد دقيقتين في الخلفية. ويظل كل توقيع يحتاج كلمة مرور المحفظة.";
 "Required signers" = "الموقّعون المطلوبون";
+"Reset Password" = "إعادة تعيين كلمة المرور";
 "Resource" = "المورد";
 "Return" = "الإرجاع";
 "Reveal the words first." = "أظهر الكلمات أولًا.";
@@ -666,13 +670,17 @@
 "This is the signature that was already created. Scanning it again signs nothing new." = "هذا هو التوقيع الذي أُنشئ من قبل. مسحه مرة أخرى لا يوقّع أي شيء جديد.";
 "This only removes the local records. It does not affect any transaction." = "هذا يزيل السجلات المحلية فقط، ولا يؤثر في أي معاملة.";
 "This page is information only. Check any wallet yourself before trusting it with money. BitTool is not responsible for anything that happens through another wallet — bugs, hacks, scams or losses of any kind." = "هذه الصفحة للمعلومات فقط. افحص أي محفظة بنفسك قبل أن تأتمنها على أموالك. لا تتحمل BitTool أي مسؤولية عما يحدث عبر محفظة أخرى — من أخطاء برمجية أو اختراقات أو عمليات احتيال أو أي خسائر مهما كان نوعها.";
+"This recovery phrase already belongs to a wallet on this device. Set a new password for it: the phrase you just entered is the proof, so the old password is not needed." = "هذه العبارة الاحتياطية تنتمي بالفعل إلى محفظة على هذا الجهاز. عيّن لها كلمة مرور جديدة: العبارة التي أدخلتها للتو هي الإثبات، فلا حاجة إلى كلمة المرور القديمة.";
 "This recovery phrase and passphrase already belong to an existing wallet." = "عبارة الاسترداد وعبارة المرور هاتان تخصان محفظة موجودة بالفعل.";
+"This recovery phrase belongs to a different wallet." = "هذه العبارة الاحتياطية تنتمي إلى محفظة أخرى.";
 "This removes the encrypted wallet and its public data from this device. Funds are not affected, but you can only recover them with the recovery phrase and any BIP39 passphrase." = "يزيل هذا المحفظة المشفّرة وبياناتها العامة من هذا الجهاز. لا تتأثر الأموال، لكن لا يمكن استعادتها إلا بالعبارة الاحتياطية وعبارة مرور BIP39 إن وُجدت.";
 "This request cannot be signed. Nothing has been signed." = "لا يمكن توقيع هذا الطلب. لم يُوقَّع أي شيء.";
 "This request does not belong to any wallet on this device. Check that you scanned the request for this wallet." = "هذا الطلب لا يخص أي محفظة على هذا الجهاز. تأكّد أنك مسحت الطلب الخاص بهذه المحفظة.";
 "This signing request is already being processed." = "طلب التوقيع هذا قيد المعالجة بالفعل.";
 "This wallet could not be found." = "تعذّر العثور على هذه المحفظة.";
 "This wallet format is not supported by this version of BitTool Signer." = "هذه الصيغة للمحفظة غير مدعومة في هذا الإصدار من BitTool Signer.";
+"This wallet is encrypted with your new password. Use it to authorize signatures from now on." = "هذه المحفظة مشفَّرة بكلمة المرور الجديدة. استخدمها لاعتماد التوقيعات من الآن.";
+"This wallet needs repair before its password can be reset." = "يجب إصلاح هذه المحفظة قبل إمكان إعادة تعيين كلمة مرورها.";
 "This wallet's public data is missing or damaged. Your encrypted recovery phrase is safe. Enter the wallet password once to rebuild it." = "بيانات هذه المحفظة العامة مفقودة أو تالفة. عبارتك الاحتياطية المشفّرة بأمان. أدخل كلمة مرور المحفظة مرة واحدة لإعادة بنائها.";
 "This wallet’s device key is unavailable. Restore your recovery phrase on this device." = "مفتاح الجهاز لهذه المحفظة غير متاح. استعد عبارة الاسترداد على هذا الجهاز.";
 "To" = "إلى";

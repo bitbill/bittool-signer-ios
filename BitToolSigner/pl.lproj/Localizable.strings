@@ -220,6 +220,7 @@
 "Each wallet signs with its own password. The final signature appears after every wallet has signed." = "Każdy portfel podpisuje własnym hasłem. Ostateczny podpis pojawia się, gdy podpiszą wszystkie.";
 "Ed25519 message signature" = "Podpis wiadomości Ed25519";
 "Email" = "E-mail";
+"Energy budget" = "Budżet energii";
 "Energy budget up to %@ · total fee not known offline" = "Budżet energii do %@ · łączna opłata nieznana offline";
 "Engine size" = "Rozmiar silnika";
 "Enter a wallet name." = "Wpisz nazwę portfela.";
@@ -272,12 +273,12 @@
 "Hook extra accounts" = "Dodatkowe konta haka";
 "Hook validation account" = "Konto walidacji haka";
 "How signing works" = "Jak działa podpisywanie";
-"I have a backup of the recovery phrase" = "Mam kopię frazy odzyskiwania";
+"I confirm I want to delete this wallet" = "Potwierdzam, że chcę usunąć";
 "I understand the risks of this request" = "Rozumiem ryzyko związane z tym żądaniem";
 "I understand this request can’t be fully verified" = "Rozumiem, że tego żądania nie da się w pełni zweryfikować";
 "If iOS asks to allow wireless data, choose Don’t Allow: the app never connects" = "Jeśli iOS poprosi o zgodę na dane bezprzewodowe, wybierz „Nie zezwalaj”: aplikacja nigdy się nie łączy";
 "If this wallet uses a BIP39 passphrase, the words alone cannot restore it." = "Jeśli ten portfel używa hasła BIP39, same słowa go nie odtworzą.";
-"If you forget this password, delete the wallet and import it again with the recovery phrase." = "Jeśli zapomnisz tego hasła, usuń portfel i zaimportuj go ponownie frazą odzyskiwania.";
+"If you forget this password, import this recovery phrase again to set a new one." = "Jeśli zapomnisz tego hasła, zaimportuj tę frazę odzyskiwania ponownie i ustaw nowe.";
 "Ignored request keys" = "Pominięte pola żądania";
 "Import Existing Wallet" = "Zaimportuj portfel";
 "Import File" = "Zaimportuj plik";
@@ -404,6 +405,7 @@
 "One address works on Ethereum, BNB Smart Chain, Arbitrum, Base and other EVM networks." = "Jeden adres działa w Ethereum, BNB Smart Chain, Arbitrum, Base i innych sieciach EVM.";
 "One animated QR code for all four chains" = "Jeden animowany kod QR dla wszystkich czterech sieci";
 "Only enter your recovery phrase into a wallet you trust, on a device you control, when you restore it." = "Wpisuj frazę odzyskiwania wyłącznie w portfelu, któremu ufasz, na urządzeniu, które kontrolujesz, i tylko wtedy, gdy go odtwarzasz.";
+"Only the password changes. The wallet keeps its name, addresses, paired wallets and history." = "Zmienia się tylko hasło. Portfel zachowuje nazwę, adresy, sparowane portfele i historię.";
 "Open BC-UR and PSBT QR standards" = "Otwarte standardy QR BC-UR i PSBT";
 "Open Camera" = "Otwórz aparat";
 "Open Settings" = "Otwórz Ustawienia";
@@ -425,6 +427,7 @@
 "Partially decoded" = "Częściowo odczytane";
 "Password" = "Hasło";
 "Password Changed" = "Hasło zmienione";
+"Password Reset" = "Hasło zmienione";
 "Password meets the requirements." = "Hasło spełnia wymagania.";
 "Passwords match" = "Hasła są zgodne";
 "Paste Request" = "Wklej żądanie";
@@ -505,6 +508,7 @@
 "Requests are decoded before you sign" = "Żądania są odczytywane, zanim podpiszesz";
 "Require %@ to open BitTool Signer at launch and after 2 minutes in the background. Every signature still needs the wallet’s password." = "Wymagaj %@ do otwarcia BitTool Signer przy starcie i po 2 minutach w tle. Każdy podpis nadal wymaga hasła portfela.";
 "Required signers" = "Wymagani podpisujący";
+"Reset Password" = "Zresetuj hasło";
 "Resource" = "Zasób";
 "Return" = "Enter";
 "Reveal the words first." = "Najpierw pokaż słowa.";
@@ -666,13 +670,17 @@
 "This is the signature that was already created. Scanning it again signs nothing new." = "To podpis, który już powstał. Ponowne zeskanowanie niczego nowego nie podpisuje.";
 "This only removes the local records. It does not affect any transaction." = "To usuwa tylko lokalne wpisy. Nie wpływa na żadną transakcję.";
 "This page is information only. Check any wallet yourself before trusting it with money. BitTool is not responsible for anything that happens through another wallet — bugs, hacks, scams or losses of any kind." = "Ta strona ma charakter wyłącznie informacyjny. Sprawdź każdy portfel samodzielnie, zanim powierzysz mu pieniądze. BitTool nie odpowiada za nic, co stanie się za pośrednictwem innego portfela — błędy, włamania, oszustwa ani straty jakiegokolwiek rodzaju.";
+"This recovery phrase already belongs to a wallet on this device. Set a new password for it: the phrase you just entered is the proof, so the old password is not needed." = "Ta fraza odzyskiwania należy już do portfela na tym urządzeniu. Ustaw dla niego nowe hasło: właśnie wpisana fraza jest potwierdzeniem, więc poprzednie hasło nie jest potrzebne.";
 "This recovery phrase and passphrase already belong to an existing wallet." = "Ta fraza odzyskiwania i to hasło BIP39 należą już do istniejącego portfela.";
+"This recovery phrase belongs to a different wallet." = "Ta fraza odzyskiwania należy do innego portfela.";
 "This removes the encrypted wallet and its public data from this device. Funds are not affected, but you can only recover them with the recovery phrase and any BIP39 passphrase." = "To usuwa z tego urządzenia zaszyfrowany portfel i jego dane publiczne. Środki nie są naruszone, ale odzyskasz je tylko za pomocą frazy odzyskiwania i ewentualnego hasła BIP39.";
 "This request cannot be signed. Nothing has been signed." = "Tego żądania nie da się podpisać. Nic nie zostało podpisane.";
 "This request does not belong to any wallet on this device. Check that you scanned the request for this wallet." = "To żądanie nie należy do żadnego portfela na tym urządzeniu. Sprawdź, czy zeskanowałeś żądanie przeznaczone dla tego portfela.";
 "This signing request is already being processed." = "To żądanie podpisu jest już przetwarzane.";
 "This wallet could not be found." = "Nie udało się znaleźć tego portfela.";
 "This wallet format is not supported by this version of BitTool Signer." = "Ta wersja BitTool Signer nie obsługuje tego formatu portfela.";
+"This wallet is encrypted with your new password. Use it to authorize signatures from now on." = "Ten portfel jest zaszyfrowany nowym hasłem. Od teraz autoryzuj nim podpisy.";
+"This wallet needs repair before its password can be reset." = "Ten portfel wymaga naprawy, zanim będzie można zresetować jego hasło.";
 "This wallet's public data is missing or damaged. Your encrypted recovery phrase is safe. Enter the wallet password once to rebuild it." = "Dane publiczne tego portfela są nieobecne lub uszkodzone. Twoja zaszyfrowana fraza odzyskiwania jest bezpieczna. Wpisz raz hasło portfela, aby je odtworzyć.";
 "This wallet’s device key is unavailable. Restore your recovery phrase on this device." = "Klucz urządzenia dla tego portfela jest niedostępny. Odtwórz swoją frazę odzyskiwania na tym urządzeniu.";
 "To" = "Do";

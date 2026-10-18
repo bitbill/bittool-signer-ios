@@ -30,6 +30,11 @@ final class WalletSetupModel: ObservableObject {
     @Published private(set) var busy = false
     @Published var error: String?
     @Published private(set) var created: VaultMetadata?
+    /// The existing wallet this phrase and passphrase already belong to. The
+    /// password step then offers to reset that wallet's password instead of
+    /// refusing a duplicate: holding the phrase is what a reset is proof of.
+    @Published private(set) var duplicateOf: UUID?
+    @Published private(set) var didResetPassword = false
     private var operation = UUID()
 
     init(intent: SetupIntent, existingWallets: Int) {
@@ -87,6 +92,8 @@ final class WalletSetupModel: ObservableObject {
         mnemonic = reading.phrase
         importedLanguage = reading.language
         error = nil
+        // A different phrase is a different question: the password step asks again.
+        duplicateOf = nil
         path = [.password]
     }
 
@@ -134,8 +141,36 @@ final class WalletSetupModel: ObservableObject {
     }
 
     func reviewPhraseAgain() {
-        verification = nil; error = nil
+        verification = nil; error = nil; duplicateOf = nil
         path = [.backup]
+    }
+
+    /// Asks, once the phrase is settled, whether some wallet on this device
+    /// already has it. Nothing is written and no password is involved.
+    func checkForExistingWallet(store: AppStore) {
+        guard !mnemonic.isEmpty, created == nil, duplicateOf == nil, !busy else { return }
+        let mnemonic = mnemonic, passphrase = usePassphrase ? passphrase : ""
+        let token = operation, epoch = store.securityEpoch
+        Task { @MainActor in
+            // A failure here only means the question stays unanswered: the
+            // create path refuses a duplicate on its own.
+            guard let existing = try? await store.existingWallet(mnemonic: mnemonic, passphrase: passphrase),
+                  operation == token, epoch == store.securityEpoch, created == nil else { return }
+            duplicateOf = existing
+        }
+    }
+
+    func resetPassword(store: AppStore) {
+        guard let walletID = duplicateOf, passwordValid, !mnemonic.isEmpty else { return }
+        let mnemonic = mnemonic, password = password
+        let passphrase = usePassphrase ? passphrase : ""
+        perform(store: store) { [self] _ in
+            try await store.resetPassword(walletID: walletID, mnemonic: mnemonic, passphrase: passphrase, newPassword: password)
+            created = store.wallet(walletID)
+            didResetPassword = true
+            clearSecrets()
+            path.append(.done)
+        }
     }
 
     func createWallet(store: AppStore) {
@@ -165,6 +200,7 @@ final class WalletSetupModel: ObservableObject {
         mnemonic = ""; importedLanguage = nil; languageChoices = []; scannedPhrase = nil; phraseInput = ""; passphrase = ""; passphraseConfirmation = ""
         password = ""; confirmation = ""; verification = nil
         hasRevealedBackup = false
+        duplicateOf = nil
     }
 
     private func validateOptions() -> Bool {

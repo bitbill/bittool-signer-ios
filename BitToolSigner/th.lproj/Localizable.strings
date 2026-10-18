@@ -220,6 +220,7 @@
 "Each wallet signs with its own password. The final signature appears after every wallet has signed." = "กระเป๋าแต่ละใบเซ็นด้วยรหัสผ่านของตัวเอง ลายเซ็นสุดท้ายจะปรากฏเมื่อทุกกระเป๋าเซ็นครบแล้ว";
 "Ed25519 message signature" = "ลายเซ็นข้อความ Ed25519";
 "Email" = "อีเมล";
+"Energy budget" = "งบพลังงาน";
 "Energy budget up to %@ · total fee not known offline" = "งบพลังงานสูงสุด %@ · ค่าธรรมเนียมรวมไม่ทราบเมื่อออฟไลน์";
 "Engine size" = "ขนาดเอนจิน";
 "Enter a wallet name." = "ป้อนชื่อกระเป๋า";
@@ -272,12 +273,12 @@
 "Hook extra accounts" = "บัญชีเพิ่มเติมของฮุก";
 "Hook validation account" = "บัญชีตรวจสอบของฮุก";
 "How signing works" = "การเซ็นทำงานอย่างไร";
-"I have a backup of the recovery phrase" = "ฉันมีข้อมูลสำรองของวลีกู้คืนแล้ว";
+"I confirm I want to delete this wallet" = "ฉันยืนยันว่าต้องการลบ";
 "I understand the risks of this request" = "ฉันเข้าใจความเสี่ยงของคำขอนี้";
 "I understand this request can’t be fully verified" = "ฉันเข้าใจว่าคำขอนี้ตรวจสอบได้ไม่ครบถ้วน";
 "If iOS asks to allow wireless data, choose Don’t Allow: the app never connects" = "หาก iOS ขออนุญาตใช้ข้อมูลไร้สาย ให้เลือก “ไม่อนุญาต” แอปนี้ไม่เคยเชื่อมต่อ";
 "If this wallet uses a BIP39 passphrase, the words alone cannot restore it." = "หากกระเป๋านี้ใช้รหัสผ่านวลี BIP39 ลำพังคำอย่างเดียวจะกู้คืนไม่ได้";
-"If you forget this password, delete the wallet and import it again with the recovery phrase." = "หากคุณลืมรหัสผ่านนี้ ให้ลบกระเป๋าแล้วนำเข้าใหม่ด้วยวลีกู้คืน";
+"If you forget this password, import this recovery phrase again to set a new one." = "ถ้าคุณลืมรหัสผ่านนี้ ให้นำเข้าวลีกู้คืนชุดนี้อีกครั้งเพื่อตั้งรหัสผ่านใหม่";
 "Ignored request keys" = "ฟิลด์คำขอที่ถูกข้าม";
 "Import Existing Wallet" = "นำเข้ากระเป๋า";
 "Import File" = "นำเข้าไฟล์";
@@ -404,6 +405,7 @@
 "One address works on Ethereum, BNB Smart Chain, Arbitrum, Base and other EVM networks." = "ที่อยู่เดียวใช้ได้บน Ethereum, BNB Smart Chain, Arbitrum, Base และเครือข่าย EVM อื่น ๆ";
 "One animated QR code for all four chains" = "คิวอาร์โค้ดเคลื่อนไหวอันเดียวสำหรับทั้งสี่เชน";
 "Only enter your recovery phrase into a wallet you trust, on a device you control, when you restore it." = "ป้อนวลีกู้คืนของคุณเฉพาะในกระเป๋าที่คุณไว้ใจ บนอุปกรณ์ที่คุณควบคุม และเฉพาะตอนที่กำลังกู้คืนเท่านั้น";
+"Only the password changes. The wallet keeps its name, addresses, paired wallets and history." = "เปลี่ยนเฉพาะรหัสผ่าน กระเป๋ายังคงชื่อ ที่อยู่ กระเป๋าที่จับคู่ไว้ และประวัติเดิมทั้งหมด";
 "Open BC-UR and PSBT QR standards" = "มาตรฐานคิวอาร์แบบเปิด BC-UR และ PSBT";
 "Open Camera" = "เปิดกล้อง";
 "Open Settings" = "เปิดการตั้งค่า";
@@ -425,6 +427,7 @@
 "Partially decoded" = "ถอดรหัสได้บางส่วน";
 "Password" = "รหัสผ่าน";
 "Password Changed" = "เปลี่ยนรหัสผ่านแล้ว";
+"Password Reset" = "ตั้งรหัสผ่านใหม่แล้ว";
 "Password meets the requirements." = "รหัสผ่านเป็นไปตามข้อกำหนด";
 "Passwords match" = "รหัสผ่านตรงกัน";
 "Paste Request" = "วางคำขอ";
@@ -505,6 +508,7 @@
 "Requests are decoded before you sign" = "คำขอจะถูกถอดรหัสก่อนที่คุณจะเซ็น";
 "Require %@ to open BitTool Signer at launch and after 2 minutes in the background. Every signature still needs the wallet’s password." = "กำหนดให้ใช้ %@ เพื่อเปิด BitTool Signer เมื่อเริ่มแอปและหลังอยู่เบื้องหลัง 2 นาที ทุกลายเซ็นยังคงต้องใช้รหัสผ่านกระเป๋า";
 "Required signers" = "ผู้เซ็นที่ต้องมี";
+"Reset Password" = "ตั้งรหัสผ่านใหม่";
 "Resource" = "ทรัพยากร";
 "Return" = "Return";
 "Reveal the words first." = "แสดงคำก่อน";
@@ -666,13 +670,17 @@
 "This is the signature that was already created. Scanning it again signs nothing new." = "นี่คือลายเซ็นที่สร้างไว้แล้ว การสแกนอีกครั้งไม่ได้เซ็นสิ่งใหม่";
 "This only removes the local records. It does not affect any transaction." = "การทำเช่นนี้ลบเฉพาะระเบียนในเครื่อง ไม่กระทบธุรกรรมใด ๆ";
 "This page is information only. Check any wallet yourself before trusting it with money. BitTool is not responsible for anything that happens through another wallet — bugs, hacks, scams or losses of any kind." = "หน้านี้เป็นเพียงข้อมูลเท่านั้น โปรดตรวจสอบกระเป๋าด้วยตัวคุณเองก่อนจะฝากเงินไว้ BitTool ไม่รับผิดชอบต่อสิ่งใดที่เกิดขึ้นผ่านกระเป๋าอื่น ไม่ว่าจะเป็นข้อบกพร่อง การถูกแฮ็ก การหลอกลวง หรือความสูญเสียในรูปแบบใดก็ตาม";
+"This recovery phrase already belongs to a wallet on this device. Set a new password for it: the phrase you just entered is the proof, so the old password is not needed." = "วลีกู้คืนชุดนี้เป็นของกระเป๋าที่มีอยู่ในเครื่องนี้แล้ว ตั้งรหัสผ่านใหม่ให้กระเป๋านั้น วลีที่คุณเพิ่งกรอกคือหลักฐาน จึงไม่ต้องใช้รหัสผ่านเดิม";
 "This recovery phrase and passphrase already belong to an existing wallet." = "วลีกู้คืนและรหัสผ่านวลีนี้เป็นของกระเป๋าที่มีอยู่แล้ว";
+"This recovery phrase belongs to a different wallet." = "วลีกู้คืนชุดนี้เป็นของกระเป๋าอื่น";
 "This removes the encrypted wallet and its public data from this device. Funds are not affected, but you can only recover them with the recovery phrase and any BIP39 passphrase." = "การทำเช่นนี้จะลบกระเป๋าที่เข้ารหัสและข้อมูลสาธารณะของกระเป๋าออกจากอุปกรณ์นี้ เงินไม่ได้รับผลกระทบ แต่คุณจะกู้คืนได้ด้วยวลีกู้คืนและรหัสผ่านวลี BIP39 (ถ้ามี) เท่านั้น";
 "This request cannot be signed. Nothing has been signed." = "คำขอนี้เซ็นไม่ได้ ยังไม่มีสิ่งใดถูกเซ็น";
 "This request does not belong to any wallet on this device. Check that you scanned the request for this wallet." = "คำขอนี้ไม่ได้เป็นของกระเป๋าใดบนอุปกรณ์นี้ ตรวจสอบว่าคุณสแกนคำขอสำหรับกระเป๋าใบนี้";
 "This signing request is already being processed." = "คำขอเซ็นนี้กำลังถูกดำเนินการอยู่แล้ว";
 "This wallet could not be found." = "ไม่พบกระเป๋านี้";
 "This wallet format is not supported by this version of BitTool Signer." = "BitTool Signer เวอร์ชันนี้ไม่รองรับรูปแบบกระเป๋านี้";
+"This wallet is encrypted with your new password. Use it to authorize signatures from now on." = "กระเป๋านี้เข้ารหัสด้วยรหัสผ่านใหม่ของคุณแล้ว ใช้รหัสผ่านนั้นอนุญาตการลงนามต่อจากนี้";
+"This wallet needs repair before its password can be reset." = "ต้องซ่อมแซมกระเป๋านี้ก่อนจึงจะตั้งรหัสผ่านใหม่ได้";
 "This wallet's public data is missing or damaged. Your encrypted recovery phrase is safe. Enter the wallet password once to rebuild it." = "ข้อมูลสาธารณะของกระเป๋านี้ขาดหายหรือเสียหาย วลีกู้คืนที่เข้ารหัสของคุณยังปลอดภัย ป้อนรหัสผ่านกระเป๋าหนึ่งครั้งเพื่อสร้างขึ้นใหม่";
 "This wallet’s device key is unavailable. Restore your recovery phrase on this device." = "คีย์ของอุปกรณ์สำหรับกระเป๋านี้ใช้งานไม่ได้ กู้คืนวลีกู้คืนของคุณบนอุปกรณ์นี้";
 "To" = "ถึง";

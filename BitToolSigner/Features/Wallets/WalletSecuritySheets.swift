@@ -211,10 +211,11 @@ struct DeleteWalletSheet: View {
                         .listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
                 }
                 Section {
-                    Toggle("I have a backup of the recovery phrase", isOn: $backedUp)
+                    Toggle("I confirm I want to delete this wallet", isOn: $backedUp)
                         .accessibilityIdentifier("delete.backupConfirmed")
                 } footer: {
-                    Text(access.biometry.isAvailable
+                    // Face ID is asked for only where App Lock already uses it.
+                    Text(asksForBiometrics
                          ? "Deleting asks for \(access.biometry.name), then for this wallet’s password."
                          : "Deleting asks for this wallet’s password.")
                 }
@@ -260,8 +261,13 @@ struct DeleteWalletSheet: View {
         .onChange(of: store.securityEpoch) { _, _ in if !operation.busy { password = ""; askingPassword = false } }
     }
 
-    /// Biometrics first where the device has them, then the password: the
-    /// password is what actually authorizes the deletion.
+    /// Whether this delete will ask for biometrics first. App Lock being on is
+    /// what decides: with it off, the app uses no biometrics at all and the
+    /// password is the only thing asked for.
+    private var asksForBiometrics: Bool { access.isEnabled && access.biometry.isAvailable }
+
+    /// Biometrics first for someone who turned App Lock on, then the password:
+    /// the password is what actually authorizes the deletion.
     private func confirm() {
         guard backedUp, !operation.busy, !confirming else { return }
         operation.error = nil
@@ -321,6 +327,9 @@ struct RepairWalletSheet: View {
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } } }
         }
         .interactiveDismissDisabled(operation.busy)
+        // A typed password is dropped the moment the app is suspended, not
+        // held until this sheet happens to go away.
+        .onChange(of: store.securityEpoch) { _, _ in if !operation.busy { password = "" } }
         .onDisappear { operation.cancel(); password = "" }
     }
 

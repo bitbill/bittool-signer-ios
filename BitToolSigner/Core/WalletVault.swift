@@ -162,6 +162,30 @@ actor WalletVault {
         try save(encrypted)
     }
 
+    /// Re-encrypts a stored wallet under a new password, without the old one.
+    ///
+    /// Proof here is the recovery phrase rather than the password: whoever holds
+    /// the phrase and any BIP39 passphrase already controls the funds, so this
+    /// grants nothing that re-importing the phrase into a new wallet would not.
+    /// It is the same operation, done in place, so the wallet keeps its name,
+    /// creation date, pairings and history.
+    ///
+    /// The caller must have established that this recovery material derives the
+    /// same wallet; this method cannot check that and does not try. The failed
+    /// attempt counter is cleared, since the password it was throttling is gone.
+    func resetPassword(id: UUID, mnemonic: String, passphrase: String, newPassword: String) throws {
+        let validation = PasswordPolicy.evaluate(newPassword)
+        guard validation.isValid else { throw VaultError.invalidPassword(validation.message) }
+        guard passphrase.utf8.count <= 1024 else { throw VaultError.invalidPassword(String(localized: "The BIP39 passphrase exceeds 1,024 UTF-8 bytes.", bundle: AppText.bundle)) }
+        let metadata = try load(id: id).header.metadata
+        var key = try deviceKeys.read(id: id)
+        defer { key.resetBytes(in: key.startIndex..<key.endIndex) }
+        let secret = VaultSecret(mnemonic: mnemonic, passphrase: passphrase)
+        let encrypted = try VaultCrypto.encrypt(secret: secret, metadata: metadata, password: newPassword, deviceKey: key)
+        try save(encrypted)
+        try? saveAuthenticationState(AuthenticationState(count: 0, retryAfter: .distantPast), id: id, deviceKey: key)
+    }
+
     /// App access authentication has no secret-returning API. Verification may
     /// decrypt the existing authenticated format, but its result dies here.
     func verifyPassword(id: UUID, password: String) throws {

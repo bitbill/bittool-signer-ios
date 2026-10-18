@@ -2,7 +2,7 @@ import { base58, base58check } from '@scure/base';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { getAddress } from 'ethers/address';
 import { RawPSBTV0, RawPSBTV2 } from '@scure/btc-signer/psbt.js';
-import { parseBitcoin, signBitcoin, bitcoinKeyMatchesInput, bitcoinDisplay } from './bitcoin.js';
+import { parseBitcoin, signBitcoin, bitcoinKeyMatchesInput, bitcoinDisplay, highFeeWarning } from './bitcoin.js';
 import { p2wpkh, p2pkh, p2sh, p2tr } from '@scure/btc-signer';
 import { parseEVM, signEVM } from './evm.js';
 import { parseSolana, signSolana } from './solana.js';
@@ -10,7 +10,7 @@ import { parseTron, signTron } from './tron.js';
 import { validatePublicIndex, derivePublicKeyAt, BITCOIN_PROFILES, publicIndexFromSeed, seedWalletKeyId } from './public-index.js';
 import { withSeedInput, withKey } from './keys.js';
 import { validateRequestTransport, ProtocolError } from '../protocols.js';
-import { check, EngineError, requestHash, stable, bytesToHex, hexToBytes, equal, utf8, fromBase64, field } from './util.js';
+import { check, EngineError, requestHash, stable, bytesToHex, hexToBytes, equal, utf8, fromBase64, field, decimal } from './util.js';
 
 const PARSERS={bitcoin:parseBitcoin,evm:parseEVM,solana:parseSolana,tron:parseTron};
 const SIGNERS={bitcoin:signBitcoin,evm:signEVM,solana:signSolana,tron:signTron};
@@ -147,7 +147,20 @@ function withVerifiedChange(parsed,found){
     fields.splice(at+1,0,field(`Output ${index+1} ownership`,`Returns to the signing wallet (verified from its public key, ${path})`));
   }
   const warnings=parsed.review.warnings.map(w=>w.startsWith('Every output is shown.')?'Every output is shown. Outputs marked as returning to your wallet were verified from the signing wallet’s own public keys.':w);
-  return {...parsed.review,fields,warnings,display:bitcoinDisplay(parsed.outputs,parsed.fee,new Set(change.keys()))};
+  // The fee rule compares the fee against what is actually being sent, which
+  // is only known now: an output coming back to this wallet is not a payment,
+  // and counting it would hide a fee that dwarfs the real one. Change only
+  // shrinks the payment, so this can add the warning, never withdraw one.
+  const payment=parsed.outputs.reduce((total,output)=>change.has(output.index)?total:total+output.amount,0n);
+  const highFee=highFeeWarning(parsed.fee,payment);
+  if(highFee&&!warnings.includes(highFee))warnings.push(highFee);
+  const riskLevel=warnings.some(w=>w.startsWith('HIGH'))?'high':parsed.review.riskLevel;
+  // The summary outlives the review: it is what the history and the signature
+  // receipt show. Change is not money sent, so it is not in the figure either,
+  // which is the same amount the card itself shows.
+  const sent=parsed.outputs.reduce((total,output)=>output.data||change.has(output.index)?total:total+output.amount,0n);
+  const summary=sent>0n?`Send ${decimal(sent,8)} BTC`:'Every output returns to your wallet';
+  return {...parsed.review,fields,warnings,riskLevel,summary,display:bitcoinDisplay(parsed.outputs,parsed.fee,new Set(change.keys()))};
 }
 function digestOf(parsed,request){return parsed.signingBytesDigest||(typeof parsed.digest==='string'?parsed.digest.replace(/^0x/,''):parsed.digest?bytesToHex(parsed.digest):parsed.bytes?bytesToHex(sha256(parsed.bytes)):requestHash(request));}
 export function resolveSigningPlan({request,wallets}) {

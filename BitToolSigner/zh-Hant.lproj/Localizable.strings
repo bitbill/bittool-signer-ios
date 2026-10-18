@@ -220,6 +220,7 @@
 "Each wallet signs with its own password. The final signature appears after every wallet has signed." = "每個錢包以各自的密碼簽名。所有錢包都簽完後才會產生最終簽名。";
 "Ed25519 message signature" = "Ed25519 訊息簽名";
 "Email" = "電子郵件";
+"Energy budget" = "能量預算";
 "Energy budget up to %@ · total fee not known offline" = "能量預算上限 %@ · 離線無法得知總手續費";
 "Engine size" = "引擎大小";
 "Enter a wallet name." = "請輸入錢包名稱。";
@@ -272,12 +273,12 @@
 "Hook extra accounts" = "Hook 額外帳戶";
 "Hook validation account" = "Hook 驗證帳戶";
 "How signing works" = "簽名流程";
-"I have a backup of the recovery phrase" = "我已備份助記詞";
+"I confirm I want to delete this wallet" = "我確認要刪除";
 "I understand the risks of this request" = "我已了解此請求的風險";
 "I understand this request can’t be fully verified" = "我明白此請求無法被完整驗證";
 "If iOS asks to allow wireless data, choose Don’t Allow: the app never connects" = "如果 iOS 詢問是否允許無線數據，請選「不允許」：這個 App 從不連網";
 "If this wallet uses a BIP39 passphrase, the words alone cannot restore it." = "如果這個錢包用了 BIP39 passphrase，只有助記詞是還原不出來的。";
-"If you forget this password, delete the wallet and import it again with the recovery phrase." = "如果忘記這組密碼，刪除錢包後用助記詞重新匯入即可。";
+"If you forget this password, import this recovery phrase again to set a new one." = "如果忘記密碼，重新匯入這組助記詞即可重設密碼。";
 "Ignored request keys" = "已忽略的請求欄位";
 "Import Existing Wallet" = "匯入既有錢包";
 "Import File" = "匯入檔案";
@@ -404,6 +405,7 @@
 "One address works on Ethereum, BNB Smart Chain, Arbitrum, Base and other EVM networks." = "同一個地址可用於 Ethereum、BNB Smart Chain、Arbitrum、Base 以及其他 EVM 網路。";
 "One animated QR code for all four chains" = "一個動態 QR Code，涵蓋全部四條鏈";
 "Only enter your recovery phrase into a wallet you trust, on a device you control, when you restore it." = "只在還原錢包時，把助記詞輸入到你信任的錢包、你自己掌控的裝置上。";
+"Only the password changes. The wallet keeps its name, addresses, paired wallets and history." = "只有密碼會改變。錢包的名稱、地址、已配對的錢包和活動記錄都保持不變。";
 "Open BC-UR and PSBT QR standards" = "開放的 BC-UR 與 PSBT 二維碼標準";
 "Open Camera" = "開啟相機";
 "Open Settings" = "開啟系統設定";
@@ -425,6 +427,7 @@
 "Partially decoded" = "部分解碼";
 "Password" = "密碼";
 "Password Changed" = "密碼已修改";
+"Password Reset" = "密碼已重設";
 "Password meets the requirements." = "密碼符合要求。";
 "Passwords match" = "兩次密碼一致";
 "Paste Request" = "貼上請求";
@@ -505,6 +508,7 @@
 "Requests are decoded before you sign" = "簽名之前先把請求解碼出來";
 "Require %@ to open BitTool Signer at launch and after 2 minutes in the background. Every signature still needs the wallet’s password." = "啟動時以及退到背景 2 分鐘後，開啟 BitTool Signer 需要 %@。每次簽名仍需錢包密碼。";
 "Required signers" = "所需簽名者";
+"Reset Password" = "重設密碼";
 "Resource" = "資源";
 "Return" = "回傳";
 "Reveal the words first." = "請先顯示助記詞。";
@@ -666,13 +670,17 @@
 "This is the signature that was already created. Scanning it again signs nothing new." = "這是之前已經產生的簽名。再掃一次不會簽任何新內容。";
 "This only removes the local records. It does not affect any transaction." = "這只會清除本機記錄，不影響任何交易。";
 "This page is information only. Check any wallet yourself before trusting it with money. BitTool is not responsible for anything that happens through another wallet — bugs, hacks, scams or losses of any kind." = "本頁僅作資訊展示。在把錢包託付給資金之前，請自行查證。透過其他錢包發生的任何事情——漏洞、駭客、詐騙或任何形式的損失——BitTool 概不負責。";
+"This recovery phrase already belongs to a wallet on this device. Set a new password for it: the phrase you just entered is the proof, so the old password is not needed." = "這組助記詞已經屬於本機上的一個錢包。為它設定新密碼：你剛輸入的助記詞就是憑證，不需要原密碼。";
 "This recovery phrase and passphrase already belong to an existing wallet." = "這組助記詞與 passphrase 已經屬於一個既有的錢包。";
+"This recovery phrase belongs to a different wallet." = "這組助記詞屬於另一個錢包。";
 "This removes the encrypted wallet and its public data from this device. Funds are not affected, but you can only recover them with the recovery phrase and any BIP39 passphrase." = "這會從本機刪除加密錢包與其公開資料。資產不受影響，但只能憑助記詞與相應的 BIP39 passphrase 恢復。";
 "This request cannot be signed. Nothing has been signed." = "這個請求無法簽名。什麼都沒有被簽。";
 "This request does not belong to any wallet on this device. Check that you scanned the request for this wallet." = "這個請求不屬於本機任何一個錢包。請確認你掃的是這個錢包的請求。";
 "This signing request is already being processed." = "這個簽名請求正在處理中。";
 "This wallet could not be found." = "找不到這個錢包。";
 "This wallet format is not supported by this version of BitTool Signer." = "目前版本的 BitTool Signer 不支援這種錢包格式。";
+"This wallet is encrypted with your new password. Use it to authorize signatures from now on." = "該錢包已用新密碼加密。此後請用新密碼授權簽名。";
+"This wallet needs repair before its password can be reset." = "該錢包需要先修復，才能重設密碼。";
 "This wallet's public data is missing or damaged. Your encrypted recovery phrase is safe. Enter the wallet password once to rebuild it." = "這個錢包的公開資料遺失或損毀。你的加密助記詞仍然安全。輸入一次錢包密碼即可重建。";
 "This wallet’s device key is unavailable. Restore your recovery phrase on this device." = "這個錢包的裝置金鑰無法使用。請在本機用助記詞還原。";
 "To" = "至";

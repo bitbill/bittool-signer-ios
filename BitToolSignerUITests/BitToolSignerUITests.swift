@@ -662,6 +662,60 @@ final class BitToolSignerUITests: XCTestCase {
         XCTAssertTrue(app.buttons["detail.recoveryPhrase"].waitForExistence(timeout: 5))
     }
 
+    /// Forgetting the password is recoverable with the recovery phrase: importing
+    /// the same phrase again offers to reset that wallet's password rather than
+    /// refusing a duplicate, and the wallet keeps its identity.
+    @MainActor
+    func testImportingAnExistingPhraseResetsItsPasswordInPlace() throws {
+        let app = launch(fixtures: 1)
+        let cards = walletCards(in: app)
+        let name = cards.firstMatch.label
+
+        app.buttons["wallets.add"].tap()
+        tap(app.buttons["Import Recovery Phrase"], in: app)
+        if app.buttons["onboarding.next"].waitForExistence(timeout: 3) {
+            for _ in 0..<3 { tap(app.buttons["onboarding.next"], in: app) }
+        }
+        let input = app.textViews["recovery.input.visible"]
+        XCTAssertTrue(input.waitForExistence(timeout: 10))
+        // The fixture wallet's own phrase, with no BIP39 passphrase.
+        input.tap(); input.typeText("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about")
+        tap(app.buttons["setup.import"], in: app)
+
+        let finish = app.buttons["setup.finish"]
+        XCTAssertTrue(finish.waitForExistence(timeout: 20))
+        XCTAssertTrue(app.navigationBars["Reset Password"].waitForExistence(timeout: 30),
+                      "An identical phrase offers to reset that wallet's password.")
+        XCTAssertFalse(element(containing: "If you forget this password", in: app).exists,
+                       "The hint describes what this screen is already doing.")
+
+        let newPassword = "Recovered-Test-Password3!"
+        type(newPassword, into: app.secureTextFields["Wallet password"])
+        type(newPassword, into: app.secureTextFields["Confirm password"])
+        tap(finish, in: app)
+        XCTAssertTrue(app.staticTexts["Password Reset"].waitForExistence(timeout: 60))
+        tap(app.buttons["setup.done"], in: app)
+
+        // One wallet, the same one: a reset is not an import.
+        XCTAssertTrue(cards.firstMatch.waitForExistence(timeout: 20))
+        XCTAssertEqual(cards.count, 1, "The wallet is reset in place, never duplicated.")
+        XCTAssertEqual(cards.firstMatch.label, name, "It keeps its name and identity.")
+
+        // Only the new password opens it now.
+        cards.firstMatch.tap()
+        tap(app.buttons["detail.recoveryPhrase"], in: app)
+        let password = app.secureTextFields["Wallet password"]
+        XCTAssertTrue(password.waitForExistence(timeout: 5))
+        type(fixturePassword, into: password)
+        tap(app.buttons["vaultManagement.submit"], in: app)
+        XCTAssertTrue(element(containing: "password is incorrect", in: app).waitForExistence(timeout: 30),
+                      "The forgotten password no longer opens the wallet.")
+        type(newPassword, into: password)
+        tap(app.buttons["vaultManagement.submit"], in: app)
+        XCTAssertTrue(app.buttons["recovery.reveal"].waitForExistence(timeout: 30),
+                      "The new password opens the same recovery phrase.")
+    }
+
     @MainActor
     func testRenameThenDeleteLastWalletReturnsToWelcome() throws {
         let app = launch(fixtures: 1)
@@ -693,7 +747,7 @@ final class BitToolSignerUITests: XCTestCase {
         tap(app.buttons["detail.delete"], in: app)
         let submit = app.buttons["vaultManagement.submit"]
         XCTAssertTrue(submit.waitForExistence(timeout: 5))
-        XCTAssertFalse(submit.isEnabled, "Deleting requires confirming a backup exists.")
+        XCTAssertFalse(submit.isEnabled, "Deleting requires confirming the deletion itself.")
         setSwitch(app.switches["delete.backupConfirmed"], on: true, in: app)
         // The password is asked for in its own prompt, after biometrics where the
         // device has them, and nothing is deleted until it is right.

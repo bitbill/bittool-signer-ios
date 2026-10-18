@@ -225,7 +225,14 @@ struct ActivityDetailView: View {
                 lines.append(Essential(id: "counterparty", label: LocalizedStringKey(display.counterpartyLabel ?? "To"),
                                        value: AddressFormatter.short(counterparty, leading: 6, trailing: 6)))
             }
-            if let fee = display.fee { lines.append(Essential(id: "fee", label: "Network fee", value: fee)) }
+            if let fee = display.fee {
+                // The same distinction the pre-sign review makes: an energy
+                // budget is not a ceiling on the whole fee, so the history
+                // never captions it as one either.
+                let energy = display.feeKind == "energyBudget"
+                lines.append(Essential(id: "fee", label: energy ? "Energy budget" : "Network fee",
+                                       value: energy ? ReviewText.shortDecimal(fee) : fee))
+            }
         }
         return lines
     }

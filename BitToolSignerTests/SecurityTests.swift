@@ -163,6 +163,59 @@ struct SecurityTests {
         try await store.delete(id: first.id, password: "Replacement-Password2")
         #expect(try await store.list().map(\.id) == [second.id])
     }
+
+    /// Forgetting the password is recoverable with the recovery phrase, which
+    /// is what the password screen now says. The wallet keeps its identity:
+    /// re-importing into a new record would lose its name, date and pairings.
+    @Test func aForgottenPasswordIsResetFromTheRecoveryPhrase() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("bittool-signer-test-\(UUID())")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = WalletVault(directory: directory, deviceKeys: MemoryDeviceKeys())
+        let wallet = try await store.create(name: "Mine", mnemonic: phrase, passphrase: "account two", password: password)
+
+        try await store.resetPassword(id: wallet.id, mnemonic: phrase, passphrase: "account two", newPassword: "Replacement-Password2")
+        await #expect(throws: VaultError.authenticationFailed) { try await store.unlock(id: wallet.id, password: password) }
+        let reopened = try await store.unlock(id: wallet.id, password: "Replacement-Password2")
+        #expect(reopened.mnemonic == phrase)
+        #expect(reopened.passphrase == "account two")
+
+        let listed = try await store.list()
+        #expect(listed.count == 1, "the wallet is reset in place, never duplicated")
+        #expect(listed.first?.id == wallet.id)
+        #expect(listed.first?.name == "Mine")
+        #expect(listed.first?.createdAt == wallet.createdAt)
+    }
+
+    @Test func aResetStillHasToOfferAnAcceptablePasswordAndAnExistingWallet() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("bittool-signer-test-\(UUID())")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = WalletVault(directory: directory, deviceKeys: MemoryDeviceKeys())
+        let wallet = try await store.create(name: "Mine", mnemonic: phrase, password: password)
+
+        await #expect(throws: VaultError.self) {
+            try await store.resetPassword(id: wallet.id, mnemonic: phrase, passphrase: "", newPassword: "weak")
+        }
+        #expect(try await store.unlock(id: wallet.id, password: password).mnemonic == phrase, "a refused reset changes nothing")
+
+        await #expect(throws: VaultError.walletNotFound) {
+            try await store.resetPassword(id: UUID(), mnemonic: phrase, passphrase: "", newPassword: "Replacement-Password2")
+        }
+    }
+
+    /// Five wrong guesses start a delay before each further attempt. Proving
+    /// the recovery phrase is not a wrong guess, and the person who just did it
+    /// is not left waiting on the counter their forgotten password built up.
+    @Test func aResetClearsTheFailedAttemptDelay() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("bittool-signer-test-\(UUID())")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = WalletVault(directory: directory, deviceKeys: MemoryDeviceKeys())
+        let wallet = try await store.create(name: "Mine", mnemonic: phrase, password: password)
+        for _ in 0..<5 { try? await store.unlock(id: wallet.id, password: "Wrong-Password1") }
+        await #expect(throws: VaultError.self) { try await store.unlock(id: wallet.id, password: password) }
+
+        try await store.resetPassword(id: wallet.id, mnemonic: phrase, passphrase: "", newPassword: "Replacement-Password2")
+        #expect(try await store.unlock(id: wallet.id, password: "Replacement-Password2").mnemonic == phrase)
+    }
 }
 
 private final class MemoryDeviceKeys: DeviceKeyStore, @unchecked Sendable {

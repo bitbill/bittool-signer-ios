@@ -146,11 +146,16 @@ final class AppAccessController: ObservableObject {
         isLocked = false
     }
 
-    /// A one-off check before a destructive action, independent of App Lock.
+    /// A one-off check before a destructive action, for someone who asked to
+    /// be checked: it runs only while App Lock is on. Turning App Lock off is
+    /// a decision that this app does not use biometrics, and a delete must not
+    /// reintroduce a Face ID prompt that the person declined everywhere else.
+    /// The wallet password still authorizes the action either way.
+    ///
     /// Throws `CancellationError` when the person dismisses it; any other error
-    /// means biometrics could not run, and the wallet password still decides.
+    /// means biometrics could not run, and the password alone decides.
     func confirmSensitiveAction(reason: String) async throws {
-        guard biometry.isAvailable else { return }
+        guard isEnabled, biometry.isAvailable else { return }
         try await biometric.authenticate(reason: reason)
     }
 

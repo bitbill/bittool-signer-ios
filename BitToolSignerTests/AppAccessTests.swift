@@ -118,6 +118,38 @@ struct AppAccessTests {
         #expect(fixture.biometric.calls == 0)
     }
 
+    /// Deleting a wallet asks for biometrics only where the person already
+    /// chose to use them for this app. Turning App Lock off says "this app does
+    /// not use Face ID", and a delete must not reintroduce the prompt. The
+    /// wallet password authorizes the deletion either way.
+    @Test func aSensitiveActionAsksForBiometricsOnlyWhileAppLockIsOn() async throws {
+        let off = try makeAccess()
+        defer { off.defaults.removePersistentDomain(forName: off.suite) }
+        #expect(!off.access.isEnabled)
+        try await off.access.confirmSensitiveAction(reason: "Delete")
+        #expect(off.biometric.calls == 0, "App Lock is off, so nothing is asked")
+
+        let on = try makeAccess(enabled: true)
+        defer { on.defaults.removePersistentDomain(forName: on.suite) }
+        on.access.updateWalletCount(1)
+        try await on.access.authenticateBiometrics()
+        let unlocking = on.biometric.calls
+        try await on.access.confirmSensitiveAction(reason: "Delete")
+        #expect(on.biometric.calls == unlocking + 1, "App Lock is on, so the check runs")
+    }
+
+    @Test func turningAppLockOffStopsTheDeleteCheckWithIt() async throws {
+        let fixture = try makeAccess(enabled: true)
+        defer { fixture.defaults.removePersistentDomain(forName: fixture.suite) }
+        fixture.access.updateWalletCount(1)
+        try await fixture.access.authenticateBiometrics()
+        try await fixture.access.setEnabled(false)
+        #expect(!fixture.access.isEnabled)
+        let before = fixture.biometric.calls
+        try await fixture.access.confirmSensitiveAction(reason: "Delete")
+        #expect(fixture.biometric.calls == before)
+    }
+
     private func makeAccess(enabled: Bool = false, vault: WalletVault = WalletVault()) throws -> AccessFixture {
         let suite = "BitTool Signer.AppAccessTests.\(UUID())"
         let defaults = try #require(UserDefaults(suiteName: suite))

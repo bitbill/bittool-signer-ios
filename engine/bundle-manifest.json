@@ -1,8 +1,8 @@
 {
   "version": "1.0.0",
   "file": "BitToolSigner/Resources/signer.js",
-  "sha256": "19d5a3d06930ef6a7c8a820581572929053f8d5aad04d946daf32f849295d713",
-  "bytes": 1179130,
+  "sha256": "6933d0d8a6f60faa8222506ac0bd7eef80eb884c9f73e31e9f354b4740f21077",
+  "bytes": 1181026,
   "inputs": [
     "data/known-contracts.engine.json",
     "data/token-registry.engine.json",
