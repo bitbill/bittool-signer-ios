@@ -1,0 +1,136 @@
+{
+  "publicFixture": true,
+  "mnemonics": [
+    {
+      "localWalletId": "10000000-0000-0000-0000-000000000001",
+      "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+    },
+    {
+      "localWalletId": "10000000-0000-0000-0000-000000000002",
+      "mnemonic": "legal winner thank year wave sausage worth useful legal winner thank yellow"
+    }
+  ],
+  "vectors": [
+    {
+      "name": "EVM registered index 8",
+      "request": {
+        "chain": "evm",
+        "kind": "personal",
+        "path": "m/44'/60'/0'/0/8",
+        "address": "0xB14c391e2bf19E5a26941617ab546FA620A4f163",
+        "message": "0x68656c6c6f"
+      },
+      "expected": {
+        "taskWalletIds": [
+          "10000000-0000-0000-0000-000000000001"
+        ],
+        "taskPaths": [
+          [
+            "m/44'/60'/0'/0/8"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "SOL standard",
+      "request": {
+        "chain": "solana",
+        "kind": "message",
+        "path": "m/44'/501'/0'/0'",
+        "masterFingerprint": "73c5da0a",
+        "message": "UHVibGljIFNvbGFuYSBmaXh0dXJl"
+      },
+      "expected": {
+        "taskWalletIds": [
+          "10000000-0000-0000-0000-000000000001"
+        ],
+        "taskPaths": [
+          [
+            "m/44'/501'/0'/0'"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "SOL trust",
+      "request": {
+        "chain": "solana",
+        "kind": "message",
+        "path": "m/44'/501'/0'",
+        "masterFingerprint": "73c5da0a",
+        "message": "UHVibGljIFNvbGFuYSBmaXh0dXJl"
+      },
+      "expected": {
+        "taskWalletIds": [
+          "10000000-0000-0000-0000-000000000001"
+        ],
+        "taskPaths": [
+          [
+            "m/44'/501'/0'"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "SOL legacy",
+      "request": {
+        "chain": "solana",
+        "kind": "message",
+        "path": "m/44'/501'",
+        "masterFingerprint": "73c5da0a",
+        "message": "UHVibGljIFNvbGFuYSBmaXh0dXJl"
+      },
+      "expected": {
+        "taskWalletIds": [
+          "10000000-0000-0000-0000-000000000001"
+        ],
+        "taskPaths": [
+          [
+            "m/44'/501'"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "TRON index 99 without path",
+      "request": {
+        "chain": "tron",
+        "kind": "message",
+        "message": "68656c6c6f",
+        "messageStandard": "TIP191",
+        "address": "TTTFe9haCY6CACG9iTM8uyL89pFEPy4ctW"
+      },
+      "expected": {
+        "taskWalletIds": [
+          "10000000-0000-0000-0000-000000000001"
+        ],
+        "taskPaths": [
+          [
+            "m/44'/195'/0'/0/99"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "BTC two local BIP48 cosigners without derivations",
+      "request": {
+        "chain": "bitcoin",
+        "psbt": "cHNidP8BAFICAAAAAXyB6bWHa/M05PLxMMoNKUbCtcHbG7yddlrN11raZOKMAAAAAAD/////AZBfAQAAAAAAFgAUXPBK0QcBD/72+pMNPQQsk+BR/4YAAAAAAAEAXgIAAAABAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAAAAAAP////8BoIYBAAAAAAAiACBNz7DR+xMxeWKE5h+oZNKKVDMaKmpHC8CQKMjGgMZhLgAAAAABASughgEAAAAAACIAIE3PsNH7EzF5YoTmH6hk0opUMxoqakcLwJAoyMaAxmEuAQVHUiED3BlTwnVsfFjU9Iyhu7p2f0FP0ja/TWYrZ3IaxibFFOAhAo6BjfY9by3OkwjXRV/UyFy7OdcDYIuPvtZH114mIyLYUq4AAA=="
+      },
+      "expected": {
+        "taskWalletIds": [
+          "10000000-0000-0000-0000-000000000001",
+          "10000000-0000-0000-0000-000000000002"
+        ],
+        "taskPaths": [
+          [
+            "m/48'/0'/0'/2'/0/0"
+          ],
+          [
+            "m/48'/0'/0'/2'/0/0"
+          ]
+        ]
+      }
+    }
+  ]
+}

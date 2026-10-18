@@ -1,0 +1,3 @@
+/* Indonesian. Keys are Info.plist names. */
+"NSCameraUsageDescription" = "BitTool Signer memakai kamera untuk memindai permintaan penandatanganan dari dompet Anda yang lain dan kode QR frasa pemulihan. Gambarnya diproses hanya di perangkat ini dan tidak pernah meninggalkannya.";
+"NSFaceIDUsageDescription" = "Buka BitTool Signer dengan Face ID. Menandatangani tetap memerlukan kata sandi dompet.";

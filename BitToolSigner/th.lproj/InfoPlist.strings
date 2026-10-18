@@ -1,0 +1,3 @@
+/* Thai. Keys are Info.plist names. */
+"NSCameraUsageDescription" = "BitTool Signer ใช้กล้องเพื่อสแกนคำขอเซ็นจากกระเป๋าอีกใบของคุณและคิวอาร์โค้ดของวลีกู้คืน ภาพจะถูกประมวลผลบนอุปกรณ์นี้เท่านั้นและไม่เคยออกจากเครื่อง";
+"NSFaceIDUsageDescription" = "เปิด BitTool Signer ด้วย Face ID การเซ็นยังคงต้องใช้รหัสผ่านกระเป๋า";

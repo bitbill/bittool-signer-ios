@@ -1,0 +1,3 @@
+/* Ukrainian. Keys are Info.plist names. */
+"NSCameraUsageDescription" = "BitTool Signer використовує камеру, щоб сканувати запити на підпис з вашого іншого гаманця та QR-коди фраз відновлення. Зображення обробляються лише на цьому пристрої й ніколи його не залишають.";
+"NSFaceIDUsageDescription" = "Відкривайте BitTool Signer за допомогою Face ID. Для підпису все одно потрібен пароль гаманця.";

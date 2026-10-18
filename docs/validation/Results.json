@@ -1,0 +1,27 @@
+{
+  "date": "2026-09-20",
+  "xcode": "26.4 (17E192)",
+  "simulator": "iPhone 16 Pro / iOS 18.6",
+  "javascriptTests": {
+    "passed": 48,
+    "failed": 0
+  },
+  "swiftTests": {
+    "passed": 15,
+    "failed": 0
+  },
+  "uiTests": {
+    "passed": 2,
+    "failed": 0
+  },
+  "debugSimulatorBuild": "passed",
+  "releaseIPhoneOSBuild": "passed (unsigned)",
+  "productionDependencyAdvisories": 0,
+  "bundleSHA256": "ea5453e7522e3d990b5a236df72d740f0c021917cc82ae02e3a66af71cf61c8f",
+  "physicalDeviceE2E": "not performed",
+  "independentSecurityAudit": "not performed",
+  "nativeCrossRuntimeVectors": {
+    "passed": 9,
+    "failed": 0
+  }
+}

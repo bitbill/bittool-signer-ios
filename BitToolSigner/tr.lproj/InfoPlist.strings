@@ -1,0 +1,3 @@
+/* Turkish. Keys are Info.plist names. */
+"NSCameraUsageDescription" = "BitTool Signer, diğer cüzdanınızdaki imzalama isteklerini ve kurtarma ifadesi QR kodlarını taramak için kamerayı kullanır. Görüntüler yalnızca bu cihazda işlenir ve cihazdan asla çıkmaz.";
+"NSFaceIDUsageDescription" = "BitTool Signer’ı Face ID ile açın. İmzalamak yine de cüzdan parolasını gerektirir.";

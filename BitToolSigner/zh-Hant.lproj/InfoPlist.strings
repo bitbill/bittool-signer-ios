@@ -1,0 +1,3 @@
+/* Traditional Chinese. Keys are Info.plist names. */
+"NSCameraUsageDescription" = "BitTool Signer 以相機掃描來自其他錢包的簽名請求與助記詞 QR Code。影像只在本機處理，不會離開裝置。";
+"NSFaceIDUsageDescription" = "使用 Face ID 開啟 BitTool Signer。簽名仍需錢包密碼。";

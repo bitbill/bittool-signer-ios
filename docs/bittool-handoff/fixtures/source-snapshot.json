@@ -1,0 +1,212 @@
+{
+  "generatedAt": "2026-10-16T03:16:23.667Z",
+  "nodeVersion": "v20.20.2",
+  "sourceType": "Local working tree, not a release certification or Git commit snapshot",
+  "files": [
+    {
+      "path": "engine/protocols.js",
+      "sha256": "1ea64e51b59ff339da17fd04e90babed13ee716b7cd88aa2a6b775e318a5ed50"
+    },
+    {
+      "path": "engine/src/bitcoin-policy.js",
+      "sha256": "e88c2f571421288867e8ba54dde2e13a174731b9754370e0ec8e37de589fada4"
+    },
+    {
+      "path": "engine/src/bitcoin.js",
+      "sha256": "0a952110c29221df12d35b6505d954e2decbc518679f99b0cf386e629d5755fc"
+    },
+    {
+      "path": "engine/src/evm.js",
+      "sha256": "771da874405b7b8b8bf081d5cec4dd710c509cf090b121d305e0dd123c1f0517"
+    },
+    {
+      "path": "engine/src/index.js",
+      "sha256": "12064a16114238ff10e2e254a5953dbab4c1ba493a62dffcab456702fe9018ba"
+    },
+    {
+      "path": "engine/src/keys.js",
+      "sha256": "9e79dac967ef18bee9288054b025485bb888c0f7d98ae10f74f0de1ae5f2b0f8"
+    },
+    {
+      "path": "engine/src/nft-orders.js",
+      "sha256": "f012c36602ffb40de3c7b2c8549665292978001b687b50d8ac343bd18c40ef6b"
+    },
+    {
+      "path": "engine/src/polyfills.js",
+      "sha256": "10de0f9e70caa595b68a22e8c316b82d803289123a54821f4527ea4046702d6a"
+    },
+    {
+      "path": "engine/src/public-index.js",
+      "sha256": "584bbccf5c0c06f89644d7e009fc9e780209d6e13ab3002b0087836b2c3b97c2"
+    },
+    {
+      "path": "engine/src/resolver.js",
+      "sha256": "7e75a256e7e0bbfaee1a1df91c094d0f4834100d3605f4e00237fc9afcb88cbf"
+    },
+    {
+      "path": "engine/src/solana.js",
+      "sha256": "aaf77479980a9028a3cf567b3abd2cf6cd0919c0fab640935c651a3e70546ebd"
+    },
+    {
+      "path": "engine/src/token-registry.js",
+      "sha256": "535c7e7210677054f2b1644c88763ad1140e5e0565744a186413c1e3af23ed39"
+    },
+    {
+      "path": "engine/src/tron.js",
+      "sha256": "fc7061227dc036603d91e446a003dd9e7cea039878301edd7f995bab16a7337b"
+    },
+    {
+      "path": "engine/src/util.js",
+      "sha256": "333c5ef53052e7666cb8f499b0c6d7740c1a4f0ec23df5c0918967663b3ffa46"
+    },
+    {
+      "path": "engine/test/protocols.test.js",
+      "sha256": "7e9afdb119a1c893cdcdccafbdc22faae9f1b6bf65a4108071acf279bfb8a215"
+    },
+    {
+      "path": "engine/test/wallet-pairing.test.mjs",
+      "sha256": "5ab2e1b5343520d4f9c39de9e8745b9c77bdd24ec01ac3e341227940b29d7d4f"
+    },
+    {
+      "path": "engine/package.json",
+      "sha256": "df822547798b3f7f9ca188afac8e1ea4bd86f94343327fd5a0bd7266ffe9a4c8"
+    },
+    {
+      "path": "engine/package-lock.json",
+      "sha256": "4f5eb7f4ffc7c61c2f261902e44cc78d46e3c890a367f2869d1bc33dda107ac9"
+    },
+    {
+      "path": "engine/data/token-registry.engine.json",
+      "sha256": "f2f04e563cc1736394e133d08f5909ae78111dd975f306587d6db74380aea022"
+    }
+  ],
+  "bundle": {
+    "path": "BitToolSigner/Resources/signer.js",
+    "sha256": "b05a2c1cacaebf0d7e2be5c3361c69bbdafaf0f274c0d9def39390f5d9bbcfe4",
+    "bytes": 1038645
+  },
+  "capabilities": {
+    "version": "1.0.0",
+    "offline": true,
+    "chains": [
+      "bitcoin",
+      "evm",
+      "tron",
+      "solana"
+    ],
+    "protocols": [
+      "crypto-psbt",
+      "eth-sign-request/eth-signature",
+      "sol-sign-request/sol-signature",
+      "tron-sign-request/tron-signature",
+      "BBQR PSBT"
+    ],
+    "authorization": "Public-index resolution with fixed, independently authorized wallet tasks",
+    "bitcoin": {
+      "supported": [
+        "PSBT v0/v2",
+        "P2PKH",
+        "P2WPKH",
+        "P2SH-P2WPKH",
+        "P2SH/P2SH-P2WSH/P2WSH multisig",
+        "Taproot key-path",
+        "Taproot c0 CHECKSIGADD/CHECKSIGVERIFY multisig leaves"
+      ],
+      "policy": [
+        "Legacy/SegWit v0 require full previous transactions; all-Taproot accepts witness UTXOs",
+        "ALL/DEFAULT sighash only",
+        "All outputs shown; no inferred change",
+        "Global/input/output metadata and existing signatures preserved"
+      ],
+      "rejected": [
+        "MuSig2",
+        "Unknown Taproot leaf policies",
+        "Unknown output scripts"
+      ]
+    },
+    "evm": {
+      "supported": [
+        "Legacy/EIP-2930/EIP-1559",
+        "personal_sign arbitrary bytes",
+        "EIP-712",
+        "SafeTx CALL/DELEGATECALL",
+        "Safe MultiSend and permission methods",
+        "ERC20/ERC721/ERC1155 transfers and approvals",
+        "ERC1155 single and batch transfers",
+        "EIP-2612/DAI Permit",
+        "Permit2 Single/Batch/TransferFrom/BatchTransferFrom",
+        "Seaport 1.5/1.6 orders and bulk orders",
+        "LooksRare v2 maker and batch orders",
+        "Blur blind Merkle-root orders (shown as opaque)"
+      ],
+      "networks": [
+        1,
+        56,
+        42161,
+        8453,
+        10,
+        137,
+        100,
+        43114
+      ],
+      "riskGated": [
+        "Unknown calldata and contract deployment: opaque",
+        "Custom typed data: partially decoded",
+        "Delegatecall, batch, permit and permission operations: high risk",
+        "NFT marketplace orders and collection-wide approvals: high risk",
+        "ERC20/ERC721 shared selectors on unregistered contracts: shown as NFT or token"
+      ],
+      "rejected": [
+        "Unsupported chain IDs",
+        "EIP-7702",
+        "Blob transactions",
+        "eth_sign raw hash"
+      ]
+    },
+    "tron": {
+      "supported": [
+        "TRX transfer",
+        "TRC20/TRC721/TRC1155 ABI calls (NFT displays with Base58 contracts)",
+        "AccountPermissionUpdate",
+        "Incremental multisig signatures",
+        "Personal messages using the TronWeb length-prefixed standard",
+        "Stake 2.0/resource contract types 54–59"
+      ],
+      "rejected": [
+        "Unknown protobuf fields/contracts",
+        "Unlabelled raw hash signing",
+        "TRC10 calls"
+      ],
+      "offlineLimits": [
+        "Network identity and current permission membership cannot be verified"
+      ]
+    },
+    "solana": {
+      "supported": [
+        "Legacy/v0 static keys",
+        "Three registered Ed25519 preset paths",
+        "System transfers, create, nonce, assign and allocate",
+        "SPL Token transfers/approvals/mint/burn/close/setAuthority/syncNative",
+        "Associated token account, compute budget and memo",
+        "Stake delegate/split/withdraw/deactivate",
+        "Required signer slots including non-fee-payer/read-only signers",
+        "Message signatures"
+      ],
+      "riskGated": [
+        "Unknown programs: opaque",
+        "Token-2022 extensions: partially decoded",
+        "Squads approve/reject/cancel proposal references: partially decoded"
+      ],
+      "rejected": [
+        "Address lookup tables",
+        "Malformed messages and invalid signer slots"
+      ]
+    },
+    "releaseQualification": "Protocol unit tests do not establish third-party wallet end-to-end certification or a security audit."
+  },
+  "fixtureChecks": {
+    "pairingURRoundtrip": true,
+    "signingRoundtrips": 9,
+    "broadcasting": false
+  }
+}

@@ -1,0 +1,3 @@
+/* Polish. Keys are Info.plist names. */
+"NSCameraUsageDescription" = "BitTool Signer używa aparatu do skanowania żądań podpisu z Twojego drugiego portfela oraz kodów QR fraz odzyskiwania. Obrazy są przetwarzane wyłącznie na tym urządzeniu i nigdy go nie opuszczają.";
+"NSFaceIDUsageDescription" = "Otwieraj BitTool Signer za pomocą Face ID. Do podpisania nadal potrzebne jest hasło portfela.";

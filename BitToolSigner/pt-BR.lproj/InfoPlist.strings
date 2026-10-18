@@ -1,0 +1,3 @@
+/* Portuguese (Brazil). Keys are Info.plist names. */
+"NSCameraUsageDescription" = "O BitTool Signer usa a câmera para ler solicitações de assinatura da sua outra carteira e QR Codes de frases de recuperação. As imagens são processadas somente neste dispositivo e nunca saem dele.";
+"NSFaceIDUsageDescription" = "Abra o BitTool Signer com o Face ID. Assinar continua exigindo a senha da carteira.";

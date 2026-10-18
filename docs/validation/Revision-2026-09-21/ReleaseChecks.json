@@ -1,0 +1,46 @@
+{
+  "configuration": "Release",
+  "destination": "generic/platform=iOS",
+  "codeSigning": "disabled for local build validation",
+  "version": "1.0.0",
+  "build": "1",
+  "minimumOS": "17.0",
+  "sdk": "iphoneos26.4",
+  "launchStoryboard": "LaunchScreen",
+  "faceIDUsage": "Use Face ID to open BitSigner. Signing requires your wallet password.",
+  "testOnlyMarkersAbsent": {
+    "--bittool-signer-ui-tests": true,
+    "Public-Test-Password1!": true,
+    "SimulatorFixtureDeviceKeys": true,
+    "SimulatorUITestContext": true
+  },
+  "bundleSHA256": "6f6569ad6934cf6fdef5640fe887c3785941d5333cc14bef9f986103c54e287e",
+  "privacy": {
+    "NSPrivacyTracking": false,
+    "NSPrivacyTrackingDomains": [],
+    "NSPrivacyCollectedDataTypes": [],
+    "NSPrivacyAccessedAPITypes": [
+      {
+        "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+        "NSPrivacyAccessedAPITypeReasons": [
+          "CA92.1"
+        ]
+      },
+      {
+        "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategorySystemBootTime",
+        "NSPrivacyAccessedAPITypeReasons": [
+          "35F9.1"
+        ]
+      },
+      {
+        "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+        "NSPrivacyAccessedAPITypeReasons": [
+          "C617.1",
+          "3B52.1"
+        ]
+      }
+    ]
+  },
+  "executableSHA256": "13fb74ac1e078f93fc1db39442f46deefd18c9111a14f384c2c89cbeca035b53",
+  "finalBuildLog": "ReleaseBuild.txt"
+}

@@ -1,0 +1,10 @@
+{
+  "BitTool_Wallet_Development_Prompt_2026-09-22.md": "6eb7857b90653a2cd43cec8346a583710649424224076e2572ecf3679da88295",
+  "README.md": "1a67050cf882f54a7fcbcda8f3c618594e3eed303e3492dbb9157084c6b72bb9",
+  "VERIFICATION.md": "74a83e2fc046250fbc580031efe98a3872e3d3a62cd51a0368a4aa851de5c3e9",
+  "fixtures/signing-roundtrips.json": "6b6ba301a4c68f8f49754d21ea02eff7c1fc9648aacd01c3e4e5e25eb7f908b7",
+  "fixtures/source-snapshot.json": "1e598c651f0b1b46eb3902cac1516ebedf6ab601044d890926c974bd8c092d02",
+  "fixtures/wallet-pairing-current.json": "2d4943fca183cf779a1b5b8f66a3197a07a4811094200b58dbad018a4f23b0ab",
+  "fixtures/wallet-pairing-no-mode-receiver-extension.json": "8ca4ef9e8d14f99f536794762283ed9630c97abd5773f8b94104da71c7cc0dd9",
+  "generate-fixtures.mjs": "310dd985316b4fd525ebca2b54f1678d1c6b143f03626c7e673165fb4f94cea7"
+}

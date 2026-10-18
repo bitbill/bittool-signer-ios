@@ -1,0 +1,13 @@
+Test Suite 'Selected tests' started at 2026-09-21 17:49:12.308.
+Test Suite 'BitToolSignerUITests.xctest' started at 2026-09-21 17:49:12.309.
+Test Suite 'BitToolSignerUITests' started at 2026-09-21 17:49:12.309.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testDirectScanPublicMatchingAndPasswordAuthorization]' started.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testDirectScanPublicMatchingAndPasswordAuthorization]' passed (44.661 seconds).
+Test Suite 'BitToolSignerUITests' passed at 2026-09-21 17:49:56.972.
+	 Executed 1 test, with 0 failures (0 unexpected) in 44.661 (44.664) seconds
+Test Suite 'BitToolSignerUITests.xctest' passed at 2026-09-21 17:49:56.973.
+	 Executed 1 test, with 0 failures (0 unexpected) in 44.661 (44.665) seconds
+Test Suite 'Selected tests' passed at 2026-09-21 17:49:56.974.
+	 Executed 1 test, with 0 failures (0 unexpected) in 44.661 (44.666) seconds
+	/tmp/BitSignerDerived/Logs/Test/Test-BitSigner-2026.09.21_17-48-27-+1000.xcresult
+** TEST SUCCEEDED **

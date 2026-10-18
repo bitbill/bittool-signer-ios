@@ -1,0 +1,2 @@
+02aa90abfe533dcc56b80b4a622e1acc3d78dcb9e0c5d6792b25e317f831f2ac  BitTool-Signer-1.0.0-Security-Audit-GPT-6-Astra.pdf
+4c227d0202481bdbca8706f9138c56268029093614a723c005dc1968e97e39c3  BitTool-Signer-1.0.0-Audit-Evidence.zip

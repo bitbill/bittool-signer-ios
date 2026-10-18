@@ -1,0 +1,3 @@
+/* Simplified Chinese. Keys are Info.plist names. */
+"NSCameraUsageDescription" = "BitTool Signer 用相机扫描来自其他钱包的签名请求和助记词二维码。画面只在本机处理，不会离开设备。";
+"NSFaceIDUsageDescription" = "使用 Face ID 打开 BitTool Signer。签名仍需钱包密码。";

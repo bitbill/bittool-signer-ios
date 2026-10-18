@@ -1,0 +1,254 @@
+
+> bittool-signer-offline-engine@1.0.0 test
+> node --test test/*.test.mjs test/*.test.js
+
+TAP version 13
+# Subtest: BIP39 entropy/checksum and four chain known address vectors
+ok 1 - BIP39 entropy/checksum and four chain known address vectors
+  ---
+  duration_ms: 44.075083
+  ...
+# Subtest: BIP39 official NFKD passphrase handling
+ok 2 - BIP39 official NFKD passphrase handling
+  ---
+  duration_ms: 40.650542
+  ...
+# Subtest: EVM EIP1559 signs and independently verifies curve signature
+ok 3 - EVM EIP1559 signs and independently verifies curve signature
+  ---
+  duration_ms: 39.185375
+  ...
+# Subtest: EVM legacy signature preserves large EIP155 v
+ok 4 - EVM legacy signature preserves large EIP155 v
+  ---
+  duration_ms: 15.13875
+  ...
+# Subtest: EVM personal and EIP712 known Mail hash
+ok 5 - EVM personal and EIP712 known Mail hash
+  ---
+  duration_ms: 32.832125
+  ...
+# Subtest: EVM raw token/NFT units are decoded without trusting symbols
+ok 6 - EVM raw token/NFT units are decoded without trusting symbols
+  ---
+  duration_ms: 16.659959
+  ...
+# Subtest: EVM rejects chain confusion, wrong signer, unknown calldata and review tampering
+ok 7 - EVM rejects chain confusion, wrong signer, unknown calldata and review tampering
+  ---
+  duration_ms: 44.402042
+  ...
+# Subtest: Bitcoin PSBT v0/v2 preserve unsigned transaction and verify ECDSA
+ok 8 - Bitcoin PSBT v0/v2 preserve unsigned transaction and verify ECDSA
+  ---
+  duration_ms: 90.193875
+  ...
+# Subtest: Bitcoin multisig incrementally preserves other cosigner signature
+ok 9 - Bitcoin multisig incrementally preserves other cosigner signature
+  ---
+  duration_ms: 60.796042
+  ...
+# Subtest: Bitcoin Taproot key path signs and finalizes
+ok 10 - Bitcoin Taproot key path signs and finalizes
+  ---
+  duration_ms: 48.028291
+  ...
+# Subtest: Bitcoin refuses forged fee context and weak sighash
+ok 11 - Bitcoin refuses forged fee context and weak sighash
+  ---
+  duration_ms: 75.016458
+  ...
+# Subtest: TRON txID and signature are bound to protobuf bytes
+ok 12 - TRON txID and signature are bound to protobuf bytes
+  ---
+  duration_ms: 15.621792
+  ...
+# Subtest: TRON refuses txID/JSON mismatch and preserves multisig
+ok 13 - TRON refuses txID/JSON mismatch and preserves multisig
+  ---
+  duration_ms: 69.50475
+  ...
+# Subtest: TRON AccountPermissionUpdate displays threshold and keys from bytes
+ok 14 - TRON AccountPermissionUpdate displays threshold and keys from bytes
+  ---
+  duration_ms: 12.24325
+  ...
+# Subtest: Solana legacy/v0 signatures verify and preserve exact message
+ok 15 - Solana legacy/v0 signatures verify and preserve exact message
+  ---
+  duration_ms: 33.17575
+  ...
+# Subtest: Solana multisig adds correct slot and preserves other signer
+ok 16 - Solana multisig adds correct slot and preserves other signer
+  ---
+  duration_ms: 13.226833
+  ...
+# Subtest: Solana refuses ALT, unknown programs, bad signature slots and wrong signer
+ok 17 - Solana refuses ALT, unknown programs, bad signature slots and wrong signer
+  ---
+  duration_ms: 10.996583
+  ...
+# Subtest: dispatch rejects oversized/malformed input without reflecting secrets
+ok 18 - dispatch rejects oversized/malformed input without reflecting secrets
+  ---
+  duration_ms: 0.543625
+  ...
+# Subtest: browser bundle operates in a JavaScriptCore-like isolated environment
+ok 19 - browser bundle operates in a JavaScriptCore-like isolated environment
+  ---
+  duration_ms: 136.559291
+  ...
+# Subtest: EIP712 Safe owner signature binds CALL fields and refuses delegatecall/unsigned extra fields
+ok 20 - EIP712 Safe owner signature binds CALL fields and refuses delegatecall/unsigned extra fields
+  ---
+  duration_ms: 37.489125
+  ...
+# Subtest: all-Taproot witness-only PSBT is accepted because its signature commits every amount
+ok 21 - all-Taproot witness-only PSBT is accepted because its signature commits every amount
+  ---
+  duration_ms: 47.388125
+  ...
+# Subtest: Solana message signing rejects legacy header bytes and requires recognizable text
+ok 22 - Solana message signing rejects legacy header bytes and requires recognizable text
+  ---
+  duration_ms: 43.546958
+  ...
+# Subtest: strict dispatch rejects duplicate keys and unsafe numeric payloads before signing
+ok 23 - strict dispatch rejects duplicate keys and unsafe numeric payloads before signing
+  ---
+  duration_ms: 0.159583
+  ...
+# Subtest: BIP380 checksum known vector and BIP48 complete multisig policy derivation
+ok 24 - BIP380 checksum known vector and BIP48 complete multisig policy derivation
+  ---
+  duration_ms: 41.647083
+  ...
+# Subtest: TRON TRC20 transfer decodes protobuf contract address, recipient and raw units
+ok 25 - TRON TRC20 transfer decodes protobuf contract address, recipient and raw units
+  ---
+  duration_ms: 13.516958
+  ...
+# Subtest: Solana SPL checked token and NFT transfers decode mint and raw amount
+ok 26 - Solana SPL checked token and NFT transfers decode mint and raw amount
+  ---
+  duration_ms: 24.065083
+  ...
+# Subtest: TRON owner permission signs explicit member identities and preserves independently verified cosignatures
+ok 27 - TRON owner permission signs explicit member identities and preserves independently verified cosignatures
+  ---
+  duration_ms: 95.218583
+  ...
+# Subtest: MetaMask registry personal request retains UUID, path, fingerprint, and exact message bytes
+ok 28 - MetaMask registry personal request retains UUID, path, fingerprint, and exact message bytes
+  ---
+  duration_ms: 5.038833
+  ...
+# Subtest: Ethereum legacy response preserves variable length EIP155 v
+ok 29 - Ethereum legacy response preserves variable length EIP155 v
+  ---
+  duration_ms: 0.330667
+  ...
+# Subtest: Solflare message request/response uses raw Ed25519 key and detached 64-byte signature
+ok 30 - Solflare message request/response uses raw Ed25519 key and detached 64-byte signature
+  ---
+  duration_ms: 2.065708
+  ...
+# Subtest: UR fountain recovers from unordered redundant frames without original first fragments
+ok 31 - UR fountain recovers from unordered redundant frames without original first fragments
+  ---
+  duration_ms: 60.909917
+  ...
+# Subtest: scanner rejects mixed fountain sessions and corrupted bytewords
+ok 32 - scanner rejects mixed fountain sessions and corrupted bytewords
+  ---
+  duration_ms: 1.361458
+  ...
+# Subtest: unsafe CBOR, duplicate labels, and unknown signing types are rejected
+ok 33 - unsafe CBOR, duplicate labels, and unknown signing types are rejected
+  ---
+  duration_ms: 0.580584
+  ...
+# Subtest: TokenPocket TRON response is full signed transaction, with raw_data_hex unchanged
+ok 34 - TokenPocket TRON response is full signed transaction, with raw_data_hex unchanged
+  ---
+  duration_ms: 0.808375
+  ...
+# Subtest: TokenPocket fragmented input checks CRC32, duplicates, and Unicode/underscore content
+ok 35 - TokenPocket fragmented input checks CRC32, duplicates, and Unicode/underscore content
+  ---
+  duration_ms: 1.794
+  ...
+# Subtest: TokenPocket EVM transaction preserves network and returns signed raw transaction
+ok 36 - TokenPocket EVM transaction preserves network and returns signed raw transaction
+  ---
+  duration_ms: 0.901792
+  ...
+# Subtest: TokenPocket message signature returns standard 0x-prefixed hex, regardless of engine internal hex convention
+ok 37 - TokenPocket message signature returns standard 0x-prefixed hex, regardless of engine internal hex convention
+  ---
+  duration_ms: 0.409375
+  ...
+# Subtest: strict JSON rejects duplicate keys, rounded amounts, bad encoding, and trailing data
+ok 38 - strict JSON rejects duplicate keys, rounded amounts, bad encoding, and trailing data
+  ---
+  duration_ms: 0.333375
+  ...
+# Subtest: pairing exports Bitcoin account xpub, MetaMask HD key, and Solflare public 32-byte key
+ok 39 - pairing exports Bitcoin account xpub, MetaMask HD key, and Solflare public 32-byte key
+  ---
+  duration_ms: 37.895292
+  ...
+# Subtest: plain PSBT returns the matching static representation
+ok 40 - plain PSBT returns the matching static representation
+  ---
+  duration_ms: 0.316417
+  ...
+# Subtest: BIP48 pairing identifies an individual native or nested SegWit cosigner, not a complete policy
+ok 41 - BIP48 pairing identifies an individual native or nested SegWit cosigner, not a complete policy
+  ---
+  duration_ms: 6.768208
+  ...
+# Subtest: MetaMask UR completes decode, review, real signing, response and independent signer recovery
+ok 42 - MetaMask UR completes decode, review, real signing, response and independent signer recovery
+  ---
+  duration_ms: 82.587584
+  ...
+# Subtest: native JSON with nested EIP712 fields passes strict parsing and independently verifiable signing
+ok 43 - native JSON with nested EIP712 fields passes strict parsing and independently verifiable signing
+  ---
+  duration_ms: 37.891666
+  ...
+# Subtest: file import accepts large native JSON and full-size binary PSBT represented as base64
+ok 44 - file import accepts large native JSON and full-size binary PSBT represented as base64
+  ---
+  duration_ms: 2.446875
+  ...
+# Subtest: large native signatures remain downloadable without requiring a QR frame
+ok 45 - large native signatures remain downloadable without requiring a QR frame
+  ---
+  duration_ms: 0.321708
+  ...
+# Subtest: BBQR hex and base32 reconstruct PSBT in reverse order and return matching protocol
+ok 46 - BBQR hex and base32 reconstruct PSBT in reverse order and return matching protocol
+  ---
+  duration_ms: 1.771458
+  ...
+# Subtest: BBQR Z raw-DEFLATE uses the specified 10-bit zlib window and rejects decompression bombs
+ok 47 - BBQR Z raw-DEFLATE uses the specified 10-bit zlib window and rejects decompression bombs
+  ---
+  duration_ms: 11.0915
+  ...
+# Subtest: BBQR rejects mixed headers, conflicting indexes, invalid alphabet and unequal blocks
+ok 48 - BBQR rejects mixed headers, conflicting indexes, invalid alphabet and unequal blocks
+  ---
+  duration_ms: 0.2995
+  ...
+1..48
+# tests 48
+# suites 0
+# pass 48
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1387.301667

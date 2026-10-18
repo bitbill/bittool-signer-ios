@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>NSPrivacyTracking</key><false/>
+<key>NSPrivacyTrackingDomains</key><array/>
+<key>NSPrivacyCollectedDataTypes</key><array/>
+<key>NSPrivacyAccessedAPITypes</key>
+<array>
+    <dict>
+        <key>NSPrivacyAccessedAPIType</key>
+        <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+        <key>NSPrivacyAccessedAPITypeReasons</key>
+        <array><string>CA92.1</string></array>
+    </dict>
+    <dict>
+        <key>NSPrivacyAccessedAPIType</key>
+        <string>NSPrivacyAccessedAPICategorySystemBootTime</string>
+        <key>NSPrivacyAccessedAPITypeReasons</key>
+        <array><string>35F9.1</string></array>
+    </dict>
+    <dict>
+        <key>NSPrivacyAccessedAPIType</key>
+        <string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+        <key>NSPrivacyAccessedAPITypeReasons</key>
+        <array><string>C617.1</string><string>3B52.1</string></array>
+    </dict>
+</array>
+<!-- Apple required-reason definitions checked 2026-09-21:
+https://developer.apple.com/documentation/bundleresources/app-privacy-configuration/nsprivacyaccessedapitypes/nsprivacyaccessedapitypereasons
+CA92.1: app-only appearance, onboarding, and App Lock preferences.
+35F9.1: systemUptime measures App Lock background intervals and QR frame timing.
+C617.1: file size/type checks for vaults, public caches, attempt counters, and activity inside the app container.
+3B52.1: file size checks for requests explicitly selected through the document picker.
+File metadata reasons include size and other metadata; no file timestamps are exported.
+No disk-capacity or active-keyboard enumeration APIs are used by app code.
+-->
+</dict></plist>

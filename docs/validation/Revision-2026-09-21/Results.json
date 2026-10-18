@@ -1,0 +1,97 @@
+{
+  "date": "2026-09-21",
+  "scope": "2026-09-21 Revision 1",
+  "engine": {
+    "passed": 76,
+    "failed": 0,
+    "skipped": 0,
+    "evidence": "EngineTests.txt"
+  },
+  "native": {
+    "swiftTestingPassed": 58,
+    "xctestPassed": 3,
+    "failed": 0,
+    "evidence": "RegressionRerun.txt"
+  },
+  "ui": {
+    "uniqueCasesPassed": 15,
+    "latestFailureCount": 0,
+    "note": "Complete first run plus affected-flow reruns; repeated runs are not added to the unique count.",
+    "latestCaseResults": {
+      "BitToolSignerUITests testAppLockColdLaunchAndPasswordFallback": {
+        "result": "passed",
+        "evidence": "PreliminaryRegression.txt"
+      },
+      "BitToolSignerUITests testBackupVerificationRejectsWrongChoiceWithoutChangingQuestions": {
+        "result": "passed",
+        "evidence": "PreliminaryRegression.txt"
+      },
+      "BitToolSignerUITests testBackupVerificationStepSurvivesBackground": {
+        "result": "passed",
+        "evidence": "PreliminaryRegression.txt"
+      },
+      "BitToolSignerUITests testDirectScanPublicMatchingAndPasswordAuthorization": {
+        "result": "passed",
+        "evidence": "SignatureUIFinal.txt"
+      },
+      "BitToolSignerUITests testEightWalletsConnectAndAddressesNeedNoUnlock": {
+        "result": "passed",
+        "evidence": "RegressionRerun.txt"
+      },
+      "BitToolSignerUITests testFirstImportCommitsThenShowsWalletHome": {
+        "result": "passed",
+        "evidence": "RegressionRerun.txt"
+      },
+      "BitToolSignerUITests testGeneratedPhraseStartsHidden": {
+        "result": "passed",
+        "evidence": "PreliminaryRegression.txt"
+      },
+      "BitToolSignerUITests testPasswordStepSurvivesBackgroundButClearsAuthorization": {
+        "result": "passed",
+        "evidence": "PreliminaryRegression.txt"
+      },
+      "BitToolSignerUITests testRecoveryPhraseConsentAndRevisit": {
+        "result": "passed",
+        "evidence": "PreliminaryRegression.txt"
+      },
+      "BitToolSignerUITests testRestoreDraftSurvivesBackground": {
+        "result": "passed",
+        "evidence": "PreliminaryRegression.txt"
+      },
+      "BitToolSignerUITests testSettingsSheetsSurviveBackground": {
+        "result": "passed",
+        "evidence": "RegressionRerun.txt"
+      },
+      "BitToolSignerUITests testWalletPasswordRotationClosesFormAndProtectsBackup": {
+        "result": "passed",
+        "evidence": "PasswordUIFinal.txt"
+      },
+      "BitToolSignerUITests testWelcomeOnboardingRetainsImportIntent": {
+        "result": "passed",
+        "evidence": "RegressionRerun.txt"
+      },
+      "BitToolSignerUITests testWholeScanCardOpensCameraWithoutUnlock": {
+        "result": "passed",
+        "evidence": "PreliminaryRegression.txt"
+      },
+      "BitToolSignerUITestsLaunchTests testLaunchScreenshot": {
+        "result": "passed",
+        "evidence": "PreliminaryRegression.txt"
+      }
+    }
+  },
+  "release": {
+    "build": "passed",
+    "sdk": "iphoneos26.4",
+    "minimumOS": "17.0",
+    "signedForDistribution": false,
+    "evidence": "ReleaseChecks.json"
+  },
+  "pending": [
+    "Physical iPhone Keychain/Face ID/camera/lifecycle acceptance",
+    "Version-specific third-party wallet pairing/sign/return camera round trips",
+    "Independent security audit",
+    "Broader screen size, Dynamic Type and VoiceOver acceptance",
+    "TestFlight/App Store signing and publication"
+  ]
+}

@@ -1,0 +1,99 @@
+Terms of Use
+Version 1.1 · Effective 16 October 2026
+
+## 1. This agreement
+These terms are an agreement between you and BITTOOL PTE. LTD. ("we", "us"), a company incorporated in Singapore and the publisher of the BitTool Signer app ("BitTool Signer", "the app"). By installing or using BitTool Signer you accept them. If you do not accept them, do not use the app.
+
+BitTool Wallet is a separate app published by us. These terms cover BitTool Signer only.
+
+## 2. What BitTool Signer is
+BitTool Signer is an offline signing app for your own cryptocurrency keys. It creates and stores keys on your device, shows you what a request would sign, and produces signatures as QR codes or files.
+
+- BitTool Signer is not a bank, exchange, broker, custodian, wallet service or money transmitter.
+- We never hold, control or have access to your keys, recovery phrase, passwords or funds, at any time.
+- The app makes no network connections. It cannot check balances, broadcast transactions, or reverse, freeze or recover anything for you.
+- Whether a transaction is sent and confirmed depends entirely on the other wallet you use and on the blockchain network.
+- We operate no service behind the app, so there is nothing for us to suspend, restore or compensate from.
+
+## 3. Self-custody: everything is in your hands
+You alone hold your keys, and you alone can use them. This is the whole point of the app, and it has one consequence you must accept before you use it: **if anything goes wrong, nobody can put it right — not us, not Apple, not anyone.**
+
+- We cannot recover a lost recovery phrase, passphrase or password, and we cannot reset them.
+- We cannot reverse, cancel, redirect or refund a transaction you signed, or one signed by anyone who obtained your keys.
+- We cannot tell you whether an address, a contract, a token or a counterparty is genuine.
+- There is no account, no support channel with access to your wallet, and no backup held by us.
+
+## 4. Your responsibilities
+You are solely responsible for your keys, your device and everything you choose to sign. In particular:
+
+- Write down your recovery phrase and store it safely, together with any BIP39 passphrase you set: the words alone will not restore a wallet that has one. The recovery cards and the recovery QR code in the app are the same secret in another form, and protect it in the same way.
+- Choose a password you will remember. Nobody, including us, can reset it or open that wallet file without it. Your coins are not lost if you forget it, as long as you still have the recovery phrase: delete the wallet and import it again.
+- Check every address, amount, network and request on screen before you sign, and compare them in the other wallet. A signature cannot be taken back.
+- Keep your device, its passcode and its backups secure, and keep its operating system up to date. Do not use the app on a jailbroken device, or on a device anyone else can reach.
+- Use BitTool Signer only with keys you are entitled to use, only for lawful purposes, and only where the law allows you to.
+
+## 5. Risks you accept
+Using cryptocurrency carries risks that no software can remove. By using the app you accept them, including:
+
+- **Irreversibility.** A signed transaction cannot be recalled. An address typed or scanned wrongly sends funds to someone else, or nowhere.
+- **Theft and deception.** Anyone who obtains your recovery phrase, passphrase or unlocked device can take your funds. Requests can be crafted to look harmless; approvals can give away far more than they appear to.
+- **Loss.** A lost phrase and a lost device together mean the funds are gone permanently.
+- **Information shown in the app can be wrong or incomplete.** Decoded transactions, token names, symbols, decimals, icons, network names and compatibility notes are offline aids assembled from public sources. They are not verified facts about a contract's behaviour, and a listed token is not an endorsement. Unknown or partly decoded requests are marked as such; sign them only if you understand them from another source.
+- **Other software and networks.** Other wallets, nodes, bridges, contracts, tokens and the blockchains themselves are outside our control, and may fail, change, fork or behave dishonestly.
+- **Defects.** Software, including this app, may contain errors. Hardware, operating systems and backups can fail or corrupt data.
+- **Legal and tax exposure.** You are responsible for whether your use is lawful where you are, and for your own taxes and reporting.
+
+## 6. No advice
+BitTool Signer gives no financial, investment, tax or legal advice, and makes no recommendation about any asset, network, contract or counterparty. Information in the app, including decoded transactions, token names and compatibility notes, is for your own review. Decisions about what to sign are yours alone.
+
+## 7. Licence
+We grant you a personal, non-exclusive, non-transferable, revocable licence to use BitTool Signer on devices you own or control, for your own use. You may not sell, rent or sublicense the app, remove its notices, or work around its security features. You may not reverse engineer it except to the extent the law expressly allows. The app itself is published as open source (Settings › Open Source). Third-party components included in it are covered by their own licences, reproduced in Settings › Open Source › Third-Party Notices.
+
+## 8. Updates and changes
+BitTool Signer runs entirely on your device; we do not operate a service behind it. Updates may change, add or remove features, and we may stop publishing the app at any time without liability to you. These terms may change with a new version of the app: the version that applies to you is the one shown on this page in the app you are using. Continuing to use the app after an update means you accept the version included with it.
+
+## 9. No warranty
+BitTool Signer is provided "as is" and "as available", without warranty of any kind, express or implied, including merchantability, fitness for a particular purpose, title, accuracy and non-infringement. We do not warrant that the app is free of defects, that it suits your purpose, that the information it displays is accurate or complete, or that it will run without interruption or error. No statement by us or anyone else creates a warranty beyond these terms.
+
+## 10. No liability, and no compensation
+Read this section carefully: it decides who carries the loss if something goes wrong.
+
+To the fullest extent permitted by law, **our total liability to you for any claim arising from or connected with BitTool Signer is zero**, and we will pay no compensation of any kind. This covers, without limitation, loss or theft of cryptocurrency, keys, recovery phrases, passphrases, passwords or data; transactions you signed, including ones signed by mistake or through deception; funds sent to a wrong, unusable or hostile address; anything displayed, decoded or omitted by the app; defects, interruptions or incompatibility; and any indirect, incidental, special, punitive or consequential loss, loss of profit, loss of opportunity or loss of goodwill. It applies however the claim arises, in contract, in tort (including negligence), under statute or otherwise, and whether or not we were told such loss was possible.
+
+The app is supplied free of charge and we receive nothing from you for it. You accept that this allocation of risk is a condition of using it, and that without it we could not publish the app at all.
+
+Some jurisdictions do not allow certain exclusions or limitations. Nothing in these terms excludes liability for fraud, for fraudulent misrepresentation, or for death or personal injury caused by negligence, or any other liability that cannot be excluded by law; and the consumer guarantees of your country of residence continue to apply. Where liability cannot be excluded, it is limited to the smallest amount the law allows, which for a free app is normally the amount you paid us — nothing.
+
+## 11. Your responsibility to us
+You will indemnify us against any claim, loss, liability or cost (including reasonable legal fees) arising from your use of the app, your breach of these terms, or your breach of any law or of anyone else's rights. We are not responsible for defending claims that you caused.
+
+## 12. Ending this agreement
+You may end this agreement at any time by deleting the app. Your licence ends automatically if you breach these terms. Deleting the app does not delete your recovery phrase from anywhere you wrote it down, and does not undo signatures you created. Sections 3, 5, 6, 9, 10, 11, 13 and 14 survive the end of this agreement.
+
+## 13. Governing law and disputes
+These terms are governed by the laws of Singapore, without regard to its conflict-of-laws rules. The courts of Singapore have exclusive jurisdiction, except that mandatory consumer protections and court access in your country of residence continue to apply. Before starting any proceedings, please write to us at the address in section 15 so we can try to resolve the matter.
+
+## 14. General
+These terms are the entire agreement between you and us about the app. If a provision is held unenforceable, the rest stays in force and that provision applies to the maximum extent permitted. Our failure to enforce a provision is not a waiver of it. You may not transfer your rights under these terms; we may transfer ours to a successor of our business.
+
+## 15. The App Store
+If you obtained BitTool Signer from the Apple App Store, the following also applies, and Apple's Licensed Application End User Licence Agreement prevails over these terms to the extent of any conflict.
+
+- This agreement is between you and us only, not with Apple, and we alone are responsible for the app and its content.
+- Your licence to use the app is limited to Apple devices you own or control, as permitted by the App Store Terms of Service.
+- Apple has no obligation to provide maintenance or support for the app.
+- If the app fails to conform to any warranty, you may notify Apple, and Apple will refund the purchase price; to the maximum extent permitted by law, Apple has no other warranty obligation, and any other claims are our responsibility.
+- We, not Apple, are responsible for addressing your claims or those of a third party about the app, including product liability, failure to conform to legal requirements, and consumer protection claims.
+- We, not Apple, are responsible for the investigation, defence, settlement and discharge of any third-party claim that the app infringes intellectual property rights.
+- You confirm that you are not located in a country under a U.S. Government embargo or designated as a terrorist-supporting country, and that you are not on any U.S. Government list of prohibited or restricted parties.
+- Apple and its subsidiaries are third-party beneficiaries of these terms and may enforce them against you.
+- Questions, complaints and support requests go to the contact details in section 16.
+
+## 16. Contact
+BITTOOL PTE. LTD.
+
+support@bittool.com
+
+https://bittool.com/signer
+
+BitTool Signer has no networking code, so nothing here can send a message for you. Write to that address from another device. We can answer questions about the app; we can never recover a wallet, a phrase or a transaction.

@@ -1,0 +1,3 @@
+/* Arabic. Keys are Info.plist names. */
+"NSCameraUsageDescription" = "يمسح BitTool Signer طلبات التوقيع من محفظتك الأخرى ورموز QR للعبارة الاحتياطية. تُعالَج صور الكاميرا على هذا الجهاز ولا تغادره أبدًا.";
+"NSFaceIDUsageDescription" = "استخدم Face ID لفتح BitTool Signer. ويتطلب التوقيع كلمة مرور محفظتك.";

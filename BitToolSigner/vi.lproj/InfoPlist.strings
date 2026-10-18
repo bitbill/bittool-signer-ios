@@ -1,0 +1,3 @@
+/* Vietnamese. Keys are Info.plist names. */
+"NSCameraUsageDescription" = "BitTool Signer dùng camera để quét yêu cầu ký từ ví còn lại của bạn và mã QR của cụm từ khôi phục. Hình ảnh chỉ được xử lý trên thiết bị này và không bao giờ rời khỏi máy.";
+"NSFaceIDUsageDescription" = "Mở BitTool Signer bằng Face ID. Việc ký vẫn cần mật khẩu của ví.";

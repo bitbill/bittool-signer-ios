@@ -1,0 +1,31 @@
+{
+  "name": "bittool-signer-offline-engine",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test test/*.test.mjs test/*.test.js"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "dependencies": {
+    "@ngraveio/bc-ur": "1.1.13",
+    "@noble/curves": "2.4.0",
+    "@noble/hashes": "2.4.0",
+    "@scure/base": "2.0.0",
+    "@scure/bip32": "2.4.0",
+    "@scure/bip39": "2.4.0",
+    "@scure/btc-signer": "2.4.1",
+    "buffer": "6.0.3",
+    "ethers": "6.17.0",
+    "fflate": "0.8.3"
+  },
+  "devDependencies": {
+    "@keystonehq/bc-ur-registry": "0.8.0",
+    "@keystonehq/bc-ur-registry-eth": "0.22.1",
+    "@keystonehq/bc-ur-registry-sol": "0.9.5",
+    "esbuild": "0.28.2"
+  }
+}

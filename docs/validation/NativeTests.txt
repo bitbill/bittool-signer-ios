@@ -1,0 +1,26 @@
+✔ Test bundledEngineDerivesKnownFourChainAccounts() passed after 0.443 seconds.
+✔ Test reviewedEVMRequestSignsAndExportsWithoutNetwork() passed after 0.298 seconds.
+✔ Test malformedQRAndUnknownContractAreRejected() passed after 0.156 seconds.
+✔ Suite EngineIntegrationTests passed after 0.899 seconds.
+✔ Test passwordRulesAndBoundaries() passed after 0.011 seconds.
+✔ Test nativeEntropyIsBoundedAndUnique() passed after 0.006 seconds.
+✔ Test passwordDerivationMatchesIndependentVector() passed after 0.099 seconds.
+✔ Test encryptionRoundTripAndDistinctSaltAndNonce() passed after 0.409 seconds.
+✔ Test authenticationRejectsWrongPasswordDeviceAndTampering() passed after 0.456 seconds.
+✔ Test throttlingSurvivesANewVaultServiceInstance() passed after 0.561 seconds.
+✔ Test javascriptBridgeHasFreshScopeNativeEntropyAndNoNetwork() passed after 0.004 seconds.
+✔ Test bundledEngineProducesBIP39AndAccountKnownVectors() passed after 0.221 seconds.
+✔ Test multipleWalletsPasswordRotationAndReauthenticatedDelete() passed after 0.950 seconds.
+✔ Suite SecurityTests passed after 2.722 seconds.
+✔ Test rejectedReviewCannotReappearWhenEngineFinishes() passed after 0.195 seconds.
+✔ Test replacingRequestDuringSigningNeverPublishesOldSignature() passed after 0.298 seconds.
+✔ Test signatureHistoryIsHiddenWhileLockedAndContainsNoSecret() passed after 0.446 seconds.
+✔ Suite SessionTests passed after 0.941 seconds.
+✔ Test run with 15 tests in 3 suites passed after 4.564 seconds.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testVaultNavigationAndRecoveryValidation]' started.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testVaultNavigationAndRecoveryValidation]' passed (20.042 seconds).
+Test Case '-[BitToolSignerUITests.BitToolSignerUITestsLaunchTests testLaunchScreenshot]' started.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITestsLaunchTests testLaunchScreenshot]' passed (5.238 seconds).
+	 Executed 2 tests, with 0 failures (0 unexpected) in 25.280 (25.293) seconds
+	 Executed 2 tests, with 0 failures (0 unexpected) in 25.280 (25.295) seconds
+** TEST SUCCEEDED **

@@ -1,0 +1,223 @@
+Test Suite 'All tests' started at 2026-09-21 17:30:12.560.
+Test Suite 'BitToolSignerTests.xctest' started at 2026-09-21 17:30:12.560.
+Test Suite 'RecoveryInputViewTests' started at 2026-09-21 17:30:12.560.
+Test Case '-[BitToolSignerTests.RecoveryInputViewTests testRecoveryInputUsesPlainTextWithoutPasswordAutofillTraits]' started.
+Test Case '-[BitToolSignerTests.RecoveryInputViewTests testRecoveryInputUsesPlainTextWithoutPasswordAutofillTraits]' passed (0.106 seconds).
+Test Suite 'RecoveryInputViewTests' passed at 2026-09-21 17:30:12.667.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.106 (0.107) seconds
+Test Suite 'RecoveryPrivacyViewTests' started at 2026-09-21 17:30:12.668.
+Test Case '-[BitToolSignerTests.RecoveryPrivacyViewTests testScreenshotNotificationPresentsWarningThroughSwiftUI]' started.
+Test Case '-[BitToolSignerTests.RecoveryPrivacyViewTests testScreenshotNotificationPresentsWarningThroughSwiftUI]' passed (0.605 seconds).
+Test Case '-[BitToolSignerTests.RecoveryPrivacyViewTests testScreenshotReplacesAlreadyPresentedRevealConfirmation]' started.
+Test Case '-[BitToolSignerTests.RecoveryPrivacyViewTests testScreenshotReplacesAlreadyPresentedRevealConfirmation]' passed (1.364 seconds).
+Test Suite 'RecoveryPrivacyViewTests' passed at 2026-09-21 17:30:14.639.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 1.970 (1.971) seconds
+Test Suite 'BitToolSignerTests.xctest' passed at 2026-09-21 17:30:14.639.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 2.076 (2.079) seconds
+Test Suite 'All tests' passed at 2026-09-21 17:30:14.639.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 2.076 (2.080) seconds
+◇ Test run started.
+◇ Suite AppAccessTests started.
+◇ Test appLockDefaultsOffAndEnablingRequiresSuccessfulFaceID() started.
+✔ Test appLockDefaultsOffAndEnablingRequiresSuccessfulFaceID() passed after 0.008 seconds.
+◇ Test backgroundGraceUsesTheExactMonotonic120SecondBoundary() started.
+✔ Test backgroundGraceUsesTheExactMonotonic120SecondBoundary() passed after 0.003 seconds.
+◇ Test alreadyLockedAppStaysLockedAcrossShortBackgroundAndRepeatedForeground() started.
+✔ Test alreadyLockedAppStaysLockedAcrossShortBackgroundAndRepeatedForeground() passed after 0.002 seconds.
+◇ Test backgroundRejectsAnInFlightBiometricCompletion() started.
+✔ Test backgroundRejectsAnInFlightBiometricCompletion() passed after 0.003 seconds.
+◇ Test anyWalletPasswordCanOpenOnlyTheAppAccessState() started.
+✔ Test anyWalletPasswordCanOpenOnlyTheAppAccessState() passed after 0.399 seconds.
+◇ Test deletingTheLastWalletClearsThePreferenceAndCannotDeadlockWelcome() started.
+✔ Test deletingTheLastWalletClearsThePreferenceAndCannotDeadlockWelcome() passed after 0.003 seconds.
+✔ Suite AppAccessTests passed after 0.424 seconds.
+◇ Suite BackupVerificationTests started.
+◇ Test supportedLengthsHaveFourUniqueQuestionsAndNoExtraPhraseWords(length:) started.
+◇ Test case passing 1 argument length → 12 to supportedLengthsHaveFourUniqueQuestionsAndNoExtraPhraseWords(length:) started.
+​◇ Test case passing 1 argument length → 15 to supportedLengthsHaveFourUniqueQuestionsAndNoExtraPhraseWords(length:) started.
+​◇ Test case passing 1 argument length → 18 to supportedLengthsHaveFourUniqueQuestionsAndNoExtraPhraseWords(length:) started.
+​◇ Test case passing 1 argument length → 21 to supportedLengthsHaveFourUniqueQuestionsAndNoExtraPhraseWords(length:) started.
+​◇ Test case passing 1 argument length → 24 to supportedLengthsHaveFourUniqueQuestionsAndNoExtraPhraseWords(length:) started.
+​✔ Test supportedLengthsHaveFourUniqueQuestionsAndNoExtraPhraseWords(length:) with 5 test cases passed after 1.167 seconds.
+◇ Test repeatedPhraseWordsReuseAllCandidatesWithIndependentShuffle() started.
+✔ Test repeatedPhraseWordsReuseAllCandidatesWithIndependentShuffle() passed after 0.126 seconds.
+◇ Test partialWrongCorrectAndResetSelectionsKeepQuestionsStable() started.
+✔ Test partialWrongCorrectAndResetSelectionsKeepQuestionsStable() passed after 0.108 seconds.
+◇ Test selectionRejectsUnknownPositionOrOptionWithoutChangingAnswers() started.
+✔ Test selectionRejectsUnknownPositionOrOptionWithoutChangingAnswers() passed after 0.106 seconds.
+◇ Test injectedRandomnessIsRepeatableAndFreshChallengesVary() started.
+✔ Test injectedRandomnessIsRepeatableAndFreshChallengesVary() passed after 0.110 seconds.
+◇ Test malformedInputFailsClosed() started.
+✔ Test malformedInputFailsClosed() passed after 0.110 seconds.
+✔ Suite BackupVerificationTests passed after 1.730 seconds.
+◇ Suite EngineIntegrationTests started.
+◇ Test bundledEngineDerivesKnownFourChainAccountsAndPublicPairing() started.
+✔ Test bundledEngineDerivesKnownFourChainAccountsAndPublicPairing() passed after 0.795 seconds.
+◇ Test fixedEVMPlanSignsAndExportsWithoutNetwork() started.
+✘ Test fixedEVMPlanSignsAndExportsWithoutNetwork() recorded an issue at BitToolSignerTests.swift:26:6: Caught error: SigningEngineError(code: "QR_PROTOCOL", message: "Unsupported response profile")
+✘ Test fixedEVMPlanSignsAndExportsWithoutNetwork() failed after 1.117 seconds with 1 issue.
+◇ Test malformedQRIsRejectedAndOpaqueContractRequiresPerRequestRiskConsent() started.
+✔ Test malformedQRIsRejectedAndOpaqueContractRequiresPerRequestRiskConsent() passed after 1.199 seconds.
+◇ Test nativeRuntimeResolvesSolanaTronAndTwoWalletBitcoinPlans() started.
+✘ Test nativeRuntimeResolvesSolanaTronAndTwoWalletBitcoinPlans() recorded an issue at BitToolSignerTests.swift:63:6: Caught error: SigningEngineError(code: "QR_PROTOCOL", message: "Unsupported response profile")
+✘ Test nativeRuntimeResolvesSolanaTronAndTwoWalletBitcoinPlans() failed after 1.482 seconds with 1 issue.
+✘ Suite EngineIntegrationTests failed after 4.595 seconds with 2 issues.
+◇ Suite QRScannerTests started.
+◇ Test recognizedButUnreadableAndEmptyCodesHaveExplicitFailures() started.
+✔ Test recognizedButUnreadableAndEmptyCodesHaveExplicitFailures() passed after 0.001 seconds.
+◇ Test sizeLimitCountsUTF8BytesAndAcceptsTheExactBoundary() started.
+✔ Test sizeLimitCountsUTF8BytesAndAcceptsTheExactBoundary() passed after 0.001 seconds.
+◇ Test repeatedFramesThrottleWithoutExtendingTheRetryWindow() started.
+✔ Test repeatedFramesThrottleWithoutExtendingTheRetryWindow() passed after 0.001 seconds.
+◇ Test distinctAnimatedFramesAreDeliveredImmediatelyAndUnchanged() started.
+✔ Test distinctAnimatedFramesAreDeliveredImmediatelyAndUnchanged() passed after 0.001 seconds.
+◇ Test repeatedFailuresDoNotBlockAReadableFrame() started.
+✔ Test repeatedFailuresDoNotBlockAReadableFrame() passed after 0.001 seconds.
+◇ Test earlierClockValueCannotPermanentlySuppressAFrame() started.
+✔ Test earlierClockValueCannotPermanentlySuppressAFrame() passed after 0.001 seconds.
+✔ Suite QRScannerTests passed after 0.001 seconds.
+◇ Suite RecoveryPrivacyTests started.
+◇ Test startsHiddenAndRequiresExplicitConfirmation() started.
+✔ Test startsHiddenAndRequiresExplicitConfirmation() passed after 0.001 seconds.
+◇ Test cancellationAndManualHideRequireFreshConfirmation() started.
+✔ Test cancellationAndManualHideRequireFreshConfirmation() passed after 0.001 seconds.
+◇ Test screenshotImmediatelyConcealsAndRequiresWarningAcknowledgement() started.
+✔ Test screenshotImmediatelyConcealsAndRequiresWarningAcknowledgement() passed after 0.001 seconds.
+◇ Test screenshotInvalidatesAnAlreadyPresentedRevealConfirmation() started.
+✔ Test screenshotInvalidatesAnAlreadyPresentedRevealConfirmation() passed after 0.001 seconds.
+◇ Test screenshotWhileHiddenStillWarnsWithoutExposingContent() started.
+✔ Test screenshotWhileHiddenStillWarnsWithoutExposingContent() passed after 0.001 seconds.
+◇ Test lifecycleAndCaptureEventsConcealAndInvalidatePendingConsent(_:) started.
+◇ Test case passing 1 argument notification → NSNotificationName(rawValue: "UIApplicationWillResignActiveNotification") to lifecycleAndCaptureEventsConcealAndInvalidatePendingConsent(_:) started.
+​◇ Test case passing 1 argument notification → NSNotificationName(rawValue: "UIApplicationDidEnterBackgroundNotification") to lifecycleAndCaptureEventsConcealAndInvalidatePendingConsent(_:) started.
+​◇ Test case passing 1 argument notification → NSNotificationName(rawValue: "UIScreenCapturedDidChangeNotification") to lifecycleAndCaptureEventsConcealAndInvalidatePendingConsent(_:) started.
+​✔ Test lifecycleAndCaptureEventsConcealAndInvalidatePendingConsent(_:) with 3 test cases passed after 0.004 seconds.
+◇ Test unsafeEnvironmentIsCheckedAgainAtConfirmation() started.
+✔ Test unsafeEnvironmentIsCheckedAgainAtConfirmation() passed after 0.001 seconds.
+◇ Test unmountedSessionsCannotRequestOrConfirmReveal() started.
+✔ Test unmountedSessionsCannotRequestOrConfirmReveal() passed after 0.001 seconds.
+◇ Test remountResetsVisibilityAndDoesNotAccumulateObservers() started.
+✔ Test remountResetsVisibilityAndDoesNotAccumulateObservers() passed after 0.001 seconds.
+✔ Suite RecoveryPrivacyTests passed after 0.008 seconds.
+◇ Suite RecoveryScreenshotTests started.
+◇ Test repeatedScreenshotsInvokeCallbackAndRequireCurrentAcknowledgement() started.
+✔ Test repeatedScreenshotsInvokeCallbackAndRequireCurrentAcknowledgement() passed after 0.001 seconds.
+◇ Test lifecycleDismissesWarningAndDefersFurtherAlertsUntilActive(notification:) started.
+◇ Test case passing 1 argument notification → NSNotificationName(rawValue: "UIApplicationWillResignActiveNotification") to lifecycleDismissesWarningAndDefersFurtherAlertsUntilActive(notification:) started.
+​◇ Test case passing 1 argument notification → NSNotificationName(rawValue: "UIApplicationDidEnterBackgroundNotification") to lifecycleDismissesWarningAndDefersFurtherAlertsUntilActive(notification:) started.
+​✔ Test lifecycleDismissesWarningAndDefersFurtherAlertsUntilActive(notification:) with 2 test cases passed after 0.001 seconds.
+◇ Test currentApplicationStateAlsoPreventsBackgroundPresentation() started.
+✔ Test currentApplicationStateAlsoPreventsBackgroundPresentation() passed after 0.001 seconds.
+◇ Test stoppingAndRemountingDoesNotRetainWarningsCallbacksOrObservers() started.
+✔ Test stoppingAndRemountingDoesNotRetainWarningsCallbacksOrObservers() passed after 0.026 seconds.
+◇ Test unmountingInsideScreenshotCallbackDoesNotPublishLateWarning() started.
+✔ Test unmountingInsideScreenshotCallbackDoesNotPublishLateWarning() passed after 0.001 seconds.
+✔ Suite RecoveryScreenshotTests passed after 0.028 seconds.
+◇ Suite SecurityTests started.
+◇ Test passwordRulesAndBoundaries() started.
+✔ Test passwordRulesAndBoundaries() passed after 0.001 seconds.
+◇ Test nativeEntropyIsBoundedAndUnique() started.
+✔ Test nativeEntropyIsBoundedAndUnique() passed after 0.001 seconds.
+◇ Test passwordDerivationMatchesIndependentVector() started.
+✔ Test passwordDerivationMatchesIndependentVector() passed after 0.093 seconds.
+◇ Test encryptionRoundTripAndDistinctSaltAndNonce() started.
+✔ Test encryptionRoundTripAndDistinctSaltAndNonce() passed after 0.361 seconds.
+◇ Test authenticationRejectsWrongPasswordDeviceAndTampering() started.
+✔ Test authenticationRejectsWrongPasswordDeviceAndTampering() passed after 0.517 seconds.
+◇ Test throttlingSurvivesANewVaultServiceInstance() started.
+✔ Test throttlingSurvivesANewVaultServiceInstance() passed after 0.584 seconds.
+◇ Test javascriptBridgeHasFreshScopeNativeEntropyAndNoNetwork() started.
+✔ Test javascriptBridgeHasFreshScopeNativeEntropyAndNoNetwork() passed after 0.007 seconds.
+◇ Test bundledEngineProducesBIP39AndAccountKnownVectors() started.
+✔ Test bundledEngineProducesBIP39AndAccountKnownVectors() passed after 0.271 seconds.
+◇ Test multipleWalletsPasswordRotationAndReauthenticatedDelete() started.
+✔ Test multipleWalletsPasswordRotationAndReauthenticatedDelete() passed after 0.924 seconds.
+✔ Suite SecurityTests passed after 2.764 seconds.
+◇ Suite SessionTests started.
+◇ Test oldEncryptedWalletMigratesWithoutRewritingItsSecret() started.
+✘ Test oldEncryptedWalletMigratesWithoutRewritingItsSecret() recorded an issue at SessionTests.swift:13:6: Caught error: .walletNotFound
+✘ Test oldEncryptedWalletMigratesWithoutRewritingItsSecret() failed after 0.094 seconds with 1 issue.
+◇ Test corruptPublicCacheDoesNotDamageOrDecryptTheWallet() started.
+✘ Test corruptPublicCacheDoesNotDamageOrDecryptTheWallet() recorded an issue at SessionTests.swift:38:6: Caught error: .walletNotFound
+✘ Test corruptPublicCacheDoesNotDamageOrDecryptTheWallet() failed after 0.092 seconds with 1 issue.
+◇ Test stableIdentitySurvivesRenamePasswordChangeAndRejectsDuplicateImport() started.
+✘ Test stableIdentitySurvivesRenamePasswordChangeAndRejectsDuplicateImport() recorded an issue at SessionTests.swift:52:6: Caught error: .walletNotFound
+✘ Test stableIdentitySurvivesRenamePasswordChangeAndRejectsDuplicateImport() failed after 0.093 seconds with 1 issue.
+◇ Test incompleteLegacyWalletDoesNotBlockImportAndDuplicatesAreFlaggedWhenCompleted() started.
+✘ Test incompleteLegacyWalletDoesNotBlockImportAndDuplicatesAreFlaggedWhenCompleted() recorded an issue at SessionTests.swift:83:9: Expectation failed: (store → BitSigner.AppStore).hasIncompleteWallets → false
+✘ Test incompleteLegacyWalletDoesNotBlockImportAndDuplicatesAreFlaggedWhenCompleted() failed after 1.619 seconds with 1 issue.
+◇ Test publicBrowsingDoesNotSelectASignerAndEachSignatureNeedsItsPassword() started.
+✘ Test publicBrowsingDoesNotSelectASignerAndEachSignatureNeedsItsPassword() recorded an issue at SessionTests.swift:102:6: Caught error: .walletNotFound
+✘ Test publicBrowsingDoesNotSelectASignerAndEachSignatureNeedsItsPassword() failed after 0.093 seconds with 1 issue.
+◇ Test missingAndConflictingSelectorsNeverProduceAnAuthorizableTask() started.
+✘ Test missingAndConflictingSelectorsNeverProduceAnAuthorizableTask() recorded an issue at SessionTests.swift:136:6: Caught error: .walletNotFound
+✘ Test missingAndConflictingSelectorsNeverProduceAnAuthorizableTask() failed after 0.094 seconds with 1 issue.
+◇ Test stalePublicCacheCannotAuthorizeADifferentEncryptedSeed() started.
+✘ Test stalePublicCacheCannotAuthorizeADifferentEncryptedSeed() recorded an issue at SessionTests.swift:154:6: Caught error: .walletNotFound
+✘ Test stalePublicCacheCannotAuthorizeADifferentEncryptedSeed() failed after 0.096 seconds with 1 issue.
+◇ Test backgroundCancelsInFlightTaskWithoutLosingTheReviewedRequest() started.
+✘ Test backgroundCancelsInFlightTaskWithoutLosingTheReviewedRequest() recorded an issue at SessionTests.swift:173:6: Caught error: .walletNotFound
+✘ Test backgroundCancelsInFlightTaskWithoutLosingTheReviewedRequest() failed after 0.095 seconds with 1 issue.
+◇ Test replacingOrRejectingARequestDiscardsLateResults() started.
+✘ Test replacingOrRejectingARequestDiscardsLateResults() recorded an issue at SessionTests.swift:196:6: Caught error: .walletNotFound
+✘ Test replacingOrRejectingARequestDiscardsLateResults() failed after 0.092 seconds with 1 issue.
+◇ Test interruptedMatchingCanRetryTheFrozenRequestWithoutAuthorization() started.
+✘ Test interruptedMatchingCanRetryTheFrozenRequestWithoutAuthorization() recorded an issue at SessionTests.swift:224:6: Caught error: .walletNotFound
+✘ Test interruptedMatchingCanRetryTheFrozenRequestWithoutAuthorization() failed after 0.093 seconds with 1 issue.
+◇ Test publicCollectionChangesCancelInFlightSignaturesAndLateMatches() started.
+✘ Test publicCollectionChangesCancelInFlightSignaturesAndLateMatches() recorded an issue at SessionTests.swift:250:6: Caught error: .walletNotFound
+✘ Test publicCollectionChangesCancelInFlightSignaturesAndLateMatches() failed after 0.094 seconds with 1 issue.
+◇ Test fixedMultiWalletTasksRequireSeparatePasswordsAndPublishOnlyWhenComplete() started.
+✘ Test fixedMultiWalletTasksRequireSeparatePasswordsAndPublishOnlyWhenComplete() recorded an issue at SessionTests.swift:287:6: Caught error: .walletNotFound
+✘ Test fixedMultiWalletTasksRequireSeparatePasswordsAndPublishOnlyWhenComplete() failed after 0.095 seconds with 1 issue.
+◇ Test interruptedCreationDoesNotLeaveAnEncryptedOrPublicWallet() started.
+✔ Test interruptedCreationDoesNotLeaveAnEncryptedOrPublicWallet() passed after 0.505 seconds.
+✘ Suite SessionTests failed after 3.164 seconds with 12 issues.
+✘ Test run with 58 tests in 8 suites failed after 12.718 seconds with 14 issues.
+Test Suite 'All tests' started at 2026-09-21 17:30:36.652.
+Test Suite 'BitToolSignerUITests.xctest' started at 2026-09-21 17:30:36.653.
+Test Suite 'BitToolSignerUITests' started at 2026-09-21 17:30:36.654.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testAppLockColdLaunchAndPasswordFallback]' started.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testAppLockColdLaunchAndPasswordFallback]' passed (25.715 seconds).
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testBackupVerificationRejectsWrongChoiceWithoutChangingQuestions]' started.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testBackupVerificationRejectsWrongChoiceWithoutChangingQuestions]' passed (59.245 seconds).
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testBackupVerificationStepSurvivesBackground]' started.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testBackupVerificationStepSurvivesBackground]' passed (61.840 seconds).
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testDirectScanPublicMatchingAndPasswordAuthorization]' started.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testDirectScanPublicMatchingAndPasswordAuthorization]' passed (39.165 seconds).
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testEightWalletsConnectAndAddressesNeedNoUnlock]' started.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testEightWalletsConnectAndAddressesNeedNoUnlock]' passed (27.650 seconds).
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testFirstImportCommitsThenShowsWalletHome]' started.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testFirstImportCommitsThenShowsWalletHome]' passed (29.029 seconds).
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testGeneratedPhraseStartsHidden]' started.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testGeneratedPhraseStartsHidden]' passed (21.225 seconds).
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testPasswordStepSurvivesBackgroundButClearsAuthorization]' started.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testPasswordStepSurvivesBackgroundButClearsAuthorization]' passed (54.687 seconds).
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testRecoveryPhraseConsentAndRevisit]' started.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testRecoveryPhraseConsentAndRevisit]' passed (57.594 seconds).
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testRestoreDraftSurvivesBackground]' started.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testRestoreDraftSurvivesBackground]' passed (46.478 seconds).
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testSettingsSheetsSurviveBackground]' started.
+<unknown>:0: error: -[BitToolSignerUITests.BitToolSignerUITests testSettingsSheetsSurviveBackground] : Failed to tap "Done" Button: Find single matching element. Multiple matching elements found for <XCUIElementQuery: 0x600002125ef0>.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testSettingsSheetsSurviveBackground]' failed (12.296 seconds).
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testWalletPasswordRotationClosesFormAndProtectsBackup]' started.
+/Users/tanguopeng/Documents/bitsigner-ios/BitSigner/BitToolSignerUITests/BitToolSignerUITests.swift:577: error: -[BitToolSignerUITests.BitToolSignerUITests testWalletPasswordRotationClosesFormAndProtectsBackup] : XCTAssertTrue failed
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testWalletPasswordRotationClosesFormAndProtectsBackup]' failed (23.325 seconds).
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testWelcomeOnboardingRetainsImportIntent]' started.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testWelcomeOnboardingRetainsImportIntent]' passed (22.175 seconds).
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testWholeScanCardOpensCameraWithoutUnlock]' started.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testWholeScanCardOpensCameraWithoutUnlock]' passed (12.123 seconds).
+Test Suite 'BitToolSignerUITests' failed at 2026-09-21 17:38:49.227.
+	 Executed 14 tests, with 2 failures (0 unexpected) in 492.546 (492.573) seconds
+Test Suite 'BitToolSignerUITestsLaunchTests' started at 2026-09-21 17:38:49.229.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITestsLaunchTests testLaunchScreenshot]' started.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITestsLaunchTests testLaunchScreenshot]' passed (4.856 seconds).
+Test Suite 'BitToolSignerUITestsLaunchTests' passed at 2026-09-21 17:38:54.086.
+	 Executed 1 test, with 0 failures (0 unexpected) in 4.856 (4.858) seconds
+Test Suite 'BitToolSignerUITests.xctest' failed at 2026-09-21 17:38:54.087.
+	 Executed 15 tests, with 2 failures (0 unexpected) in 497.401 (497.434) seconds
+Test Suite 'All tests' failed at 2026-09-21 17:38:54.088.
+	 Executed 15 tests, with 2 failures (0 unexpected) in 497.401 (497.436) seconds
+ xcrun: error: unable to find utility "simctl", not a developer tool or in PATH
+	/tmp/BitSignerDerived/Logs/Test/Test-BitSigner-2026.09.21_17-28-57-+1000.xcresult
+** TEST FAILED **

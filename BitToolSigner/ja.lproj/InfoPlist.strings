@@ -1,0 +1,3 @@
+/* Japanese. Keys are Info.plist names. */
+"NSCameraUsageDescription" = "BitTool Signer は、もう一方のウォレットからの署名リクエストや、リカバリーフレーズの QR コードをカメラで読み取ります。映像はこの端末の中だけで処理され、外に出ることはありません。";
+"NSFaceIDUsageDescription" = "Face ID で BitTool Signer を開きます。署名には引き続きウォレットのパスワードが必要です。";

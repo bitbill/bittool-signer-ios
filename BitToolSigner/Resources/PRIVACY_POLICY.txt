@@ -1,0 +1,58 @@
+Privacy Policy
+Version 1.1 · Effective 16 October 2026
+
+## In short
+BitTool Signer, published by BITTOOL PTE. LTD. ("we", "us"), collects nothing. It has no accounts, no servers and no networking code at all. Everything you see in the app is produced on your device, and this page is stored inside the app rather than on a website.
+
+## 1. What we collect
+Nothing. We run no servers and receive no data from the app. There is no sign-up, no telemetry, no analytics, no crash reporting, no advertising and no tracking. The app does bundle open-source libraries for cryptography and encoding (listed in Settings › Open Source › Third-Party Notices), but none of them can reach the network or collect anything.
+
+### Why iOS may ask about wireless data
+On iPhones sold in mainland China, iOS keeps a per-app switch for Wi-Fi and cellular data, and asks about it when an app is first used. That prompt comes from iOS, not from BitTool Signer. Choose "Don't Allow": nothing in the app needs a connection, and nothing will stop working. The app contains no networking code and links no networking framework, so it cannot send or receive anything either way.
+
+## 2. What the app stores on your device
+- Wallets: your recovery phrase and optional passphrase, encrypted with your wallet password and a key held in the device's Keychain. They are only ever decrypted in memory, after you type that password.
+- Public wallet data: account public keys, addresses, the master fingerprint and the wallet name, saved with an authentication tag so tampering is detected. This is what the app reads to show addresses and build pairing QR codes.
+- Activity: up to 100 recent signing records — the date, network, title, summary, risk level, request fingerprint, and which wallet signed (its name, identifier and master fingerprint). Use Clear Activity in the Activity tab to erase them. They are kept when you delete a wallet, shown as "Deleted wallet", until you clear them.
+- Preferences: appearance, App Lock setting, and whether the introduction has been shown.
+- A small counter of failed password attempts per wallet, used for the retry delay.
+
+The wallet files, public wallet data and activity record stay in the app's own storage with iOS file protection, and are excluded from iCloud and computer backups. Preferences are ordinary iOS settings and are included in a device backup; they hold no keys, addresses or activity. Your recovery phrase is never written anywhere in readable form.
+
+## 3. Camera
+The camera turns on only while the scanner is open, and only to read QR codes. Frames are processed on the device and are never stored or sent anywhere. You can withdraw the permission in iOS Settings; the app still works with pasted or imported requests.
+
+## 4. Face ID and Touch ID
+If you turn on App Lock, iOS performs the check and tells the app only whether it succeeded. Biometric data stays in the Secure Enclave and is never available to BitTool Signer.
+
+## 5. Clipboard
+When you copy an address, QR text or payload, it goes to this device's clipboard only — never through Handoff or Universal Clipboard — and expires after two minutes.
+
+## 6. Screenshots and the app switcher
+BitTool Signer hides its content when it leaves the foreground and while the screen is being recorded or mirrored, so wallet data does not appear in app-switcher snapshots or in a recording. It cannot prevent a screenshot that you take yourself, and warns you when one is taken while a recovery phrase is on screen.
+
+## 7. What leaves your device
+Only what you deliberately show or export: a pairing or signature QR code you display, text you copy, or a file you save. These contain public keys, addresses and signatures — never your recovery phrase, passphrase, password or private keys.
+
+Two things you control are different. The backup screen can show your recovery phrase as a plain-text QR code, which you must reveal yourself and which the app warns you about: anyone who scans or photographs it has your wallet. And when you save or open a file, you choose the location: if you pick a cloud folder in the Files app, that service receives it. Where exported data goes afterwards is up to the app or person you give it to.
+
+## 8. Deleting your data
+Deleting a wallet erases its encrypted file, its public data and its device key. Deleting the app removes all of its files. A random device key may stay in the iOS Keychain until iOS clears it; it holds no wallet data and is useless without the encrypted file, and you can remove it first by deleting each wallet. Because we hold nothing, there is nothing for us to delete and no request to make.
+
+## 9. Children
+BitTool Signer is not directed at children under 13, and collects no data from anyone of any age.
+
+## 10. The App Store
+Downloads and updates happen through Apple, which may collect its own data about them under Apple's privacy policy. We receive no personal data from Apple.
+
+## 11. Changes to this policy
+Any change ships as part of a new app version, with a new version number at the top of this page. Nothing changes retroactively, because no data was collected under the earlier version either.
+
+## 12. Contact
+BITTOOL PTE. LTD.
+
+support@bittool.com
+
+https://bittool.com/signer
+
+BitTool Signer has no networking code, so nothing here can send a message for you. Write to that address from another device.

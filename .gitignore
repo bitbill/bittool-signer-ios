@@ -1,0 +1,19 @@
+# Build output
+engine/node_modules/
+.build/
+DerivedData/
+build/
+*.xcresult
+*.xcuserstate
+xcuserdata/
+.DS_Store
+
+# Scratch: audit runs, generated reports, coursework. Never published.
+tmp/
+output/
+
+# Signing material must never be committed.
+*.p12
+*.cer
+*.certSigningRequest
+*.mobileprovision

@@ -1,0 +1,187 @@
+Test Suite 'Selected tests' started at 2026-09-21 17:40:32.910.
+Test Suite 'BitToolSignerUITests.xctest' started at 2026-09-21 17:40:32.914.
+Test Suite 'BitToolSignerUITests' started at 2026-09-21 17:40:32.915.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testDirectScanPublicMatchingAndPasswordAuthorization]' started.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testDirectScanPublicMatchingAndPasswordAuthorization]' passed (46.665 seconds).
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testEightWalletsConnectAndAddressesNeedNoUnlock]' started.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testEightWalletsConnectAndAddressesNeedNoUnlock]' passed (29.522 seconds).
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testFirstImportCommitsThenShowsWalletHome]' started.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testFirstImportCommitsThenShowsWalletHome]' passed (29.008 seconds).
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testSettingsSheetsSurviveBackground]' started.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testSettingsSheetsSurviveBackground]' passed (15.208 seconds).
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testWalletPasswordRotationClosesFormAndProtectsBackup]' started.
+/Users/tanguopeng/Documents/bitsigner-ios/BitSigner/BitToolSignerUITests/BitToolSignerUITests.swift:580: error: -[BitToolSignerUITests.BitToolSignerUITests testWalletPasswordRotationClosesFormAndProtectsBackup] : XCTAssertTrue failed
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testWalletPasswordRotationClosesFormAndProtectsBackup]' failed (23.863 seconds).
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testWelcomeOnboardingRetainsImportIntent]' started.
+Test Case '-[BitToolSignerUITests.BitToolSignerUITests testWelcomeOnboardingRetainsImportIntent]' passed (24.502 seconds).
+Test Suite 'BitToolSignerUITests' failed at 2026-09-21 17:43:21.697.
+	 Executed 6 tests, with 1 failure (0 unexpected) in 168.769 (168.783) seconds
+Test Suite 'BitToolSignerUITests.xctest' failed at 2026-09-21 17:43:21.698.
+	 Executed 6 tests, with 1 failure (0 unexpected) in 168.769 (168.784) seconds
+Test Suite 'Selected tests' failed at 2026-09-21 17:43:21.699.
+	 Executed 6 tests, with 1 failure (0 unexpected) in 168.769 (168.788) seconds
+Test Suite 'All tests' started at 2026-09-21 17:43:23.451.
+Test Suite 'BitToolSignerTests.xctest' started at 2026-09-21 17:43:23.452.
+Test Suite 'RecoveryInputViewTests' started at 2026-09-21 17:43:23.452.
+Test Case '-[BitToolSignerTests.RecoveryInputViewTests testRecoveryInputUsesPlainTextWithoutPasswordAutofillTraits]' started.
+Test Case '-[BitToolSignerTests.RecoveryInputViewTests testRecoveryInputUsesPlainTextWithoutPasswordAutofillTraits]' passed (0.076 seconds).
+Test Suite 'RecoveryInputViewTests' passed at 2026-09-21 17:43:23.529.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.076 (0.077) seconds
+Test Suite 'RecoveryPrivacyViewTests' started at 2026-09-21 17:43:23.529.
+Test Case '-[BitToolSignerTests.RecoveryPrivacyViewTests testScreenshotNotificationPresentsWarningThroughSwiftUI]' started.
+Test Case '-[BitToolSignerTests.RecoveryPrivacyViewTests testScreenshotNotificationPresentsWarningThroughSwiftUI]' passed (0.555 seconds).
+Test Case '-[BitToolSignerTests.RecoveryPrivacyViewTests testScreenshotReplacesAlreadyPresentedRevealConfirmation]' started.
+Test Case '-[BitToolSignerTests.RecoveryPrivacyViewTests testScreenshotReplacesAlreadyPresentedRevealConfirmation]' passed (1.386 seconds).
+Test Suite 'RecoveryPrivacyViewTests' passed at 2026-09-21 17:43:25.472.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 1.942 (1.943) seconds
+Test Suite 'BitToolSignerTests.xctest' passed at 2026-09-21 17:43:25.472.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 2.018 (2.020) seconds
+Test Suite 'All tests' passed at 2026-09-21 17:43:25.473.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 2.018 (2.022) seconds
+◇ Test run started.
+◇ Suite AppAccessTests started.
+◇ Test appLockDefaultsOffAndEnablingRequiresSuccessfulFaceID() started.
+✔ Test appLockDefaultsOffAndEnablingRequiresSuccessfulFaceID() passed after 0.012 seconds.
+◇ Test backgroundGraceUsesTheExactMonotonic120SecondBoundary() started.
+✔ Test backgroundGraceUsesTheExactMonotonic120SecondBoundary() passed after 0.003 seconds.
+◇ Test alreadyLockedAppStaysLockedAcrossShortBackgroundAndRepeatedForeground() started.
+✔ Test alreadyLockedAppStaysLockedAcrossShortBackgroundAndRepeatedForeground() passed after 0.003 seconds.
+◇ Test backgroundRejectsAnInFlightBiometricCompletion() started.
+✔ Test backgroundRejectsAnInFlightBiometricCompletion() passed after 0.003 seconds.
+◇ Test anyWalletPasswordCanOpenOnlyTheAppAccessState() started.
+✔ Test anyWalletPasswordCanOpenOnlyTheAppAccessState() passed after 0.389 seconds.
+◇ Test deletingTheLastWalletClearsThePreferenceAndCannotDeadlockWelcome() started.
+✔ Test deletingTheLastWalletClearsThePreferenceAndCannotDeadlockWelcome() passed after 0.002 seconds.
+✔ Suite AppAccessTests passed after 0.418 seconds.
+◇ Suite BackupVerificationTests started.
+◇ Test supportedLengthsHaveFourUniqueQuestionsAndNoExtraPhraseWords(length:) started.
+◇ Test case passing 1 argument length → 12 to supportedLengthsHaveFourUniqueQuestionsAndNoExtraPhraseWords(length:) started.
+​◇ Test case passing 1 argument length → 15 to supportedLengthsHaveFourUniqueQuestionsAndNoExtraPhraseWords(length:) started.
+​◇ Test case passing 1 argument length → 18 to supportedLengthsHaveFourUniqueQuestionsAndNoExtraPhraseWords(length:) started.
+​◇ Test case passing 1 argument length → 21 to supportedLengthsHaveFourUniqueQuestionsAndNoExtraPhraseWords(length:) started.
+​◇ Test case passing 1 argument length → 24 to supportedLengthsHaveFourUniqueQuestionsAndNoExtraPhraseWords(length:) started.
+​✔ Test supportedLengthsHaveFourUniqueQuestionsAndNoExtraPhraseWords(length:) with 5 test cases passed after 1.124 seconds.
+◇ Test repeatedPhraseWordsReuseAllCandidatesWithIndependentShuffle() started.
+✔ Test repeatedPhraseWordsReuseAllCandidatesWithIndependentShuffle() passed after 0.128 seconds.
+◇ Test partialWrongCorrectAndResetSelectionsKeepQuestionsStable() started.
+✔ Test partialWrongCorrectAndResetSelectionsKeepQuestionsStable() passed after 0.109 seconds.
+◇ Test selectionRejectsUnknownPositionOrOptionWithoutChangingAnswers() started.
+✔ Test selectionRejectsUnknownPositionOrOptionWithoutChangingAnswers() passed after 0.107 seconds.
+◇ Test injectedRandomnessIsRepeatableAndFreshChallengesVary() started.
+✔ Test injectedRandomnessIsRepeatableAndFreshChallengesVary() passed after 0.109 seconds.
+◇ Test malformedInputFailsClosed() started.
+✔ Test malformedInputFailsClosed() passed after 0.107 seconds.
+✔ Suite BackupVerificationTests passed after 1.688 seconds.
+◇ Suite EngineIntegrationTests started.
+◇ Test bundledEngineDerivesKnownFourChainAccountsAndPublicPairing() started.
+✔ Test bundledEngineDerivesKnownFourChainAccountsAndPublicPairing() passed after 0.745 seconds.
+◇ Test fixedEVMPlanSignsAndExportsWithoutNetwork() started.
+✔ Test fixedEVMPlanSignsAndExportsWithoutNetwork() passed after 1.309 seconds.
+◇ Test malformedQRIsRejectedAndOpaqueContractRequiresPerRequestRiskConsent() started.
+✔ Test malformedQRIsRejectedAndOpaqueContractRequiresPerRequestRiskConsent() passed after 1.258 seconds.
+◇ Test nativeRuntimeResolvesSolanaTronAndTwoWalletBitcoinPlans() started.
+✔ Test nativeRuntimeResolvesSolanaTronAndTwoWalletBitcoinPlans() passed after 3.291 seconds.
+✔ Suite EngineIntegrationTests passed after 6.605 seconds.
+◇ Suite QRScannerTests started.
+◇ Test recognizedButUnreadableAndEmptyCodesHaveExplicitFailures() started.
+✔ Test recognizedButUnreadableAndEmptyCodesHaveExplicitFailures() passed after 0.001 seconds.
+◇ Test sizeLimitCountsUTF8BytesAndAcceptsTheExactBoundary() started.
+✔ Test sizeLimitCountsUTF8BytesAndAcceptsTheExactBoundary() passed after 0.001 seconds.
+◇ Test repeatedFramesThrottleWithoutExtendingTheRetryWindow() started.
+✔ Test repeatedFramesThrottleWithoutExtendingTheRetryWindow() passed after 0.001 seconds.
+◇ Test distinctAnimatedFramesAreDeliveredImmediatelyAndUnchanged() started.
+✔ Test distinctAnimatedFramesAreDeliveredImmediatelyAndUnchanged() passed after 0.001 seconds.
+◇ Test repeatedFailuresDoNotBlockAReadableFrame() started.
+✔ Test repeatedFailuresDoNotBlockAReadableFrame() passed after 0.001 seconds.
+◇ Test earlierClockValueCannotPermanentlySuppressAFrame() started.
+✔ Test earlierClockValueCannotPermanentlySuppressAFrame() passed after 0.001 seconds.
+✔ Suite QRScannerTests passed after 0.005 seconds.
+◇ Suite RecoveryPrivacyTests started.
+◇ Test startsHiddenAndRequiresExplicitConfirmation() started.
+✔ Test startsHiddenAndRequiresExplicitConfirmation() passed after 0.001 seconds.
+◇ Test cancellationAndManualHideRequireFreshConfirmation() started.
+✔ Test cancellationAndManualHideRequireFreshConfirmation() passed after 0.001 seconds.
+◇ Test screenshotImmediatelyConcealsAndRequiresWarningAcknowledgement() started.
+✔ Test screenshotImmediatelyConcealsAndRequiresWarningAcknowledgement() passed after 0.001 seconds.
+◇ Test screenshotInvalidatesAnAlreadyPresentedRevealConfirmation() started.
+✔ Test screenshotInvalidatesAnAlreadyPresentedRevealConfirmation() passed after 0.001 seconds.
+◇ Test screenshotWhileHiddenStillWarnsWithoutExposingContent() started.
+✔ Test screenshotWhileHiddenStillWarnsWithoutExposingContent() passed after 0.001 seconds.
+◇ Test lifecycleAndCaptureEventsConcealAndInvalidatePendingConsent(_:) started.
+◇ Test case passing 1 argument notification → NSNotificationName(rawValue: "UIApplicationWillResignActiveNotification") to lifecycleAndCaptureEventsConcealAndInvalidatePendingConsent(_:) started.
+​◇ Test case passing 1 argument notification → NSNotificationName(rawValue: "UIApplicationDidEnterBackgroundNotification") to lifecycleAndCaptureEventsConcealAndInvalidatePendingConsent(_:) started.
+​◇ Test case passing 1 argument notification → NSNotificationName(rawValue: "UIScreenCapturedDidChangeNotification") to lifecycleAndCaptureEventsConcealAndInvalidatePendingConsent(_:) started.
+​✔ Test lifecycleAndCaptureEventsConcealAndInvalidatePendingConsent(_:) with 3 test cases passed after 0.013 seconds.
+◇ Test unsafeEnvironmentIsCheckedAgainAtConfirmation() started.
+✔ Test unsafeEnvironmentIsCheckedAgainAtConfirmation() passed after 0.001 seconds.
+◇ Test unmountedSessionsCannotRequestOrConfirmReveal() started.
+✔ Test unmountedSessionsCannotRequestOrConfirmReveal() passed after 0.001 seconds.
+◇ Test remountResetsVisibilityAndDoesNotAccumulateObservers() started.
+✔ Test remountResetsVisibilityAndDoesNotAccumulateObservers() passed after 0.001 seconds.
+✔ Suite RecoveryPrivacyTests passed after 0.015 seconds.
+◇ Suite RecoveryScreenshotTests started.
+◇ Test repeatedScreenshotsInvokeCallbackAndRequireCurrentAcknowledgement() started.
+✔ Test repeatedScreenshotsInvokeCallbackAndRequireCurrentAcknowledgement() passed after 0.001 seconds.
+◇ Test lifecycleDismissesWarningAndDefersFurtherAlertsUntilActive(notification:) started.
+◇ Test case passing 1 argument notification → NSNotificationName(rawValue: "UIApplicationWillResignActiveNotification") to lifecycleDismissesWarningAndDefersFurtherAlertsUntilActive(notification:) started.
+​◇ Test case passing 1 argument notification → NSNotificationName(rawValue: "UIApplicationDidEnterBackgroundNotification") to lifecycleDismissesWarningAndDefersFurtherAlertsUntilActive(notification:) started.
+​✔ Test lifecycleDismissesWarningAndDefersFurtherAlertsUntilActive(notification:) with 2 test cases passed after 0.008 seconds.
+◇ Test currentApplicationStateAlsoPreventsBackgroundPresentation() started.
+✔ Test currentApplicationStateAlsoPreventsBackgroundPresentation() passed after 0.001 seconds.
+◇ Test stoppingAndRemountingDoesNotRetainWarningsCallbacksOrObservers() started.
+✔ Test stoppingAndRemountingDoesNotRetainWarningsCallbacksOrObservers() passed after 0.001 seconds.
+◇ Test unmountingInsideScreenshotCallbackDoesNotPublishLateWarning() started.
+✔ Test unmountingInsideScreenshotCallbackDoesNotPublishLateWarning() passed after 0.001 seconds.
+✔ Suite RecoveryScreenshotTests passed after 0.009 seconds.
+◇ Suite SecurityTests started.
+◇ Test passwordRulesAndBoundaries() started.
+✔ Test passwordRulesAndBoundaries() passed after 0.001 seconds.
+◇ Test nativeEntropyIsBoundedAndUnique() started.
+✔ Test nativeEntropyIsBoundedAndUnique() passed after 0.001 seconds.
+◇ Test passwordDerivationMatchesIndependentVector() started.
+✔ Test passwordDerivationMatchesIndependentVector() passed after 0.093 seconds.
+◇ Test encryptionRoundTripAndDistinctSaltAndNonce() started.
+✔ Test encryptionRoundTripAndDistinctSaltAndNonce() passed after 0.361 seconds.
+◇ Test authenticationRejectsWrongPasswordDeviceAndTampering() started.
+✔ Test authenticationRejectsWrongPasswordDeviceAndTampering() passed after 0.450 seconds.
+◇ Test throttlingSurvivesANewVaultServiceInstance() started.
+✔ Test throttlingSurvivesANewVaultServiceInstance() passed after 0.593 seconds.
+◇ Test javascriptBridgeHasFreshScopeNativeEntropyAndNoNetwork() started.
+✔ Test javascriptBridgeHasFreshScopeNativeEntropyAndNoNetwork() passed after 0.007 seconds.
+◇ Test bundledEngineProducesBIP39AndAccountKnownVectors() started.
+✔ Test bundledEngineProducesBIP39AndAccountKnownVectors() passed after 0.298 seconds.
+◇ Test multipleWalletsPasswordRotationAndReauthenticatedDelete() started.
+✔ Test multipleWalletsPasswordRotationAndReauthenticatedDelete() passed after 0.937 seconds.
+✔ Suite SecurityTests passed after 2.753 seconds.
+◇ Suite SessionTests started.
+◇ Test oldEncryptedWalletMigratesWithoutRewritingItsSecret() started.
+✔ Test oldEncryptedWalletMigratesWithoutRewritingItsSecret() passed after 0.567 seconds.
+◇ Test corruptPublicCacheDoesNotDamageOrDecryptTheWallet() started.
+✔ Test corruptPublicCacheDoesNotDamageOrDecryptTheWallet() passed after 1.065 seconds.
+◇ Test stableIdentitySurvivesRenamePasswordChangeAndRejectsDuplicateImport() started.
+✔ Test stableIdentitySurvivesRenamePasswordChangeAndRejectsDuplicateImport() passed after 1.864 seconds.
+◇ Test incompleteLegacyWalletDoesNotBlockImportAndDuplicatesAreFlaggedWhenCompleted() started.
+✔ Test incompleteLegacyWalletDoesNotBlockImportAndDuplicatesAreFlaggedWhenCompleted() passed after 1.563 seconds.
+◇ Test publicBrowsingDoesNotSelectASignerAndEachSignatureNeedsItsPassword() started.
+✔ Test publicBrowsingDoesNotSelectASignerAndEachSignatureNeedsItsPassword() passed after 3.055 seconds.
+◇ Test missingAndConflictingSelectorsNeverProduceAnAuthorizableTask() started.
+✔ Test missingAndConflictingSelectorsNeverProduceAnAuthorizableTask() passed after 0.969 seconds.
+◇ Test stalePublicCacheCannotAuthorizeADifferentEncryptedSeed() started.
+✔ Test stalePublicCacheCannotAuthorizeADifferentEncryptedSeed() passed after 1.835 seconds.
+◇ Test backgroundCancelsInFlightTaskWithoutLosingTheReviewedRequest() started.
+✔ Test backgroundCancelsInFlightTaskWithoutLosingTheReviewedRequest() passed after 1.856 seconds.
+◇ Test replacingOrRejectingARequestDiscardsLateResults() started.
+✔ Test replacingOrRejectingARequestDiscardsLateResults() passed after 1.868 seconds.
+◇ Test interruptedMatchingCanRetryTheFrozenRequestWithoutAuthorization() started.
+✔ Test interruptedMatchingCanRetryTheFrozenRequestWithoutAuthorization() passed after 1.001 seconds.
+◇ Test publicCollectionChangesCancelInFlightSignaturesAndLateMatches() started.
+✔ Test publicCollectionChangesCancelInFlightSignaturesAndLateMatches() passed after 1.470 seconds.
+◇ Test fixedMultiWalletTasksRequireSeparatePasswordsAndPublishOnlyWhenComplete() started.
+✔ Test fixedMultiWalletTasksRequireSeparatePasswordsAndPublishOnlyWhenComplete() passed after 1.954 seconds.
+◇ Test interruptedCreationDoesNotLeaveAnEncryptedOrPublicWallet() started.
+✔ Test interruptedCreationDoesNotLeaveAnEncryptedOrPublicWallet() passed after 0.452 seconds.
+✔ Suite SessionTests passed after 19.528 seconds.
+✔ Test run with 58 tests in 8 suites passed after 31.027 seconds.
+ xcrun: error: unable to find utility "simctl", not a developer tool or in PATH
+	/tmp/BitSignerDerived/Logs/Test/Test-BitSigner-2026.09.21_17-39-38-+1000.xcresult
+** TEST FAILED **

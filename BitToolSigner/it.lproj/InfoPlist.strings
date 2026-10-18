@@ -1,0 +1,3 @@
+/* Italian. Keys are Info.plist names. */
+"NSCameraUsageDescription" = "BitTool Signer usa la fotocamera per scansionare le richieste di firma del tuo altro wallet e i codici QR delle frasi di recupero. Le immagini sono elaborate solo su questo dispositivo e non lo lasciano mai.";
+"NSFaceIDUsageDescription" = "Apri BitTool Signer con Face ID. Per firmare serve comunque la password del wallet.";

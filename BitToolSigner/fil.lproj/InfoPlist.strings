@@ -1,0 +1,3 @@
+/* Filipino. Keys are Info.plist names. */
+"NSCameraUsageDescription" = "Gumagamit ang BitTool Signer ng camera para mag-scan ng mga signing request mula sa kabila mong wallet at ng mga QR code ng recovery phrase. Pinoproseso ang mga larawan sa device na ito lamang at hindi kailanman umaalis dito.";
+"NSFaceIDUsageDescription" = "Buksan ang BitTool Signer gamit ang Face ID. Kailangan pa rin ng password ng wallet para makalagda.";
