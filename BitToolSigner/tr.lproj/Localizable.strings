@@ -60,6 +60,7 @@
 "Allowance / NFT token ID" = "İzin verilen tutar / NFT token kimliği";
 "Also paid out" = "Ayrıca ödenen";
 "Always compare the first addresses in both apps before receiving funds." = "Para almadan önce her iki uygulamadaki ilk adresleri mutlaka karşılaştırın.";
+"Ambiguous wallet match" = "Birden fazla cüzdan eşleşti";
 "Amount" = "Tutar";
 "Amount (SOL)" = "Tutar (SOL)";
 "Amount (TRX)" = "Tutar (TRX)";
@@ -305,12 +306,14 @@
 "Invalid recovery phrase: it has 1 word. Recovery phrases have 12, 15, 18, 21 or 24 words." = "Geçersiz kurtarma ifadesi: 1 kelime içeriyor. Kurtarma ifadeleri 12, 15, 18, 21 veya 24 kelimeden oluşur.";
 "Invalid request format." = "Geçersiz istek biçimi.";
 "Invalid signing plan." = "Geçersiz imzalama planı.";
+"Invalid signing request" = "Geçersiz imza isteği";
 "Invalid signing wallet identity." = "Geçersiz imzalayan cüzdan kimliği.";
 "It contains the %lld words only. Your BIP39 passphrase is not included; restoring this wallet also needs the passphrase." = "Yalnızca %lld kelimeyi içerir. BIP39 parolanız dâhil değildir; bu cüzdanı geri getirmek için parola da gerekir.";
 "Items" = "Kalemler";
 "I’ve Written Them Down in Order" = "Sırayla yazdım";
 "Keep Editing" = "Düzenlemeyi sürdür";
 "Keep it offline" = "Çevrimdışı tutun";
+"Keep the animated code in view · %lld parts" = "Animasyonlu kodu kadrajda tutun · %lld parça";
 "Keep the three cards in three different places. One card alone does not hold the full phrase, but it shows two thirds of the words; with a 12- or 15-word phrase the rest can be guessed with enough computing power, so hide every card." = "Üç kartı üç farklı yerde saklayın. Tek bir kart ifadenin tamamını içermez ama kelimelerin üçte ikisini gösterir; 12 veya 15 kelimelik bir ifadede geri kalanı yeterli işlem gücüyle tahmin edilebilir, bu yüzden her kartı saklayın.";
 "Keep these three cards in three different places. Any two of them restore the complete recovery phrase, so if one card is lost or stolen, the other two keep your wallet safe and recoverable." = "Bu üç kartı üç farklı yerde saklayın. Herhangi ikisi tam kurtarma ifadesini geri getirir; bir kart kaybolur veya çalınırsa diğer ikisi cüzdanınızı güvende ve kurtarılabilir tutar.";
 "Keep these three cards in three different places. Any two of them restore the complete recovery phrase, so if one card is lost, the other two can still restore your wallet." = "Bu üç kartı üç farklı yerde saklayın. Herhangi ikisi tam kurtarma ifadesini geri getirir; bir kart kaybolursa diğer ikisi yine de cüzdanınızı geri getirebilir.";
@@ -352,6 +355,7 @@
 "Method" = "Yöntem";
 "Mint" = "Mint";
 "Missing or invalid transaction commitment." = "İşlem taahhüdü eksik veya geçersiz.";
+"Missing signer information" = "İmzalayan bilgisi eksik";
 "More than one saved wallet matches. Delete the duplicate wallet, then scan again." = "Birden fazla kayıtlı cüzdan eşleşiyor. Yinelenen cüzdanı silip yeniden tarayın.";
 "Multisig" = "Çoklu imza";
 "Multisig account" = "Çoklu imza hesabı";
@@ -388,6 +392,7 @@
 "No camera is available. Import the request as a file instead." = "Kullanılabilir kamera yok. Bunun yerine isteği dosya olarak içe aktarın.";
 "No interrupted or unmatched request to retry." = "Yeniden denenecek, yarıda kalmış veya eşleşmemiş bir istek yok.";
 "No matching signing task. Review the request again." = "Eşleşen bir imzalama görevi yok. İsteği yeniden inceleyin.";
+"No matching wallet" = "Eşleşen cüzdan yok";
 "No matching word" = "Eşleşen kelime yok";
 "Nonce" = "Nonce";
 "Nonce account" = "Nonce hesabı";
@@ -462,6 +467,7 @@
 "Quantity" = "Miktar";
 "Raw amount" = "Ham tutar";
 "Read every warning above before signing." = "İmzalamadan önce yukarıdaki tüm uyarıları okuyun.";
+"Reading request…" = "İstek okunuyor…";
 "Reading…" = "Okunuyor…";
 "Rebuild it yourself" = "Kendiniz yeniden derleyin";
 "Receive Addresses" = "Alma adresleri";
@@ -747,6 +753,7 @@
 "Wallet information changed. Match this request again." = "Cüzdan bilgisi değişti. Bu isteği yeniden eşleştirin.";
 "Wallet name" = "Cüzdan adı";
 "Wallet password" = "Cüzdan parolası";
+"Wallet setup required" = "Önce cüzdanı kurmanız gerekiyor";
 "Wallet setup required." = "Cüzdan kurulumu gerekiyor.";
 "Wallets" = "Cüzdanlar";
 "Wallets Unavailable" = "Cüzdanlar kullanılamıyor";
@@ -754,6 +761,7 @@
 "Watch only" = "Yalnızca izleme";
 "Which language is your backup in?" = "Yedeğiniz hangi dilde?";
 "Which of these the wallet reads: Wallet Level, and Coin Level for Bitcoin, EVM, TRON or Solana." = "Cüzdanın bunlardan hangilerini okuduğu: cüzdan düzeyi ve Bitcoin, EVM, TRON ya da Solana için coin düzeyi.";
+"With a %lld-word phrase each card shows %lld of the %lld words, and the other %lld could be worked out with enough computing power. Guard every card as carefully as the full phrase, or use a 24-word phrase for split backups." = "%1$lld kelimelik bir ifadede her kart %3$lld kelimenin %2$lld tanesini gösterir, kalan %4$lld kelime ise yeterli işlem gücüyle bulunabilir. Her kartı tam ifade kadar dikkatli saklayın ya da bölünmüş yedekler için 24 kelimelik bir ifade kullanın.";
 "Word %lld" = "Kelime %lld";
 "Word %lld, %@" = "Kelime %1$lld, %2$@";
 "Word %lld, hidden" = "Kelime %lld, gizli";

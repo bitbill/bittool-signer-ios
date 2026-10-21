@@ -87,7 +87,7 @@ struct RequestReviewView: View {
                 .font(.headline)
             if let message = store.matchingError {
                 VStack(alignment: .leading, spacing: 10) {
-                    Label(message, systemImage: "xmark.octagon.fill")
+                    Label(ReviewText.phrase(message), systemImage: "xmark.octagon.fill")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Palette.danger)
                         .accessibilityIdentifier("signing.matchError")

@@ -60,6 +60,7 @@
 "Allowance / NFT token ID" = "許可額／NFT トークン ID";
 "Also paid out" = "他の受取先";
 "Always compare the first addresses in both apps before receiving funds." = "入金の前に、両方のアプリで最初のアドレスを必ず見比べてください。";
+"Ambiguous wallet match" = "複数のウォレットが一致しました";
 "Amount" = "金額";
 "Amount (SOL)" = "数量（SOL）";
 "Amount (TRX)" = "数量（TRX）";
@@ -305,12 +306,14 @@
 "Invalid recovery phrase: it has 1 word. Recovery phrases have 12, 15, 18, 21 or 24 words." = "リカバリーフレーズが不正です：1 単語しかありません。リカバリーフレーズは 12、15、18、21、24 単語のいずれかです。";
 "Invalid request format." = "リクエストの形式が不正です。";
 "Invalid signing plan." = "署名プランが不正です。";
+"Invalid signing request" = "署名リクエストが無効です";
 "Invalid signing wallet identity." = "署名ウォレットの ID が不正です。";
 "It contains the %lld words only. Your BIP39 passphrase is not included; restoring this wallet also needs the passphrase." = "含まれるのは %lld 単語だけです。BIP39 パスフレーズは含まれません。このウォレットの復元にはパスフレーズも必要です。";
 "Items" = "アイテム";
 "I’ve Written Them Down in Order" = "順番どおり書き写しました";
 "Keep Editing" = "編集を続ける";
 "Keep it offline" = "オフラインで保管";
+"Keep the animated code in view · %lld parts" = "アニメーションQRコードを画面内に保ってください · %lld 個読み取り済み";
 "Keep the three cards in three different places. One card alone does not hold the full phrase, but it shows two thirds of the words; with a 12- or 15-word phrase the rest can be guessed with enough computing power, so hide every card." = "3 枚のカードは、それぞれ別の場所に保管してください。1 枚だけではフレーズ全体にはなりませんが、単語の 3 分の 2 が見えてしまいます。12 または 15 単語のフレーズでは、十分な計算能力があれば残りを推測できるため、どのカードも必ず隠してください。";
 "Keep these three cards in three different places. Any two of them restore the complete recovery phrase, so if one card is lost or stolen, the other two keep your wallet safe and recoverable." = "3 枚のカードは、それぞれ別の場所に保管してください。どの 2 枚からでも完全なリカバリーフレーズを復元できるため、1 枚を紛失したり盗まれたりしても、残りの 2 枚でウォレットを安全に復元できます。";
 "Keep these three cards in three different places. Any two of them restore the complete recovery phrase, so if one card is lost, the other two can still restore your wallet." = "3 枚のカードは、それぞれ別の場所に保管してください。どの 2 枚からでも完全なリカバリーフレーズを復元できるため、1 枚を紛失しても残りの 2 枚でウォレットを復元できます。";
@@ -352,6 +355,7 @@
 "Method" = "メソッド";
 "Mint" = "ミント";
 "Missing or invalid transaction commitment." = "トランザクションのコミットメントが欠けているか、不正です。";
+"Missing signer information" = "署名者の情報がありません";
 "More than one saved wallet matches. Delete the duplicate wallet, then scan again." = "保存済みのウォレットが複数一致します。重複したウォレットを削除してから、もう一度読み取ってください。";
 "Multisig" = "マルチシグ";
 "Multisig account" = "マルチシグアカウント";
@@ -388,6 +392,7 @@
 "No camera is available. Import the request as a file instead." = "使用できるカメラがありません。リクエストをファイルから読み込んでください。";
 "No interrupted or unmatched request to retry." = "再試行できる中断中または未照合のリクエストはありません。";
 "No matching signing task. Review the request again." = "一致する署名タスクがありません。リクエストをもう一度確認してください。";
+"No matching wallet" = "一致するウォレットがありません";
 "No matching word" = "一致する単語がありません";
 "Nonce" = "ノンス";
 "Nonce account" = "ノンスアカウント";
@@ -462,6 +467,7 @@
 "Quantity" = "数量";
 "Raw amount" = "生の数量";
 "Read every warning above before signing." = "署名の前に、上の警告をすべて読んでください。";
+"Reading request…" = "リクエストを読み取っています…";
 "Reading…" = "読み込み中…";
 "Rebuild it yourself" = "自分でビルドし直す";
 "Receive Addresses" = "受取アドレス";
@@ -747,6 +753,7 @@
 "Wallet information changed. Match this request again." = "ウォレットの情報が変わりました。このリクエストをもう一度照合してください。";
 "Wallet name" = "ウォレット名";
 "Wallet password" = "ウォレットのパスワード";
+"Wallet setup required" = "ウォレットのセットアップが必要です";
 "Wallet setup required." = "このウォレットは設定を完了する必要があります。";
 "Wallets" = "ウォレット";
 "Wallets Unavailable" = "ウォレットを利用できません";
@@ -754,6 +761,7 @@
 "Watch only" = "残高表示のみ";
 "Which language is your backup in?" = "バックアップは何語で書かれていますか？";
 "Which of these the wallet reads: Wallet Level, and Coin Level for Bitcoin, EVM, TRON or Solana." = "そのウォレットが読めるもの：ウォレットレベル、および Bitcoin・EVM・TRON・Solana のコインレベル。";
+"With a %lld-word phrase each card shows %lld of the %lld words, and the other %lld could be worked out with enough computing power. Guard every card as carefully as the full phrase, or use a 24-word phrase for split backups." = "%1$lld 語のリカバリーフレーズでは、各カードに %3$lld 語のうち %2$lld 語が表示され、残りの %4$lld 語は十分な計算力があれば割り出せます。カードはすべて完全なフレーズと同じ厳重さで保管するか、分割バックアップには 24 語のフレーズを使ってください。";
 "Word %lld" = "%lld 番目の単語";
 "Word %lld, %@" = "%lld 番目の単語、%@";
 "Word %lld, hidden" = "%lld 番目の単語、非表示";

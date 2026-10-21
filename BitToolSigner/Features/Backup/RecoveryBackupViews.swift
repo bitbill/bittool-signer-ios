@@ -211,7 +211,7 @@ struct RecoveryCardsSheet: View {
 
     private var weakPhraseWarning: String {
         let missing = words.count / RecoveryCards.count
-        return "With a \(words.count)-word phrase each card shows \(words.count - missing) of the \(words.count) words, and the other \(missing) could be worked out with enough computing power. Guard every card as carefully as the full phrase, or use a 24-word phrase for split backups."
+        return String(localized: "With a \(words.count)-word phrase each card shows \(words.count - missing) of the \(words.count) words, and the other \(missing) could be worked out with enough computing power. Guard every card as carefully as the full phrase, or use a 24-word phrase for split backups.", bundle: AppText.bundle)
     }
 }
 

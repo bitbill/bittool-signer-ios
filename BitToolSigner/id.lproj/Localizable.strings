@@ -60,6 +60,7 @@
 "Allowance / NFT token ID" = "Batas yang diizinkan / ID token NFT";
 "Also paid out" = "Juga dibayarkan";
 "Always compare the first addresses in both apps before receiving funds." = "Selalu bandingkan alamat pertama di kedua aplikasi sebelum menerima dana.";
+"Ambiguous wallet match" = "Beberapa dompet cocok";
 "Amount" = "Jumlah";
 "Amount (SOL)" = "Jumlah (SOL)";
 "Amount (TRX)" = "Jumlah (TRX)";
@@ -305,12 +306,14 @@
 "Invalid recovery phrase: it has 1 word. Recovery phrases have 12, 15, 18, 21 or 24 words." = "Frasa pemulihan tidak valid: berisi 1 kata. Frasa pemulihan terdiri dari 12, 15, 18, 21, atau 24 kata.";
 "Invalid request format." = "Format permintaan tidak valid.";
 "Invalid signing plan." = "Rencana penandatanganan tidak valid.";
+"Invalid signing request" = "Permintaan tanda tangan tidak valid";
 "Invalid signing wallet identity." = "Identitas dompet penanda tangan tidak valid.";
 "It contains the %lld words only. Your BIP39 passphrase is not included; restoring this wallet also needs the passphrase." = "Isinya hanya %lld kata itu. Frasa sandi BIP39 Anda tidak disertakan; memulihkan dompet ini juga memerlukan frasa sandi tersebut.";
 "Items" = "Item";
 "I’ve Written Them Down in Order" = "Saya sudah menuliskannya berurutan";
 "Keep Editing" = "Lanjut mengetik";
 "Keep it offline" = "Simpan secara luring";
+"Keep the animated code in view · %lld parts" = "Jaga kode animasi tetap dalam bingkai · %lld bagian";
 "Keep the three cards in three different places. One card alone does not hold the full phrase, but it shows two thirds of the words; with a 12- or 15-word phrase the rest can be guessed with enough computing power, so hide every card." = "Simpan ketiga kartu di tiga tempat berbeda. Satu kartu saja tidak memuat seluruh frasa, tetapi menampilkan dua pertiga kata; pada frasa 12 atau 15 kata, sisanya bisa ditebak dengan daya komputasi yang cukup, jadi sembunyikan setiap kartu.";
 "Keep these three cards in three different places. Any two of them restore the complete recovery phrase, so if one card is lost or stolen, the other two keep your wallet safe and recoverable." = "Simpan ketiga kartu ini di tiga tempat berbeda. Dua kartu mana pun memulihkan frasa pemulihan lengkap, jadi jika satu kartu hilang atau dicuri, dua kartu lainnya menjaga dompet Anda tetap aman dan bisa dipulihkan.";
 "Keep these three cards in three different places. Any two of them restore the complete recovery phrase, so if one card is lost, the other two can still restore your wallet." = "Simpan ketiga kartu ini di tiga tempat berbeda. Dua kartu mana pun memulihkan frasa pemulihan lengkap, jadi jika satu kartu hilang, dua kartu lainnya masih bisa memulihkan dompet Anda.";
@@ -352,6 +355,7 @@
 "Method" = "Metode";
 "Mint" = "Mint";
 "Missing or invalid transaction commitment." = "Komitmen transaksi tidak ada atau tidak valid.";
+"Missing signer information" = "Informasi penanda tangan tidak ada";
 "More than one saved wallet matches. Delete the duplicate wallet, then scan again." = "Lebih dari satu dompet tersimpan yang cocok. Hapus dompet gandanya, lalu pindai lagi.";
 "Multisig" = "Multitanda tangan";
 "Multisig account" = "Akun multitanda tangan";
@@ -388,6 +392,7 @@
 "No camera is available. Import the request as a file instead." = "Tidak ada kamera yang tersedia. Impor permintaan sebagai berkas saja.";
 "No interrupted or unmatched request to retry." = "Tidak ada permintaan yang terputus atau belum cocok untuk dicoba lagi.";
 "No matching signing task. Review the request again." = "Tidak ada tugas penandatanganan yang cocok. Tinjau permintaannya lagi.";
+"No matching wallet" = "Tidak ada dompet yang cocok";
 "No matching word" = "Tidak ada kata yang cocok";
 "Nonce" = "Nonce";
 "Nonce account" = "Akun nonce";
@@ -462,6 +467,7 @@
 "Quantity" = "Kuantitas";
 "Raw amount" = "Jumlah mentah";
 "Read every warning above before signing." = "Baca semua peringatan di atas sebelum menandatangani.";
+"Reading request…" = "Membaca permintaan…";
 "Reading…" = "Membaca…";
 "Rebuild it yourself" = "Bangun ulang sendiri";
 "Receive Addresses" = "Alamat penerimaan";
@@ -747,6 +753,7 @@
 "Wallet information changed. Match this request again." = "Informasi dompet berubah. Cocokkan permintaan ini lagi.";
 "Wallet name" = "Nama dompet";
 "Wallet password" = "Kata sandi dompet";
+"Wallet setup required" = "Dompet perlu disiapkan dulu";
 "Wallet setup required." = "Dompet perlu disiapkan.";
 "Wallets" = "Dompet";
 "Wallets Unavailable" = "Dompet tidak tersedia";
@@ -754,6 +761,7 @@
 "Watch only" = "Pantau saja";
 "Which language is your backup in?" = "Cadangan Anda dalam bahasa apa?";
 "Which of these the wallet reads: Wallet Level, and Coin Level for Bitcoin, EVM, TRON or Solana." = "Yang mana yang bisa dibaca dompet: level dompet, dan level koin untuk Bitcoin, EVM, TRON, atau Solana.";
+"With a %lld-word phrase each card shows %lld of the %lld words, and the other %lld could be worked out with enough computing power. Guard every card as carefully as the full phrase, or use a 24-word phrase for split backups." = "Pada frasa %1$lld kata, tiap kartu menampilkan %2$lld dari %3$lld kata, dan %4$lld sisanya bisa dihitung dengan daya komputasi yang cukup. Jaga setiap kartu secermat frasa lengkapnya, atau pakai frasa 24 kata untuk cadangan terbagi.";
 "Word %lld" = "Kata %lld";
 "Word %lld, %@" = "Kata %1$lld, %2$@";
 "Word %lld, hidden" = "Kata %lld, tersembunyi";

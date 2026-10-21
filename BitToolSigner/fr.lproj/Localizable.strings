@@ -60,6 +60,7 @@
 "Allowance / NFT token ID" = "Autorisation de dépense / ID de jeton NFT";
 "Also paid out" = "Également versé";
 "Always compare the first addresses in both apps before receiving funds." = "Comparez toujours les premières adresses dans les deux apps avant de recevoir des fonds.";
+"Ambiguous wallet match" = "Plusieurs portefeuilles correspondent";
 "Amount" = "Montant";
 "Amount (SOL)" = "Montant (SOL)";
 "Amount (TRX)" = "Montant (TRX)";
@@ -305,12 +306,14 @@
 "Invalid recovery phrase: it has 1 word. Recovery phrases have 12, 15, 18, 21 or 24 words." = "Phrase de récupération invalide : elle ne compte qu’un mot. Une phrase de récupération compte 12, 15, 18, 21 ou 24 mots.";
 "Invalid request format." = "Format de demande invalide.";
 "Invalid signing plan." = "Plan de signature invalide.";
+"Invalid signing request" = "Demande de signature invalide";
 "Invalid signing wallet identity." = "Identité du portefeuille signataire invalide.";
 "It contains the %lld words only. Your BIP39 passphrase is not included; restoring this wallet also needs the passphrase." = "Il ne contient que les %lld mots. Votre phrase secrète BIP39 n’y figure pas ; restaurer ce portefeuille exige aussi la phrase secrète.";
 "Items" = "Articles";
 "I’ve Written Them Down in Order" = "Je les ai notés dans l’ordre";
 "Keep Editing" = "Continuer la saisie";
 "Keep it offline" = "Gardez-la hors ligne";
+"Keep the animated code in view · %lld parts" = "Gardez le code animé dans le cadre · %lld parties";
 "Keep the three cards in three different places. One card alone does not hold the full phrase, but it shows two thirds of the words; with a 12- or 15-word phrase the rest can be guessed with enough computing power, so hide every card." = "Conservez les trois cartes en trois endroits différents. Une carte seule ne contient pas la phrase entière, mais elle en révèle les deux tiers ; avec une phrase de 12 ou 15 mots, le reste peut être deviné avec assez de puissance de calcul : cachez donc chaque carte.";
 "Keep these three cards in three different places. Any two of them restore the complete recovery phrase, so if one card is lost or stolen, the other two keep your wallet safe and recoverable." = "Conservez ces trois cartes en trois endroits différents. Deux d’entre elles, quelles qu’elles soient, restaurent la phrase de récupération complète : si une carte est perdue ou volée, les deux autres gardent votre portefeuille sûr et récupérable.";
 "Keep these three cards in three different places. Any two of them restore the complete recovery phrase, so if one card is lost, the other two can still restore your wallet." = "Conservez ces trois cartes en trois endroits différents. Deux d’entre elles, quelles qu’elles soient, restaurent la phrase de récupération complète : si une carte est perdue, les deux autres suffisent encore à restaurer votre portefeuille.";
@@ -352,6 +355,7 @@
 "Method" = "Méthode";
 "Mint" = "Mint";
 "Missing or invalid transaction commitment." = "Engagement de transaction manquant ou invalide.";
+"Missing signer information" = "Informations sur le signataire manquantes";
 "More than one saved wallet matches. Delete the duplicate wallet, then scan again." = "Plusieurs portefeuilles enregistrés correspondent. Supprimez le portefeuille en double, puis scannez à nouveau.";
 "Multisig" = "Multisignature";
 "Multisig account" = "Compte multisignature";
@@ -388,6 +392,7 @@
 "No camera is available. Import the request as a file instead." = "Aucun appareil photo disponible. Importez plutôt la demande sous forme de fichier.";
 "No interrupted or unmatched request to retry." = "Aucune demande interrompue ou non associée à réessayer.";
 "No matching signing task. Review the request again." = "Aucune tâche de signature correspondante. Réexaminez la demande.";
+"No matching wallet" = "Aucun portefeuille correspondant";
 "No matching word" = "Aucun mot correspondant";
 "Nonce" = "Nonce";
 "Nonce account" = "Compte nonce";
@@ -462,6 +467,7 @@
 "Quantity" = "Quantité";
 "Raw amount" = "Montant brut";
 "Read every warning above before signing." = "Lisez tous les avertissements ci-dessus avant de signer.";
+"Reading request…" = "Lecture de la demande…";
 "Reading…" = "Lecture…";
 "Rebuild it yourself" = "Reconstruisez-le vous-même";
 "Receive Addresses" = "Adresses de réception";
@@ -747,6 +753,7 @@
 "Wallet information changed. Match this request again." = "Les informations du portefeuille ont changé. Réassociez cette demande.";
 "Wallet name" = "Nom du portefeuille";
 "Wallet password" = "Mot de passe du portefeuille";
+"Wallet setup required" = "Configuration du portefeuille requise";
 "Wallet setup required." = "Configuration du portefeuille requise.";
 "Wallets" = "Portefeuilles";
 "Wallets Unavailable" = "Portefeuilles indisponibles";
@@ -754,6 +761,7 @@
 "Watch only" = "Lecture seule";
 "Which language is your backup in?" = "Dans quelle langue est votre sauvegarde ?";
 "Which of these the wallet reads: Wallet Level, and Coin Level for Bitcoin, EVM, TRON or Solana." = "Lesquels de ces formats le portefeuille lit : niveau portefeuille, et niveau pièce pour Bitcoin, EVM, TRON ou Solana.";
+"With a %lld-word phrase each card shows %lld of the %lld words, and the other %lld could be worked out with enough computing power. Guard every card as carefully as the full phrase, or use a 24-word phrase for split backups." = "Avec une phrase de %1$lld mots, chaque carte affiche %2$lld des %3$lld mots, et les %4$lld autres peuvent être retrouvés avec assez de puissance de calcul. Gardez chaque carte aussi précieusement que la phrase complète, ou utilisez une phrase de 24 mots pour les sauvegardes réparties.";
 "Word %lld" = "Mot %lld";
 "Word %lld, %@" = "Mot %1$lld, %2$@";
 "Word %lld, hidden" = "Mot %lld, masqué";

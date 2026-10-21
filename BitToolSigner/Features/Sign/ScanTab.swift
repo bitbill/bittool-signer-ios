@@ -17,9 +17,12 @@ final class ScanSession: ObservableObject {
     private var ready = false
     private var onComplete: (@MainActor () -> Void)?
 
+    /// Drawn verbatim, so it is localized here rather than by the view.
     var status: String? {
-        if processing && received == 1 { return "Reading request…" }
-        if received > 1 && progress < 1 { return "Keep the animated code in view · \(received) parts" }
+        if processing && received == 1 { return String(localized: "Reading request…", bundle: AppText.bundle) }
+        if received > 1 && progress < 1 {
+            return String(localized: "Keep the animated code in view · \(received) parts", bundle: AppText.bundle)
+        }
         return nil
     }
 

@@ -60,6 +60,7 @@
 "Allowance / NFT token ID" = "授權額度／NFT Token ID";
 "Also paid out" = "其他人收到";
 "Always compare the first addresses in both apps before receiving funds." = "收款前，請務必在兩個 App 中核對第一個地址。";
+"Ambiguous wallet match" = "比對到多個錢包";
 "Amount" = "金額";
 "Amount (SOL)" = "金額（SOL）";
 "Amount (TRX)" = "金額（TRX）";
@@ -305,12 +306,14 @@
 "Invalid recovery phrase: it has 1 word. Recovery phrases have 12, 15, 18, 21 or 24 words." = "助記詞無效：只有 1 個字。助記詞應為 12、15、18、21 或 24 個字。";
 "Invalid request format." = "請求格式無效。";
 "Invalid signing plan." = "簽名計畫無效。";
+"Invalid signing request" = "簽名請求無效";
 "Invalid signing wallet identity." = "簽名錢包的身分無效。";
 "It contains the %lld words only. Your BIP39 passphrase is not included; restoring this wallet also needs the passphrase." = "其中只包含這 %lld 個單詞，不含 BIP39 passphrase；恢復這個錢包還需要該 passphrase。";
 "Items" = "項目";
 "I’ve Written Them Down in Order" = "我已按順序抄寫完畢";
 "Keep Editing" = "繼續編輯";
 "Keep it offline" = "不要讓它連網";
+"Keep the animated code in view · %lld parts" = "保持動態二維碼在取景框內 · 已讀取 %lld 段";
 "Keep the three cards in three different places. One card alone does not hold the full phrase, but it shows two thirds of the words; with a 12- or 15-word phrase the rest can be guessed with enough computing power, so hide every card." = "把三張卡片分別放在三個不同的地方。單張卡片不含完整助記詞，但會露出三分之二的字；對 12 或 15 字的助記詞來說，剩下的部分在足夠算力下可以被猜出來，所以每一張都要藏好。";
 "Keep these three cards in three different places. Any two of them restore the complete recovery phrase, so if one card is lost or stolen, the other two keep your wallet safe and recoverable." = "把這三張卡片分別放在三個不同的地方。任兩張即可還原完整助記詞，因此即使遺失或被竊一張，另外兩張仍能讓錢包安全且可恢復。";
 "Keep these three cards in three different places. Any two of them restore the complete recovery phrase, so if one card is lost, the other two can still restore your wallet." = "把這三張卡片分別放在三個不同的地方。任兩張即可還原完整助記詞，因此即使遺失一張，另外兩張仍能恢復你的錢包。";
@@ -352,6 +355,7 @@
 "Method" = "方法";
 "Mint" = "代幣鑄造地址";
 "Missing or invalid transaction commitment." = "缺少交易承諾，或承諾無效。";
+"Missing signer information" = "缺少簽名方資訊";
 "More than one saved wallet matches. Delete the duplicate wallet, then scan again." = "有多個已儲存的錢包都能比對到。請刪除重複的錢包後重新掃描。";
 "Multisig" = "多簽";
 "Multisig account" = "多重簽名帳戶";
@@ -388,6 +392,7 @@
 "No camera is available. Import the request as a file instead." = "沒有可用的相機。請改用檔案匯入請求。";
 "No interrupted or unmatched request to retry." = "沒有可重試的中斷或未比對請求。";
 "No matching signing task. Review the request again." = "沒有相符的簽名任務。請重新審核該請求。";
+"No matching wallet" = "沒有相符的錢包";
 "No matching word" = "沒有符合的單詞";
 "Nonce" = "Nonce";
 "Nonce account" = "Nonce 帳戶";
@@ -462,6 +467,7 @@
 "Quantity" = "數量";
 "Raw amount" = "原始金額";
 "Read every warning above before signing." = "簽名前請先讀完上面每一條警告。";
+"Reading request…" = "正在讀取請求…";
 "Reading…" = "讀取中…";
 "Rebuild it yourself" = "自行重新建置";
 "Receive Addresses" = "收款地址";
@@ -747,6 +753,7 @@
 "Wallet information changed. Match this request again." = "錢包資訊已變化。請重新比對這個請求。";
 "Wallet name" = "錢包名稱";
 "Wallet password" = "錢包密碼";
+"Wallet setup required" = "錢包需要先完成設定";
 "Wallet setup required." = "該錢包需要先完成設定。";
 "Wallets" = "錢包";
 "Wallets Unavailable" = "錢包無法使用";
@@ -754,6 +761,7 @@
 "Watch only" = "僅觀察";
 "Which language is your backup in?" = "你的備份使用哪種語言？";
 "Which of these the wallet reads: Wallet Level, and Coin Level for Bitcoin, EVM, TRON or Solana." = "該錢包能讀取其中哪些：錢包級，以及 Bitcoin、EVM、TRON 或 Solana 的幣種級。";
+"With a %lld-word phrase each card shows %lld of the %lld words, and the other %lld could be worked out with enough computing power. Guard every card as carefully as the full phrase, or use a 24-word phrase for split backups." = "%1$lld 詞的助記詞，每張卡片會顯示 %3$lld 個詞中的 %2$lld 個，剩下的 %4$lld 個有足夠算力就能推算出來。請像保管完整助記詞一樣保管每一張卡片，或改用 24 詞助記詞來做分卡備份。";
 "Word %lld" = "第 %lld 個單詞";
 "Word %lld, %@" = "第 %lld 個單詞，%@";
 "Word %lld, hidden" = "第 %lld 個單詞，已隱藏";

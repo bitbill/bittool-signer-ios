@@ -60,6 +60,7 @@
 "Allowance / NFT token ID" = "Разрешённая сумма / ID токена NFT";
 "Also paid out" = "Также выплачивается";
 "Always compare the first addresses in both apps before receiving funds." = "Перед получением средств всегда сверяйте первые адреса в обоих приложениях.";
+"Ambiguous wallet match" = "Совпало несколько кошельков";
 "Amount" = "Сумма";
 "Amount (SOL)" = "Сумма (SOL)";
 "Amount (TRX)" = "Сумма (TRX)";
@@ -305,12 +306,14 @@
 "Invalid recovery phrase: it has 1 word. Recovery phrases have 12, 15, 18, 21 or 24 words." = "Некорректная фраза восстановления: в ней всего одно слово. Фраза восстановления состоит из 12, 15, 18, 21 или 24 слов.";
 "Invalid request format." = "Некорректный формат запроса.";
 "Invalid signing plan." = "Некорректный план подписи.";
+"Invalid signing request" = "Неверный запрос на подпись";
 "Invalid signing wallet identity." = "Некорректный идентификатор подписывающего кошелька.";
 "It contains the %lld words only. Your BIP39 passphrase is not included; restoring this wallet also needs the passphrase." = "Здесь только %lld слов. Парольная фраза BIP39 не включена; для восстановления этого кошелька она тоже нужна.";
 "Items" = "Позиции";
 "I’ve Written Them Down in Order" = "Я записал их по порядку";
 "Keep Editing" = "Продолжить ввод";
 "Keep it offline" = "Держите офлайн";
+"Keep the animated code in view · %lld parts" = "Держите анимированный код в кадре · получено частей: %lld";
 "Keep the three cards in three different places. One card alone does not hold the full phrase, but it shows two thirds of the words; with a 12- or 15-word phrase the rest can be guessed with enough computing power, so hide every card." = "Храните три карточки в трёх разных местах. Одна карточка не содержит всю фразу, но показывает две трети слов; для фразы из 12 или 15 слов остальное можно подобрать при достаточных вычислительных мощностях, поэтому прячьте каждую карточку.";
 "Keep these three cards in three different places. Any two of them restore the complete recovery phrase, so if one card is lost or stolen, the other two keep your wallet safe and recoverable." = "Храните эти три карточки в трёх разных местах. Любые две восстанавливают полную фразу, поэтому если одна потеряется или будет украдена, оставшиеся две сохранят кошелёк доступным для восстановления.";
 "Keep these three cards in three different places. Any two of them restore the complete recovery phrase, so if one card is lost, the other two can still restore your wallet." = "Храните эти три карточки в трёх разных местах. Любые две восстанавливают полную фразу, поэтому если одна потеряется, оставшиеся две всё равно восстановят кошелёк.";
@@ -352,6 +355,7 @@
 "Method" = "Метод";
 "Mint" = "Минт";
 "Missing or invalid transaction commitment." = "Обязательство транзакции отсутствует или некорректно.";
+"Missing signer information" = "Нет сведений о подписывающем";
 "More than one saved wallet matches. Delete the duplicate wallet, then scan again." = "Подходит несколько сохранённых кошельков. Удалите дубликат и отсканируйте снова.";
 "Multisig" = "Мультиподпись";
 "Multisig account" = "Мультиподписной счёт";
@@ -388,6 +392,7 @@
 "No camera is available. Import the request as a file instead." = "Камера недоступна. Загрузите запрос файлом.";
 "No interrupted or unmatched request to retry." = "Нет прерванного или несопоставленного запроса для повтора.";
 "No matching signing task. Review the request again." = "Подходящей задачи подписи нет. Проверьте запрос ещё раз.";
+"No matching wallet" = "Нет подходящего кошелька";
 "No matching word" = "Нет подходящего слова";
 "Nonce" = "Nonce";
 "Nonce account" = "Счёт nonce";
@@ -462,6 +467,7 @@
 "Quantity" = "Количество";
 "Raw amount" = "Сырая сумма";
 "Read every warning above before signing." = "Прочитайте все предупреждения выше, прежде чем подписывать.";
+"Reading request…" = "Чтение запроса…";
 "Reading…" = "Чтение…";
 "Rebuild it yourself" = "Соберите сами";
 "Receive Addresses" = "Адреса для получения";
@@ -747,6 +753,7 @@
 "Wallet information changed. Match this request again." = "Данные кошелька изменились. Сопоставьте этот запрос снова.";
 "Wallet name" = "Название кошелька";
 "Wallet password" = "Пароль кошелька";
+"Wallet setup required" = "Требуется настройка кошелька";
 "Wallet setup required." = "Этот кошелёк нужно донастроить.";
 "Wallets" = "Кошельки";
 "Wallets Unavailable" = "Кошельки недоступны";
@@ -754,6 +761,7 @@
 "Watch only" = "Только наблюдение";
 "Which language is your backup in?" = "На каком языке записана ваша копия?";
 "Which of these the wallet reads: Wallet Level, and Coin Level for Bitcoin, EVM, TRON or Solana." = "Что из этого читает кошелёк: уровень кошелька и уровень монеты для Bitcoin, EVM, TRON или Solana.";
+"With a %lld-word phrase each card shows %lld of the %lld words, and the other %lld could be worked out with enough computing power. Guard every card as carefully as the full phrase, or use a 24-word phrase for split backups." = "При фразе из %1$lld слов каждая карточка показывает %2$lld из %3$lld слов, а остальные %4$lld можно вычислить при достаточных вычислительных мощностях. Храните каждую карточку так же тщательно, как полную фразу, либо используйте фразу из 24 слов для раздельной резервной копии.";
 "Word %lld" = "Слово %lld";
 "Word %lld, %@" = "Слово %lld, %@";
 "Word %lld, hidden" = "Слово %lld, скрыто";
