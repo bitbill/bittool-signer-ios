@@ -730,6 +730,7 @@
 "Unlimited permit" = "Permit illimité";
 "Unlock" = "Déverrouiller";
 "Unlock to view your wallets and activity." = "Déverrouillez pour voir vos portefeuilles et votre historique.";
+"Unlock with %@" = "Déverrouiller avec %@";
 "Unlocking the app never authorizes a signature." = "Déverrouiller l’app n’autorise jamais une signature.";
 "Update account permissions" = "Mettre à jour les permissions du compte";
 "Use %@ Instead" = "Utiliser %@ à la place";

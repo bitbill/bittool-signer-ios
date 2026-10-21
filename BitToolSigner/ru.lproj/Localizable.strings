@@ -730,6 +730,7 @@
 "Unlimited permit" = "Неограниченный Permit";
 "Unlock" = "Разблокировать";
 "Unlock to view your wallets and activity." = "Разблокируйте, чтобы увидеть кошельки и историю.";
+"Unlock with %@" = "Разблокировать с помощью %@";
 "Unlocking the app never authorizes a signature." = "Разблокировка приложения никогда не подтверждает подпись.";
 "Update account permissions" = "Обновить разрешения счёта";
 "Use %@ Instead" = "Использовать %@";

@@ -730,6 +730,7 @@
 "Unlimited permit" = "Permit ilimitado";
 "Unlock" = "Desbloquear";
 "Unlock to view your wallets and activity." = "Desbloquea para ver tus billeteras y tu actividad.";
+"Unlock with %@" = "Desbloquear con %@";
 "Unlocking the app never authorizes a signature." = "Desbloquear la app nunca autoriza una firma.";
 "Update account permissions" = "Actualizar los permisos de la cuenta";
 "Use %@ Instead" = "Usar %@ en su lugar";

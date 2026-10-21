@@ -730,6 +730,7 @@
 "Unlimited permit" = "无限额 Permit";
 "Unlock" = "解锁";
 "Unlock to view your wallets and activity." = "解锁后查看钱包与活动记录。";
+"Unlock with %@" = "用 %@ 解锁";
 "Unlocking the app never authorizes a signature." = "解锁 App 本身从不授权任何签名。";
 "Update account permissions" = "更新账户权限";
 "Use %@ Instead" = "改用 %@";

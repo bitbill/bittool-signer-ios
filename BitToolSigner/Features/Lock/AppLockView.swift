@@ -47,7 +47,7 @@ struct AppLockView: View {
     private var biometricActions: some View {
         VStack(spacing: 12) {
             Button { authenticateBiometrics() } label: {
-                ActionLabel(verbatim: "Unlock with \(access.biometry.name)", systemImage: access.biometry.symbol, busy: access.isAuthenticating)
+                ActionLabel("Unlock with \(access.biometry.name)", systemImage: access.biometry.symbol, busy: access.isAuthenticating)
             }
             .prominentAction()
             .disabled(access.isAuthenticating)

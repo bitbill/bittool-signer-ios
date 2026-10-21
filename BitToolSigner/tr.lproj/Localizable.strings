@@ -730,6 +730,7 @@
 "Unlimited permit" = "Sınırsız Permit";
 "Unlock" = "Kilidi aç";
 "Unlock to view your wallets and activity." = "Cüzdanlarınızı ve etkinliğinizi görmek için kilidi açın.";
+"Unlock with %@" = "%@ ile kilidi aç";
 "Unlocking the app never authorizes a signature." = "Uygulamanın kilidini açmak hiçbir zaman bir imzayı yetkilendirmez.";
 "Update account permissions" = "Hesap izinlerini güncelle";
 "Use %@ Instead" = "Bunun yerine %@ kullan";

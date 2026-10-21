@@ -730,6 +730,7 @@
 "Unlimited permit" = "Permit แบบไม่จำกัด";
 "Unlock" = "ปลดล็อก";
 "Unlock to view your wallets and activity." = "ปลดล็อกเพื่อดูกระเป๋าและกิจกรรมของคุณ";
+"Unlock with %@" = "ปลดล็อกด้วย %@";
 "Unlocking the app never authorizes a signature." = "การปลดล็อกแอปไม่เคยเป็นการอนุมัติลายเซ็น";
 "Update account permissions" = "อัปเดตสิทธิ์ของบัญชี";
 "Use %@ Instead" = "ใช้ %@ แทน";
