@@ -52,7 +52,7 @@ The payload carries **seven accounts**: account-level xpubs for four Bitcoin scr
 
 `mode` is `full`, as the draft defines it, and does not appear in the interface as a Simple/Full choice. The format follows the draft the user supplied: `ur:bytes` carrying canonical CBOR (RFC 8949 §4.2.1), with field names identical to the JSON keys. A `masterFingerprint` field is added — v1 parsers ignore unknown fields — so a watch-only wallet can put the correct fingerprint in PSBTs and signing requests. The exact encoding, test vectors and security notes are in [docs/Wallet-Pairing-v1.md](Wallet-Pairing-v1.md).
 
-The wallet supported by default is **BitTool Wallet** (BITTOOL PTE. LTD., iOS, [App Store 6761503126](https://apps.apple.com/app/id6761503126), linked from bittool.com; listed at the user's direction). Sparrow, MetaMask and the rest continue to use the chain-specific Coin Level formats.
+The wallet supported by default is **BitTool Wallet** (BITTOOL PTE. LTD., iOS and Android; [App Store 6761503126](https://apps.apple.com/app/id6761503126), linked from bittool.com; listed at the publisher’s direction). Sparrow, MetaMask and the rest continue to use the chain-specific Coin Level formats.
 
 > **Receivers must be updated for this shape.** The `accounts` array went from 4 entries to 7, entries must be read by their `chain` and `script` or `profile` fields rather than by index, Solana entries carry a `profile` field, and all frames must be collected before decoding.
 

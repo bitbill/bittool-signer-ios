@@ -129,7 +129,7 @@ enum CompatibleWallets {
     // Wallet level: one `bittool-signer-wallet` v1 QR for all four chains (docs/Wallet-Pairing-v1.md).
     // BitTool Wallet (BITTOOL PTE. LTD.) is the wallet this format is designed with.
     static let walletLevel = [
-        signing("BitTool Wallet", "wallet_bittool", "iOS"),
+        signing("BitTool Wallet", "wallet_bittool", "iOS · Android"),
     ]
 
     /// Wallets for one export on the Connect page.
