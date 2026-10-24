@@ -400,12 +400,21 @@ test('SOL-NFT-6: Token Metadata Lock, Unlock, Burn and BurnNft use their own acc
   assert.deepEqual([unlockToken.display.action, unlockToken.display.assetKind], ['Unlock Metaplex token', 'nftOrToken']);
   assert.equal(review([{ program: TM, accounts: lockAccounts.map((a, i) => i === 4 ? k(0x93) : a), data: new Uint8Array([46, 0, 0]) }], { signers: [ME, freeze] }).decodeStatus, 'opaque', 'metadata not for this mint');
   const burnAccounts = [ME, TM, tmPda(mint), tmPda(mint, utf8('edition')), mint, token, TM, TM, TM, TM, TM, SYSTEM, SYSVAR_IX, TOKEN];
+  // A burn is a destructive movement, so the shared burn display owns the action
+  // ('Burn', as for SPL and Bitcoin) and the headline names what is destroyed.
+  // The instruction's own wording stays in Details.
   const burn = review([{ program: TM, accounts: burnAccounts, data: bytes([41, 0], u64(1)) }]);
-  assert.equal(burn.display.action, 'Burn NFT (irreversible)'); assert.equal(fieldValue(burn, 'Raw amount'), '1'); assert.ok(hasWarning(burn, 'This cannot be undone'));
+  assert.equal(burn.display.action, 'Burn'); assert.equal(burn.display.headline, 'Destroys 1 NFT');
+  assert.equal(fieldValue(burn, 'Action'), 'Burn NFT (irreversible)');
+  assert.equal(fieldValue(burn, 'Raw amount'), '1'); assert.ok(hasWarning(burn, 'This cannot be undone'));
   const burnToken = review([{ program: TM, accounts: burnAccounts.map((a, i) => i === 3 ? TM : a), data: bytes([41, 0], u64(10)) }]);
-  assert.deepEqual([burnToken.display.action, burnToken.display.assetKind], ['Burn Metaplex token (irreversible)', 'nftOrToken']);
+  assert.deepEqual([burnToken.display.action, burnToken.display.assetKind], ['Burn', 'nftOrToken']);
+  // Metaplex carries no decimals, so a non-NFT burn stays in raw units.
+  assert.equal(burnToken.display.headline, 'Destroys 10 raw units');
+  assert.equal(fieldValue(burnToken, 'Action'), 'Burn Metaplex token (irreversible)');
   const burnNft = review([{ program: TM, accounts: [tmPda(mint), ME, mint, token, tmPda(mint, utf8('edition')), TOKEN], data: new Uint8Array([29]) }]);
-  assert.deepEqual([burnNft.display.action, burnNft.riskLevel, burnNft.display.assetKind], ['Burn NFT (irreversible)', 'high', 'nft']);
+  assert.deepEqual([burnNft.display.action, burnNft.riskLevel, burnNft.display.assetKind], ['Burn', 'high', 'nft']);
+  assert.equal(burnNft.display.headline, 'Destroys 1 NFT');
   assert.equal(review([{ program: TM, accounts: [tmPda(mint), ME, mint, token, k(0x94), TOKEN], data: new Uint8Array([29]) }]).decodeStatus, 'opaque', 'BurnNft with a wrong master edition');
 });
 

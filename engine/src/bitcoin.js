@@ -56,6 +56,26 @@ function signatureDigest(parsed,index,sighash,leaf) {
  * of the headline: a burn is the one outcome that cannot be undone, and it must
  * not be able to read as a consolidation. Every satoshi is accounted for as
  * payment, change, burn or fee. */
+/** The one-line summary, from the same accounting the card uses.
+ *
+ * It separates what is paid out, what is destroyed in an unspendable output and
+ * what comes back as verified change. A burn must never be absorbed into "sent"
+ * or allowed to read as a consolidation: the summary outlives the review as the
+ * history and signature-receipt text, where it is often all that is kept.
+ * `change` is empty until the resolver has verified change from the wallet's own
+ * keys, so before then nothing is assumed to return.
+ */
+export function bitcoinSummary(outputs,change=new Set()) {
+  let burned=0n,payment=0n;
+  for(const output of outputs){
+    if(output.data)burned+=output.amount;
+    else if(!change.has(output.index))payment+=output.amount;
+  }
+  const destroys=`Burn ${decimal(burned,8)} BTC`;
+  if(burned>0n)return payment>0n?`${destroys} and send ${decimal(payment,8)} BTC`:destroys;
+  if(payment>0n)return `Send ${decimal(payment,8)} BTC`;
+  return 'Every output returns to your wallet';
+}
 export function bitcoinDisplay(outputs,fee,change=new Set()) {
   const burned=outputs.filter(o=>o.data).reduce((n,o)=>n+o.amount,0n);
   const payments=outputs.filter(o=>!o.data&&!change.has(o.index));
@@ -158,7 +178,7 @@ export function parseBitcoin(request) {
   const highFee=highFeeWarning(fee,outputTotal);
   if(highFee)warnings.push(highFee);
   parsed.fee=fee;
-  parsed.review=reviewResult(request,'Sign Bitcoin transaction',`Send ${decimal(outputTotal,8)} BTC`,fields,warnings,{riskLevel:warnings.some(w=>w.startsWith('HIGH'))?'high':'warning',network:{name:'Bitcoin',symbol:'BTC'},display:bitcoinDisplay(parsed.outputs,fee)});
+  parsed.review=reviewResult(request,'Sign Bitcoin transaction',bitcoinSummary(parsed.outputs),fields,warnings,{riskLevel:warnings.some(w=>w.startsWith('HIGH'))?'high':'warning',network:{name:'Bitcoin',symbol:'BTC'},display:bitcoinDisplay(parsed.outputs,fee)});
   return parsed;
 }
 /** Developer summary of PSBT bytes for the response payload view. Field names are

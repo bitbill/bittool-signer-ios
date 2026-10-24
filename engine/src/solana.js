@@ -152,6 +152,13 @@ function tmBurn(a,data){
   const nft=edition===tmPda(mint,utf8('edition')),o=nftResult();
   o.add('Action',nft?'Burn NFT (irreversible)':'Burn Metaplex token (irreversible)','Mint',mint,'Token account',token,'Raw amount',new Reader(data.slice(2)).u64(),'Authority (owner or delegate)',authority,'Edition account',notSupplied(edition,TM),'Collection metadata',notSupplied(collectionMetadata,TM));
   o.high('HIGH RISK: Burning permanently destroys this asset. This cannot be undone.');o.high(NAME_ONLY);o.partial();
+  // Destruction is an economic effect, not just a field: without this the
+  // headline aggregator cannot see the burn and a dust transfer beside it
+  // becomes the whole summary. Metaplex carries no decimals, so a non-NFT
+  // amount stays in raw units rather than being given invented ones.
+  const burned=new Reader(data.slice(2)).u64();
+  if(nft||burned>0n)o.movements.push({amount:nft?'1':String(burned),symbol:nft?'NFT':burned===1n?'raw unit':'raw units',
+    to:mint,label:'Mint',destroys:true,raw:nft?1n:burned,scale:0});
   o.extra.display={assetKind:nft?'nft':'nftOrToken',assetContract:mint,assetContractLabel:'Mint'};
   return o;
 }
@@ -163,6 +170,7 @@ function tmBurnNft(a,data){
   const o=nftResult();
   o.add('Action','Burn NFT (irreversible)','Mint',mint,'Owner',owner,'Token account',token,'Master edition',masterEdition);if(collectionMetadata)o.add('Collection metadata',collectionMetadata);
   o.high('HIGH RISK: Burning permanently destroys this asset. This cannot be undone.');o.high(NAME_ONLY);o.partial();
+  o.movements.push({amount:'1',symbol:'NFT',to:mint,label:'Mint',destroys:true,raw:1n,scale:0});
   o.extra.display={assetKind:'nft',assetContract:mint,assetContractLabel:'Mint'};
   return o;
 }

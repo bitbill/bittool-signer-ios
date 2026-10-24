@@ -2,7 +2,7 @@ import { base58, base58check } from '@scure/base';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { getAddress } from 'ethers/address';
 import { RawPSBTV0, RawPSBTV2 } from '@scure/btc-signer/psbt.js';
-import { parseBitcoin, signBitcoin, bitcoinKeyMatchesInput, bitcoinDisplay, highFeeWarning } from './bitcoin.js';
+import { parseBitcoin, signBitcoin, bitcoinKeyMatchesInput, bitcoinDisplay, bitcoinSummary, highFeeWarning } from './bitcoin.js';
 import { p2wpkh, p2pkh, p2sh, p2tr } from '@scure/btc-signer';
 import { parseEVM, signEVM } from './evm.js';
 import { parseSolana, signSolana } from './solana.js';
@@ -155,11 +155,8 @@ function withVerifiedChange(parsed,found){
   const highFee=highFeeWarning(parsed.fee,payment);
   if(highFee&&!warnings.includes(highFee))warnings.push(highFee);
   const riskLevel=warnings.some(w=>w.startsWith('HIGH'))?'high':parsed.review.riskLevel;
-  // The summary outlives the review: it is what the history and the signature
-  // receipt show. Change is not money sent, so it is not in the figure either,
-  // which is the same amount the card itself shows.
-  const sent=parsed.outputs.reduce((total,output)=>output.data||change.has(output.index)?total:total+output.amount,0n);
-  const summary=sent>0n?`Send ${decimal(sent,8)} BTC`:'Every output returns to your wallet';
+  // Recomputed from the same accounting as the card now that change is known.
+  const summary=bitcoinSummary(parsed.outputs,new Set(change.keys()));
   return {...parsed.review,fields,warnings,riskLevel,summary,display:bitcoinDisplay(parsed.outputs,parsed.fee,new Set(change.keys()))};
 }
 function digestOf(parsed,request){return parsed.signingBytesDigest||(typeof parsed.digest==='string'?parsed.digest.replace(/^0x/,''):parsed.digest?bytesToHex(parsed.digest):parsed.bytes?bytesToHex(sha256(parsed.bytes)):requestHash(request));}

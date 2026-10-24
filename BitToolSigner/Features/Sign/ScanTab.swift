@@ -53,10 +53,16 @@ final class ScanSession: ObservableObject {
     }
 
     func receive(_ frame: String, store: AppStore, completed: @escaping @MainActor () -> Void) {
-        guard error == nil, store.review == nil, seen.insert(frame).inserted else { return }
+        guard error == nil, store.review == nil else { return }
         onComplete = completed
-        received += 1
-        queue.append(frame)
+        // A frame is counted and queued once. Draining, though, is attempted on
+        // every delivery: a static request is one frame, so after an interrupted
+        // decode puts it back on the queue, its own repeats are the only thing
+        // left that can resume it.
+        if seen.insert(frame).inserted {
+            received += 1
+            queue.append(frame)
+        }
         drain(store: store, completed: completed)
     }
 
@@ -72,7 +78,9 @@ final class ScanSession: ObservableObject {
             guard token == id else { return }
             processing = false
             guard epoch == store.securityEpoch else {
-                // Interrupted by backgrounding: retry this part with the next frame.
+                // Interrupted by backgrounding: requeue this part. `receive`
+                // drains on every delivery, including an already-seen frame, so
+                // a static request still resumes from its own repeats.
                 queue.insert(frame, at: 0); return
             }
             switch outcome {
