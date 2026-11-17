@@ -6,6 +6,9 @@ struct PublicWalletSnapshot: Sendable {
     let displayName: String?
     let metadata: WalletPublicMetadata?
     let status: PublicMetadataStatus
+    /// Absent for a wallet saved before version 1.1.0, or whose stored signature
+    /// no longer parses. Either way the wallet needs its password once.
+    let identity: WalletIdentitySignature?
 }
 
 /// Public keys, addresses and display names for each wallet. They cannot spend
@@ -26,27 +29,45 @@ actor PublicWalletRepository {
 
     func snapshot(walletID: UUID, key: SymmetricKey?) -> PublicWalletSnapshot {
         guard FileManager.default.fileExists(atPath: file(walletID).path) else {
-            return PublicWalletSnapshot(displayName: nil, metadata: nil, status: .needsCompletion)
+            return PublicWalletSnapshot(displayName: nil, metadata: nil, status: .needsCompletion, identity: nil)
         }
-        guard let key else { return PublicWalletSnapshot(displayName: nil, metadata: nil, status: .invalid) }
+        guard let key else { return PublicWalletSnapshot(displayName: nil, metadata: nil, status: .invalid, identity: nil) }
         do {
             let body = try read(walletID, key: key)
             let name = body["displayName"] as? String
             if let name, !Self.validName(name) { throw VaultError.invalidName }
             guard let index = body["publicIndex"] as? [String: Any] else {
-                return PublicWalletSnapshot(displayName: name, metadata: nil, status: .needsCompletion)
+                return PublicWalletSnapshot(displayName: name, metadata: nil, status: .needsCompletion, identity: nil)
             }
-            return PublicWalletSnapshot(displayName: name, metadata: try WalletPublicMetadata(index), status: .ready)
-        } catch { return PublicWalletSnapshot(displayName: nil, metadata: nil, status: .invalid) }
+            let stored = body["khV2"] as? [String: Any]
+            return PublicWalletSnapshot(displayName: name, metadata: try WalletPublicMetadata(index), status: .ready,
+                                        identity: WalletIdentitySignature(epoch: stored?["epoch"], signature: stored?["signature"]))
+        } catch { return PublicWalletSnapshot(displayName: nil, metadata: nil, status: .invalid, identity: nil) }
     }
 
-    func save(_ metadata: WalletPublicMetadata, walletID: UUID, displayName: String? = nil, key: SymmetricKey) throws {
+    /// Writes the public index, and the identity signature when one is supplied.
+    /// Rebuilding the index without a signature drops any stored one: the two are
+    /// derived from the same seed, so a signature must never outlive the keys it
+    /// was checked against.
+    func save(_ metadata: WalletPublicMetadata, walletID: UUID, displayName: String? = nil,
+              identity: WalletIdentitySignature? = nil, key: SymmetricKey) throws {
         var body: [String: Any] = ["localWalletId": walletID.uuidString, "publicIndex": metadata.raw]
         let name = displayName ?? (try? read(walletID, key: key)["displayName"] as? String)
         if let name {
             guard Self.validName(name) else { throw VaultError.invalidName }
             body["displayName"] = name
         }
+        if let identity { body["khV2"] = identity.raw }
+        try write(body, id: walletID, key: key)
+    }
+
+    /// Stores an identity signature for a wallet whose public index is already
+    /// saved — the path a wallet from before version 1.1.0 takes once its
+    /// password has been entered.
+    func saveIdentity(_ identity: WalletIdentitySignature, walletID: UUID, key: SymmetricKey) throws {
+        var body = try read(walletID, key: key)
+        guard body["publicIndex"] is [String: Any] else { throw VaultError.walletNotFound }
+        body["khV2"] = identity.raw
         try write(body, id: walletID, key: key)
     }
 

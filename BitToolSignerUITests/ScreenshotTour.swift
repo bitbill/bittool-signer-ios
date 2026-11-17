@@ -16,6 +16,8 @@ final class ScreenshotTour: XCTestCase {
 
     @MainActor func testTourLight() throws { try tour(dark: false) }
     @MainActor func testTourDark() throws { try tour(dark: true) }
+    @MainActor func testWalletLevelPairingStates() throws { try walletLevelPairing() }
+    @MainActor func testSolanaLookupTableReview() throws { try solanaLookupTableReview() }
 
     @MainActor private func tour(dark: Bool) throws {
         prefix = dark ? "dark" : "light"
@@ -23,6 +25,63 @@ final class ScreenshotTour: XCTestCase {
         let run = walletScreens(dark: dark)
         lockScreens(dark: dark, run: run)
     }
+
+    /// The two states of the Wallet Level pairing page: a wallet created on
+    /// 1.1.0, which shows its version 2 code straight away, and a wallet saved
+    /// before 1.1.0, which asks for its password once before it has a code.
+    @MainActor private func walletLevelPairing() throws {
+        prefix = "light"
+        for (unsigned, name) in [(false, "15e-wallet-level-signed"), (true, "15f-wallet-level-password")] {
+            let app = launch(fixtures: 1, dark: false, extra: unsigned ? ["--unsigned-wallet-pairing"] : [])
+            // Pair on the wallet card opens Wallet Level directly.
+            tap(app, app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "wallet.connect.")).firstMatch)
+            sleep(3)
+            let qr = app.descendants(matching: .any)["connect.walletQR"]
+            let form = app.descendants(matching: .any)["connect.walletIdentity"]
+            if unsigned {
+                XCTAssertTrue(form.waitForExistence(timeout: 10),
+                              "A wallet from before 1.1.0 asks for its password instead of showing a code.")
+                XCTAssertFalse(qr.exists, "and shows no QR until it is signed")
+            } else {
+                XCTAssertTrue(qr.waitForExistence(timeout: 20),
+                              "A wallet created on 1.1.0 shows its code with no password.")
+                XCTAssertFalse(form.exists)
+            }
+            shot(app, name)
+            app.swipeUp(); sleep(1); shot(app, name + "-bottom")
+            app.terminate()
+        }
+    }
+
+    /// A Solana v0 transaction whose recipient comes from an address lookup table.
+    /// These used to be refused outright, which made swaps and bridge claims
+    /// impossible; they are signable now, and this captures what that costs the
+    /// person reading the review: a red high-risk warning naming the table, a
+    /// recipient that is a placeholder rather than an address, and the
+    /// acknowledgement that has to be ticked before the wallet will sign.
+    @MainActor private func solanaLookupTableReview() throws {
+        prefix = "light"
+        let app = launch(fixtures: 1, dark: false)
+        openTab(app, "Scan")
+        app.buttons["signing.paste"].tap()
+        let payload = app.textViews["signing.payload"]
+        XCTAssertTrue(payload.waitForExistence(timeout: 5))
+        payload.tap(); payload.typeText(Self.solanaLookupTableRequest)
+        app.buttons["signing.decode"].tap()
+        XCTAssertTrue(app.buttons["signing.authorize"].waitForExistence(timeout: 30),
+                      "A v0 transaction with a lookup table reaches the review instead of being refused.")
+        sleep(2); shot(app, "60-solana-lookup-table")
+        let notice = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS[c] %@", "address lookup table")).firstMatch
+        var found = notice.waitForExistence(timeout: 5)
+        for _ in 0..<6 where !found { app.swipeUp(); found = notice.waitForExistence(timeout: 1) }
+        XCTAssertTrue(found, "The review says the accounts came from a lookup table.")
+        shot(app, "61-solana-lookup-table-warning")
+        app.swipeUp(); sleep(1); shot(app, "62-solana-lookup-table-detail")
+        app.terminate()
+    }
+
+    /// Public test phrase, synthetic blockhash, one lookup table. No real funds.
+    private static let solanaLookupTableRequest = "UR:SOL-SIGN-REQUEST/OXAOHDRFLAADAEADAXWTENDIIDFGOSHPNTVLEENNTYDNBZVOEYYNGYMYSABSHESNGWCAIEVSCTNDTDHDYLAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEASASASASASASASASASASASASASASASASASASASASASASASASASASASASASASASASADAOAOAEAXBNAOAEAEAEAESGNYFRAEAEAEAEADAMAMAMAMAMAMAMAMAMAMAMAMAMAMAMAMAMAMAMAMAMAMAMAMAMAMAMAMAMAMAMAMAOAXAAAEAXTAADDYOEADLOCSDWYKCFADYKYKAEYKAEYKAOCYJKSKTNBKAAHDCXWTENDIIDFGOSHPNTVLEENNTYDNBZVOEYYNGYMYSABSHESNGWCAIEVSCTNDTDHDYLAMADESCEOSCT"
 
     // MARK: Welcome, onboarding, import and create
 
@@ -288,9 +347,9 @@ final class ScreenshotTour: XCTestCase {
         (ProcessInfo.processInfo.environment["BITTOOL_SIGNER_EXTRA_ARGS"] ?? "").split(separator: " ").map(String.init)
     }
 
-    @MainActor private func launch(fixtures: Int, dark: Bool) -> XCUIApplication {
+    @MainActor private func launch(fixtures: Int, dark: Bool, extra: [String] = []) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = ["--bittool-signer-ui-tests", "--reset-ui-fixtures", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"] + extraArguments
+        app.launchArguments = ["--bittool-signer-ui-tests", "--reset-ui-fixtures", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"] + extraArguments + extra
         if dark { app.launchArguments.append("--dark-appearance") }
         app.launchEnvironment = ["BITTOOL_SIGNER_UI_TEST_RUN": UUID().uuidString, "BITTOOL_SIGNER_UI_FIXTURE_COUNT": String(fixtures)]
         app.launch()

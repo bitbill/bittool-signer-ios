@@ -159,6 +159,8 @@ function withVerifiedChange(parsed,found){
   const summary=bitcoinSummary(parsed.outputs,new Set(change.keys()));
   return {...parsed.review,fields,warnings,riskLevel,summary,display:bitcoinDisplay(parsed.outputs,parsed.fee,new Set(change.keys()))};
 }
+/** What a parser may know about the wallet that signs, beyond the request itself. */
+function signerContext(chain,task){const address=task?.targets?.[0]?.address;return chain==='evm'&&address?{signerAddress:address}:{};}
 function digestOf(parsed,request){return parsed.signingBytesDigest||(typeof parsed.digest==='string'?parsed.digest.replace(/^0x/,''):parsed.digest?bytesToHex(parsed.digest):parsed.bytes?bytesToHex(sha256(parsed.bytes)):requestHash(request));}
 export function resolveSigningPlan({request,wallets}) {
   try {
@@ -190,7 +192,10 @@ export function resolveSigningPlan({request,wallets}) {
     }).sort((a,b)=>(a.localWalletId>b.localWalletId?1:a.localWalletId<b.localWalletId?-1:0));
     check(tasks.every(t=>t.targets.length<=200),'LIMIT','Too many signing targets');
     const originalPayloadBytes=request.transport?.payloadBytes||bytesToHex(utf8(stable(request)));
-    const review=request.chain==='bitcoin'?withVerifiedChange(parsed,found):parsed.review;
+    // The review a plan carries is the one for its signer: an EVM request that
+    // does not name its sender is reviewed again knowing which wallet matched,
+    // and may be refused on that knowledge. Neither changes the signing bytes.
+    const review=request.chain==='bitcoin'?withVerifiedChange(parsed,found):request.chain==='evm'?PARSERS.evm(request,signerContext('evm',found[0])).review:parsed.review;
     const plan={version:1,status:'ready',requestHash:hash,payloadDigest:bytesToHex(sha256(hexToBytes(originalPayloadBytes))),protocolProfile:request.transport?.type||'internal',originalPayloadBytes,signingBytesDigest,chain:request.chain,review,tasks};
     return {...plan,planHash:requestHash(plan)};
   }catch(error){return failure('invalid',error instanceof EngineError||error instanceof ProtocolError?error.message:'Invalid or unsupported signing request');}
@@ -226,8 +231,10 @@ export function signPlanTask({request,plan,taskId,mnemonic,passphrase,seed,previ
   validateRequestTransport(request);
   check(Array.isArray(plan.tasks)&&plan.tasks.length>0&&plan.tasks.length<=100,'PLAN','Invalid signing tasks');
   const task=plan.tasks.find(item=>item.id===taskId);check(task,'PLAN','The signing task does not belong to this plan');
-  const parsed=PARSERS[request.chain](request);check(digestOf(parsed,request)===plan.signingBytesDigest,'INTEGRITY','Signing bytes changed after review');
-  if(['partiallyDecoded','opaque'].includes(parsed.review.decodeStatus))check(riskAcknowledged===true,'RISK','Confirm this request’s decoding risks before signing');
+  const parsed=PARSERS[request.chain](request,signerContext(request.chain,task));check(digestOf(parsed,request)===plan.signingBytesDigest,'INTEGRITY','Signing bytes changed after review');
+  // The interface asks for the acknowledgement on the same rule; the engine is the
+  // last line, so it holds the rule itself rather than trusting that it was asked.
+  if(['partiallyDecoded','opaque'].includes(parsed.review.decodeStatus)||parsed.review.riskLevel==='high')check(riskAcknowledged===true,'RISK','Confirm this request’s decoding risks before signing');
   const working=accumulatedRequest(request,previousResult,plan,parsed);
   return withSeedInput({mnemonic,passphrase,seed},(seedBytes,root)=>{
     check(seedWalletKeyId(root)===task.walletKeyId,'SIGNER','The decrypted wallet does not match the signing plan');

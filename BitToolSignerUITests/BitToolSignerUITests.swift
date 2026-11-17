@@ -550,7 +550,9 @@ final class BitToolSignerUITests: XCTestCase {
         XCTAssertTrue(element(containing: "all three Solana addresses", in: app).exists)
         XCTAssertTrue(app.descendants(matching: .any)["connect.walletQR"].firstMatch.waitForExistence(timeout: 20))
         XCTAssertTrue(waitUntilEnabled(app.buttons["connect.copy"]))
-        XCTAssertTrue(scrollToExistence(element(containing: "bittool-signer-wallet v1", in: app), in: app))
+        XCTAssertTrue(scrollToExistence(element(containing: "bittool-signer-wallet v2", in: app), in: app))
+        XCTAssertTrue(scrollToExistence(element(containing: "BitTool Wallet 1.1.0 or later", in: app), in: app),
+                      "The page says which wallet version can read a v2 code.")
         XCTAssertTrue(scrollToExistence(element(containing: "BitTool Wallet", in: app), in: app), "BitTool Wallet is listed for wallet-level pairing.")
         app.swipeDown(); app.swipeDown(); app.swipeDown(); app.swipeDown()
         app.segmentedControls["connect.level"].buttons["Coin Level"].tap()
@@ -853,6 +855,12 @@ final class BitToolSignerUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Compatibility"].waitForExistence(timeout: 3))
         backgroundAndReactivate(app)
         XCTAssertTrue(app.navigationBars["Compatibility"].waitForExistence(timeout: 3))
+
+        // The page opens on Formats, which names the wire version the wallet-level
+        // QR actually carries. Pinned here because it is written as a literal: it
+        // went on saying v1 for a while after the payload became v2.
+        XCTAssertTrue(scrollToExistence(element(containing: "bittool-signer-wallet v2", in: app), in: app),
+                      "The Formats tab names the current wallet-level wire version.")
 
         // The Wallets tab lists every wallet with a site to copy, behind a
         // notice that none of them is verified or endorsed.

@@ -58,21 +58,43 @@ struct KeychainDeviceKeyStore: DeviceKeyStore {
     }
 }
 
+/// Time since boot that keeps counting while the device sleeps and that no setting
+/// can move. `systemUptime` pauses during sleep; the date can be set to anything.
+enum MonotonicClock {
+    static func seconds() -> TimeInterval {
+        TimeInterval(clock_gettime_nsec_np(CLOCK_MONOTONIC_RAW)) / 1_000_000_000
+    }
+}
+
 /// Serializes filesystem mutations and performs password work away from the UI.
 /// No password, clear recovery phrase, or derived key is retained between calls.
 actor WalletVault {
     private let directory: URL
     private let deviceKeys: any DeviceKeyStore
+    private let uptime: @Sendable () -> TimeInterval
     private struct AuthenticationState: Codable {
         let count: Int
+        /// The end of the delay by the date. Not read since the delay moved to the
+        /// monotonic clock; still written so that an older build can open the file.
         let retryAfter: Date
+        /// When the last counted attempt was made, in `MonotonicClock` seconds.
+        /// Absent from files written by 1.0.0.
+        var attemptUptime: TimeInterval?
     }
 
-    init(directory: URL? = nil, deviceKeys: any DeviceKeyStore = KeychainDeviceKeyStore()) {
+    init(directory: URL? = nil, deviceKeys: any DeviceKeyStore = KeychainDeviceKeyStore(),
+         uptime: @escaping @Sendable () -> TimeInterval = MonotonicClock.seconds) {
         let applicationSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Library/Application Support", isDirectory: true)
         self.directory = directory ?? applicationSupport.appendingPathComponent("BitToolSigner/Vaults", isDirectory: true)
         self.deviceKeys = deviceKeys
+        self.uptime = uptime
+    }
+
+    /// How long to wait after `count` failed attempts in a row: nothing for the
+    /// first four, then 2, 4, 8 … seconds, up to five minutes.
+    static func delay(afterFailures count: Int) -> TimeInterval {
+        count >= 5 ? min(300, pow(2, Double(count - 4))) : 0
     }
 
     func list() throws -> [VaultMetadata] {
@@ -136,15 +158,31 @@ actor WalletVault {
         let encrypted = try load(id: id)
         var key = try deviceKeys.read(id: id)
         defer { key.resetBytes(in: key.startIndex..<key.endIndex) }
-        let previous = try authenticationState(id: id, deviceKey: key)
-        if previous.retryAfter > Date() {
-            throw VaultError.temporarilyLocked(max(1, Int(ceil(previous.retryAfter.timeIntervalSinceNow))))
+        let now = uptime()
+        var previous = try authenticationState(id: id, deviceKey: key)
+        let window = Self.delay(afterFailures: previous.count)
+        if window > 0 {
+            // The delay runs on the monotonic clock, not the date. An offline phone's
+            // date is whatever its owner sets: moving it forward used to skip every
+            // delay, and a clock reset (a flat battery) locked the wallet for the gap.
+            // The monotonic clock starts again at zero on every boot, so:
+            //  · a file from 1.0.0 has no attempt time: a full delay from now;
+            //  · an attempt time later than now is from an earlier boot, and at least
+            //    `now` has passed since it: the delay is counted from this boot.
+            // Either way the time left is never more than one delay.
+            let started = previous.attemptUptime.map { $0 > now ? 0 : $0 } ?? now
+            if started != previous.attemptUptime {
+                previous.attemptUptime = started
+                try saveAuthenticationState(previous, id: id, deviceKey: key)
+            }
+            let remaining = min(window, started + window - now)
+            if remaining > 0 { throw VaultError.temporarilyLocked(max(1, Int(ceil(remaining)))) }
         }
         let count = min(previous.count + 1, 16)
-        let delay = count >= 5 ? min(300.0, pow(2.0, Double(count - 4))) : 0
         // Persist the attempt before costly decryption. Killing and relaunching
         // the process cannot reset the counter or interrupt its persistence.
-        try saveAuthenticationState(AuthenticationState(count: count, retryAfter: Date().addingTimeInterval(delay)), id: id, deviceKey: key)
+        try saveAuthenticationState(AuthenticationState(count: count, retryAfter: Date().addingTimeInterval(Self.delay(afterFailures: count)),
+                                                        attemptUptime: now), id: id, deviceKey: key)
         guard !password.isEmpty, password.utf8.count <= 1024 else { throw VaultError.authenticationFailed }
         let secret = try VaultCrypto.decrypt(encrypted, password: password, deviceKey: key)
         try saveAuthenticationState(AuthenticationState(count: 0, retryAfter: .distantPast), id: id, deviceKey: key)

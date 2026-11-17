@@ -86,8 +86,6 @@ struct RecoveryPhraseSheet: View {
                 .focused($passwordFocused)
                 .submitLabel(.continue)
                 .onSubmit(unlock)
-                .padding(14)
-                .background(Palette.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             Text("The recovery phrase stays hidden until you choose to show it.")
                 .font(.footnote).foregroundStyle(.secondary)
                 .padding(.horizontal, 4)
@@ -140,13 +138,13 @@ struct ChangePasswordSheet: View {
             Form {
                 Section { WalletIdentityHeader(walletID: walletID) }
                 Section {
-                    PasswordField(.currentWalletPassword, text: $current)
+                    PasswordField(.currentWalletPassword, text: $current, chrome: .plain)
                         .focused($focus, equals: .current).submitLabel(.next).onSubmit { focus = .new }
                 }
                 Section {
-                    PasswordField(.newPassword, text: $new, isNew: true)
+                    PasswordField(.newPassword, text: $new, isNew: true, chrome: .plain)
                         .focused($focus, equals: .new).submitLabel(.next).onSubmit { focus = .confirmation }
-                    PasswordField(.confirmNewPassword, text: $confirmation, isNew: true)
+                    PasswordField(.confirmNewPassword, text: $confirmation, isNew: true, chrome: .plain)
                         .focused($focus, equals: .confirmation).submitLabel(.done).onSubmit { focus = nil }
                 } footer: {
                     PasswordRequirementsView(password: new, confirmation: confirmation).padding(.top, 6)
@@ -308,7 +306,7 @@ struct RepairWalletSheet: View {
             Form {
                 Section { WalletIdentityHeader(walletID: walletID) }
                 Section {
-                    PasswordField(.walletPassword, text: $password).onSubmit(submit)
+                    PasswordField(.walletPassword, text: $password, chrome: .plain).onSubmit(submit)
                 } footer: {
                     Text("BitTool Signer decrypts the wallet once to rebuild its public keys and addresses. Your recovery phrase and password do not change.")
                 }

@@ -1,4 +1,4 @@
-# BitTool Signer for iOS · 1.0.0
+# BitTool Signer for iOS · 1.1.0
 
 **BitTool Signer** is an offline, air-gapped transaction signer published by BITTOOL PTE. LTD., meant to be used alongside **BitTool Wallet**: [bittool.com](https://bittool.com) · [bittool.com/signer](https://bittool.com/signer) · [bittool.com/wallet](https://bittool.com/wallet). Both apps share one mark; the signer uses the dark version and the wallet the light one. This repository is the app's source: [github.com/bitbill/bittool-signer-ios](https://github.com/bitbill/bittool-signer-ios).
 
@@ -49,7 +49,7 @@ Four tabs: **Wallets · Scan · Activity · Settings**.
 
 - **Wallets** — every wallet side by side; there is no "current wallet". A card shows an identity colour, the name, the master fingerprint (the same `masterFingerprint` the pairing QR carries) and the networks it supports, with direct links to Pair and Addresses. The detail page covers all four chains plus wallet-level pairing, receiving addresses, revealing the recovery phrase, changing the password, renaming and deleting. Tapping a chain opens Coin Level for it; tapping Wallet Level, or Pair on the card, opens Wallet Level.
 
-  The Pair page switches between **Coin Level** (each chain's own standard format) and **Wallet Level**, which exports in one animated multi-frame QR code: account xpubs for **four Bitcoin script types** — `p2wpkh` (bc1q), `p2tr` (bc1p), `p2sh-p2wpkh` (3) and `p2pkh` (1) — an EVM xpub, a TRON xpub, and **three Solana addresses** (standard, trust, legacy; Ed25519 derivation is hardened, so a watch-only wallet cannot derive one of them from another). The format is specified in [docs/Wallet-Pairing-v1.md](docs/Wallet-Pairing-v1.md). Bitcoin exports an Account XPUB by default, and TRON can export any address index from 0 to 2³¹−1.
+  The Pair page switches between **Coin Level** (each chain's own standard format) and **Wallet Level**, which exports in one animated multi-frame QR code: account xpubs for **four Bitcoin script types** — `p2wpkh` (bc1q), `p2tr` (bc1p), `p2sh-p2wpkh` (3) and `p2pkh` (1) — an EVM xpub, a TRON xpub, and **three Solana addresses** (standard, trust, legacy; Ed25519 derivation is hardened, so a watch-only wallet cannot derive one of them from another). Since 1.1.0 the payload also carries a **wallet-identity signature** — proof that this device holds the private key behind the keys it exports — which the receiving wallet verifies offline before creating a watch wallet. The format is specified in [docs/Wallet-Pairing-v2.md](docs/Wallet-Pairing-v2.md), with published test vectors in [docs/kh2_bittool_vectors.json](docs/kh2_bittool_vectors.json); it needs BitTool Wallet 1.1.0 or later. Bitcoin exports an Account XPUB by default, and TRON can export any address index from 0 to 2³¹−1.
 
 - **Scan** — the whole scan card is tappable, and a request can also be pasted or imported from a file. The review page runs summary → risk warnings → signing wallet → full fields → request fingerprint, with the risk acknowledgement and the Sign button pinned to the bottom. Every signature takes that wallet's own password.
 
@@ -89,7 +89,7 @@ The full account is in [docs/Security.md](docs/Security.md).
 - [Protocols, export semantics and compatibility evidence](docs/Compatibility.md)
 - [Engine API and tests](engine/README.md)
 - [Token registry sources and selection](docs/TokenRegistrySources.md) · [wallet icon sources](docs/WalletLogoSources.md)
-- [Release acceptance](docs/Release-1.0.0.md)
+- [1.1.0 release notes](docs/Release-Notes-1.1.0.md) · [1.0.0 release acceptance](docs/Release-1.0.0.md)
 - [Brand and icons](design/Brand.md)
 
 Older reports under `docs/validation` are kept as history and do not describe the current state.

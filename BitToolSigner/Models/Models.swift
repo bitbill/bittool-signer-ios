@@ -465,6 +465,34 @@ enum AppIssue: LocalizedError, Equatable {
 
 enum PublicMetadataStatus: String, Codable, Sendable { case ready, needsCompletion, invalid }
 
+/// A wallet's KH v2 identity signature: proof that this device holds the private
+/// key behind the public keys a wallet-level QR exports (docs/Wallet-Pairing-v2.md).
+///
+/// It is public data — a signature over one fixed sentence, revealing nothing but
+/// that the wallet exists — and lives beside the public index, under the same
+/// HMAC. Producing it needs the seed, so a wallet created before version 1.1.0
+/// has none until its password is entered once.
+struct WalletIdentitySignature: Sendable, Equatable {
+    let epoch: Int
+    let signature: String
+
+    init?(epoch: Any?, signature: Any?) {
+        guard let epoch = epoch as? Int, epoch >= 1, epoch <= 1_000_000,
+              let signature = signature as? String, Self.isSignature(signature) else { return nil }
+        self.epoch = epoch; self.signature = signature
+    }
+
+    /// 65 bytes in base64: header, R, S. Checked here so a damaged sidecar is
+    /// treated as "not signed yet" instead of reaching the engine.
+    static func isSignature(_ value: String) -> Bool {
+        value.count == 88 && value.hasSuffix("=")
+            && value.range(of: "^[A-Za-z0-9+/]{87}=$", options: .regularExpression) != nil
+            && Data(base64Encoded: value)?.count == 65
+    }
+
+    var raw: [String: Any] { ["epoch": epoch, "signature": signature] }
+}
+
 /// A frozen, public-only document. Secrets never belong in this cache. The
 /// signing engine re-derives and checks its keys after every password approval.
 struct WalletPublicMetadata: Sendable {
@@ -530,7 +558,7 @@ struct WalletPublicMetadata: Sendable {
     }
 }
 
-/// BitTool Signer wallet-level pairing (`bittool-signer-wallet` v1): one QR for every
+/// BitTool Signer wallet-level pairing (`bittool-signer-wallet` v2): one QR for every
 /// chain family. `json` is the developer view of the exact encoded object.
 struct WalletPairingPayload: Equatable {
     struct Line: Equatable, Identifiable {

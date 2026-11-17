@@ -34,9 +34,14 @@ struct SimulatorUITestContext {
                 guard store.wallets.isEmpty else { return }
                 do {
                     for index in 0..<count {
-                        _ = try await store.createWallet(name: "Public fixture \(index + 1)",
+                        let wallet = try await store.createWallet(name: "Public fixture \(index + 1)",
                             mnemonic: "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
                             passphrase: index == 0 ? "" : "Public fixture \(index + 1)", password: "Public-Test-Password1!")
+                        // For the "wallet saved before 1.1.0" screen: a fixture with
+                        // no identity signature, so Wallet Level asks for a password.
+                        if process.arguments.contains("--unsigned-wallet-pairing") {
+                            await store.dropWalletIdentityForUITests(walletID: wallet.id)
+                        }
                     }
                 } catch { store.error = "UI fixture setup failed: " + error.localizedDescription }
             }

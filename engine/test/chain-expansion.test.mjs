@@ -73,7 +73,18 @@ test('EVM exact local registry formats integers without losing precision and unk
  const abi=new Interface(['function transfer(address to,uint256 amount)']);const r=evmRequest(abi.encodeFunctionData('transfer',[account[1].address,'9007199254740993123']));const review=parseEVM(r).review;
  assert.equal(review.asset.symbol,'USDC');assert.equal(review.asset.displayAmount,'9007199254740.993123');assert.equal(review.asset.assetAddress,r.transaction.to.toLowerCase());
  const opaque=parseEVM(evmRequest('0x12345678')).review;assert.equal(opaque.decodeStatus,'opaque');assert.equal(opaque.riskLevel,'high');assert.ok(opaque.fields.some(f=>f.value==='0x12345678'));
- assert.throws(()=>parseEVM({...r,transaction:{...r.transaction,chainId:11155111}}),e=>e.code==='NETWORK');assert.throws(()=>parseEVM(evmRequest('0xa9059cbb')),e=>e.code==='CALLDATA');
+ // An unnamed chain is signed rather than refused — the chain ID is inside what is
+ // signed — but it is named as a number, prices nothing in a guessed ticker, and says so.
+ const other=parseEVM({...r,transaction:{...r.transaction,chainId:11155111}}).review;
+ assert.equal(other.network.name,'Chain 11155111');assert.equal(other.network.symbol,'native units');
+ assert.ok(other.warnings.some(w=>w.includes('does not recognise EVM chain 11155111')),other.warnings.join(' | '));
+ assert.equal(other.asset,undefined,'no token registry stands behind an unknown chain');
+ assert.match(other.display.fee,/native units$/);
+ // A chain ID of zero or below is still refused: an unprotected transaction replays
+ // on every network, which is a different thing from a network with no name here.
+ for(const chainId of [0,-1])assert.throws(()=>parseEVM({...r,transaction:{...r.transaction,chainId}}),e=>e.code==='CHAIN_ID',String(chainId));
+ assert.throws(()=>parseEVM({...r,transaction:{...r.transaction,chainId:'x'}}));
+ assert.throws(()=>parseEVM(evmRequest('0xa9059cbb')),e=>e.code==='CALLDATA');
 });
 test('EIP712 Permit2 fields and absent signed chain context are explicit; task identity is rechecked',()=>{
  const typedData={domain:{name:'Permit2',chainId:1,verifyingContract:'0x000000000022D473030F116dDEE9F6B43aC78BA3'},primaryType:'PermitSingle',types:{PermitDetails:[['token','address'],['amount','uint160'],['expiration','uint48'],['nonce','uint48']].map(([name,type])=>({name,type})),PermitSingle:[['details','PermitDetails'],['spender','address'],['sigDeadline','uint256']].map(([name,type])=>({name,type}))},message:{details:{token:'0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',amount:String((1n<<160n)-1n),expiration:1900000000,nonce:42},spender:account[1].address,sigDeadline:1900000000}};

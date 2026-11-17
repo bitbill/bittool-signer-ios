@@ -103,6 +103,70 @@ struct SecurityTests {
         }
     }
 
+    /// The failed-attempt delay runs on the monotonic clock (Revision 17). It used to
+    /// be a date, and an offline phone's date is whatever its owner sets: forward
+    /// skipped every delay, backward (a clock reset) locked the wallet for the gap.
+    @Test func failedAttemptDelayRunsOnTheMonotonicClock() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("bittool-signer-clock-\(UUID())")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let keys = MemoryDeviceKeys(), clock = TestUptime(10_000)
+        let store = WalletVault(directory: directory, deviceKeys: keys, uptime: clock.read)
+        let wallet = try await store.create(name: "Clock test", mnemonic: phrase, password: password)
+        let wrong = { (vault: WalletVault) in _ = try await vault.unlock(id: wallet.id, password: "Wrong-Password1") }
+        let right = { (vault: WalletVault) in _ = try await vault.unlock(id: wallet.id, password: self.password) }
+        for _ in 0..<5 { await #expect(throws: VaultError.authenticationFailed) { try await wrong(store) } }
+        // Five failures: two seconds, counted by the clock alone.
+        await #expect(throws: VaultError.temporarilyLocked(2)) { try await right(store) }
+        clock.advance(1.5)
+        await #expect(throws: VaultError.temporarilyLocked(1)) { try await right(store) }
+        clock.advance(0.5)
+        // The date has moved by milliseconds; the delay is over because the clock says so.
+        await #expect(throws: VaultError.authenticationFailed) { try await wrong(store) }
+        await #expect(throws: VaultError.temporarilyLocked(4), "the sixth failure doubles it") { try await right(store) }
+        // The file still carries the count and the date, so an older build can open it.
+        let fields = try attemptFile(wallet.id, keys: keys, directory: directory)
+        #expect(fields["count"] as? Int == 6)
+        #expect(fields["retryAfter"] != nil)
+        #expect(fields["attemptUptime"] as? Double == 10_002)
+
+        // A reboot: the clock starts again near zero. The attempt is from an earlier
+        // boot, so the delay is counted from this boot: rebooting does not skip it,
+        // and nothing waits longer than one delay.
+        clock.set(1)
+        let rebooted = WalletVault(directory: directory, deviceKeys: keys, uptime: clock.read)
+        await #expect(throws: VaultError.temporarilyLocked(3)) { try await right(rebooted) }
+        clock.set(4)
+        #expect(try await rebooted.unlock(id: wallet.id, password: password).mnemonic == phrase)
+        #expect(try attemptFile(wallet.id, keys: keys, directory: directory)["count"] as? Int == 0)
+    }
+
+    @Test func aDelayRecordedByAnOlderVersionRunsInFullFromNow() async throws {
+        // 1.0.0 wrote a count and a date only. The date is not trusted to say that
+        // the delay is over: nine failures mean 32 seconds, starting now.
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("bittool-signer-legacy-\(UUID())")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let keys = MemoryDeviceKeys(), clock = TestUptime(500)
+        let store = WalletVault(directory: directory, deviceKeys: keys, uptime: clock.read)
+        let wallet = try await store.create(name: "Legacy test", mnemonic: phrase, password: password)
+        let legacy = try JSONSerialization.data(withJSONObject: ["count": 9, "retryAfter": Date.distantPast.timeIntervalSinceReferenceDate])
+        let box = try AES.GCM.seal(legacy, using: SymmetricKey(data: try keys.read(id: wallet.id)),
+                                   authenticating: Data("com.bittool.signer.auth.v1/\(wallet.id.uuidString)".utf8))
+        try #require(box.combined).write(to: directory.appendingPathComponent(".\(wallet.id.uuidString.lowercased()).attempts"))
+        await #expect(throws: VaultError.temporarilyLocked(32)) { _ = try await store.unlock(id: wallet.id, password: password) }
+        clock.advance(31)
+        // The start was written back on the first try, not taken afresh on every one.
+        await #expect(throws: VaultError.temporarilyLocked(1)) { _ = try await store.unlock(id: wallet.id, password: password) }
+        clock.advance(1)
+        #expect(try await store.unlock(id: wallet.id, password: password).mnemonic == phrase)
+    }
+
+    private func attemptFile(_ id: UUID, keys: MemoryDeviceKeys, directory: URL) throws -> [String: Any] {
+        let sealed = try Data(contentsOf: directory.appendingPathComponent(".\(id.uuidString.lowercased()).attempts"))
+        let plaintext = try AES.GCM.open(AES.GCM.SealedBox(combined: sealed), using: SymmetricKey(data: try keys.read(id: id)),
+                                         authenticating: Data("com.bittool.signer.auth.v1/\(id.uuidString)".utf8))
+        return try #require(JSONSerialization.jsonObject(with: plaintext) as? [String: Any])
+    }
+
     #if DEBUG
     @Test func javascriptBridgeHasFreshScopeNativeEntropyAndNoNetwork() async throws {
         let source = """
@@ -240,4 +304,14 @@ private final class MemoryDeviceKeys: DeviceKeyStore, @unchecked Sendable {
         defer { lock.unlock() }
         keys[id] = nil
     }
+}
+
+/// A monotonic clock the test moves by hand.
+private final class TestUptime: @unchecked Sendable {
+    private let lock = NSLock()
+    private var now: TimeInterval
+    init(_ now: TimeInterval) { self.now = now }
+    var read: @Sendable () -> TimeInterval { { [self] in lock.withLock { now } } }
+    func advance(_ seconds: TimeInterval) { lock.withLock { now += seconds } }
+    func set(_ value: TimeInterval) { lock.withLock { now = value } }
 }

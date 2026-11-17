@@ -101,7 +101,7 @@ final class AppAccessController: ObservableObject {
     /// Monotonic time that keeps counting while the device sleeps. `systemUptime`
     /// pauses during sleep, which would let a phone asleep for hours reopen unlocked.
     nonisolated static func monotonicSeconds() -> TimeInterval {
-        TimeInterval(clock_gettime_nsec_np(CLOCK_MONOTONIC_RAW)) / 1_000_000_000
+        MonotonicClock.seconds()
     }
 
     init(vault: WalletVault, defaults: UserDefaults = .standard,

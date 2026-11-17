@@ -185,10 +185,10 @@ test('ERC-1155 batch uses one Items field, flags duplicates and zero quantities,
   fails(() => review(evmTx(BAYC, call('safeBatchTransferFrom', [ME, ATT, [...ids, 33], [...ids, 33].map(() => 1), '0x']))), 'LIMIT');
 });
 
-test('MultiSend headline lists inner NFT calls by risk and indexes their warnings once', () => {
+test('MultiSend headline lists outgoing transfers first, then grants, and indexes their warnings once', () => {
   const data = call('multiSend', [packMultiSend([[BAYC, call('safeTransferFrom(address,address,uint256)', [ME, ATT, 42])], [BAYC, call('setApprovalForAll', [ATT, true])]])]);
   const r = review(evmTx('0x' + '5a'.repeat(20), data));
-  assert.equal(r.display.headline, '2 calls: Approve All NFTs (All your NFTs in 0xBC4C…f13D); Send NFT (NFT #42)');
+  assert.equal(r.display.headline, '2 calls: Send NFT (NFT #42); Approve All NFTs (All your NFTs in 0xBC4C…f13D)');
   assert.ok(r.warnings.some(w => w.startsWith('HIGH RISK: Call 2: ') && w.includes(BAYC)));
   assert.equal(r.warnings.filter(w => w.startsWith('Contract identity')).length, 1);
   assert.equal(r.riskLevel, 'high');

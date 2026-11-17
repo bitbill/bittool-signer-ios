@@ -258,16 +258,12 @@ private struct PassphraseOptions: View {
             }
             .accessibilityIdentifier("setup.usePassphrase")
             if model.usePassphrase {
-                VStack(spacing: 0) {
+                VStack(spacing: 12) {
                     PasswordField(.passphrase, text: $model.passphrase, isNew: true, revealable: true)
                         .focused($focus, equals: .passphrase).submitLabel(.next).onSubmit { focus = .confirmation }
-                        .padding(14)
-                    Divider().padding(.leading, 14)
                     PasswordField(.confirmPassphrase, text: $model.passphraseConfirmation, isNew: true, revealable: true)
                         .focused($focus, equals: .confirmation).submitLabel(.done).onSubmit { focus = nil }
-                        .padding(14)
                 }
-                .background(Palette.raised, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                 Callout("Each passphrase opens a different wallet. Back it up separately: the recovery phrase alone cannot restore this wallet. It is not your wallet password.",
                         tone: .warning)
             }
@@ -358,16 +354,16 @@ private struct SetPasswordStep: View {
                       message: resetting == nil
                                ? "The password encrypts this wallet on this device and authorizes every signature. It is not part of your recovery phrase."
                                : "This recovery phrase already belongs to a wallet on this device. Set a new password for it: the phrase you just entered is the proof, so the old password is not needed.") {
-            VStack(spacing: 0) {
+            // Two boxes, not two rows of one card: a password field has to look
+            // like something you type into wherever it appears, and the card had
+            // the same failing as the pairing page — a divider between two
+            // paragraphs of grey placeholder.
+            VStack(spacing: 12) {
                 PasswordField(.walletPassword, text: $model.password, isNew: true)
                     .focused($focus, equals: .password).submitLabel(.next).onSubmit { focus = .confirmation }
-                    .padding(14)
-                Divider().padding(.leading, 14)
                 PasswordField(.confirmPassword, text: $model.confirmation, isNew: true)
                     .focused($focus, equals: .confirmation).submitLabel(.done).onSubmit { focus = nil }
-                    .padding(14)
             }
-            .background(Palette.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             PasswordRequirementsView(password: model.password, confirmation: model.confirmation)
                 .padding(.horizontal, 4)
             if let walletID = resetting {

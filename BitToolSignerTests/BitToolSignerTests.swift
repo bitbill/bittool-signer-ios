@@ -97,7 +97,11 @@ struct EngineIntegrationTests {
             var completed: [String] = []
             for task in decodedPlan.tasks {
                 let mnemonic = try #require(wallets.first { $0["localWalletId"] == task.walletID.uuidString.lowercased() }?["mnemonic"])
-                var parameters: [String: Any] = ["request": request, "plan": plan, "taskId": task.id, "mnemonic": mnemonic]
+                // Acknowledged exactly when the review screen would ask for it: the
+                // engine now holds that rule itself, so a caller that skips the
+                // question is refused rather than trusted.
+                var parameters: [String: Any] = ["request": request, "plan": plan, "taskId": task.id, "mnemonic": mnemonic,
+                                                 "riskAcknowledged": TransactionReview(review).requiresAcknowledgement]
                 if let previous { parameters["previousResult"] = previous }
                 let result = try await engine.run(operation: "signPlanTask", parameters: parameters)
                 completed.append(task.id)

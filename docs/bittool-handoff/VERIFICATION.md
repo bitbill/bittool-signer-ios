@@ -1,9 +1,17 @@
 # Verification for this handoff package
 
-Regenerated 18 October 2026 against the current code. This package only produces BitTool Wallet
+Regenerated 15 November 2026 against the current code. This package only produces BitTool Wallet
 development documentation and public interoperability data; it does not modify the BitTool
 Signer app or its signing engine.
 
+> **Regenerated, 15 November 2026 — wallet pairing is now version 2.** The payload carries a
+> **wallet-identity signature** (`khSig`, `khEpoch`), and the receiving side **must verify it on
+> the device** against the code's own `p2pkh` account xpub before creating a wallet. Version 1 is
+> no longer produced and the reference decoder refuses it; `fixtures/wallet-pairing-v1-rejected.json`
+> is a v1 payload kept so a receiver can test that it refuses one. The signature vectors a
+> receiver must reproduce byte for byte are in `../kh2_bittool_vectors.json`, and the format is
+> specified in `../Wallet-Pairing-v2.md`. A receiver built against version 1 will not interoperate.
+>
 > **Regenerated, 18 October 2026.** The earlier version of this package described the
 > pre-Revision-9 pairing payload: three account xpubs plus a single Solana address, 755 inner
 > CBOR bytes. The shipping format now exports **seven accounts** — four Bitcoin script types,
@@ -16,8 +24,8 @@ Signer app or its signing engine.
 1. Read the reference `BitTool Signer_Wallet_Level_QR_Pairing_v1_v2.md` against the current
    `protocols.js`, public index, resolver, the four chain signing implementations and their
    tests.
-2. Ran `node --test test/wallet-pairing.test.mjs test/protocols.test.js`:
-   **24 passed / 0 failed / 0 skipped.**
+2. Ran `node --test test/wallet-pairing.test.mjs test/kh2.test.mjs test/solana-lookup-tables.test.mjs test/protocols.test.js`:
+   **37 passed / 0 failed / 0 skipped.** The full engine suite is 238/238.
 3. Ran `generate-fixtures.mjs`: wallet-level UR reassembly out of order, inner and outer CBOR
    bytes consistent; **9 real signing round-trip samples passed.**
 4. Each sample goes through public account location and a fixed signing task, decodes the
@@ -32,19 +40,21 @@ Signer app or its signing engine.
 ## Baseline for this package
 
 ```text
-Wallet pairing protocol: 1
+Wallet pairing protocol: 2
 Current mode field: full
 BTC: four account xpubs (p2wpkh, p2tr, p2sh-p2wpkh, p2pkh)
 EVM / TRON: account xpubs
 SOL: three explicit addresses (standard, trust, legacy), index 0
-Inner CBOR bytes: 1561
-BC-UR frames: 4 (fragmentLength 400)
+Wallet identity: khSig over "OwnbitAuth:v2:epoch=1", key m/44'/0'/0'/0/1000000000
+Identity address: 1N8ju3BdMHttCNBJ4d8v3eCrpzdLk1m9Vo
+Inner CBOR bytes: 1666
+BC-UR frames: 5 (fragmentLength 400)
 Inner CBOR SHA-256:
-c8db82cd92e0cf45cb6329b2429494b04a3b6bad7653c9bed1d2a5ef10f4a5fc
+cc911414877a3b544b90f6c8ac794c76197015b60c00002d12577608473894ef
 
-BitToolSigner/Resources/signer.js bytes: 1181026
+BitToolSigner/Resources/signer.js bytes: 1194055
 Bundle SHA-256:
-6933d0d8a6f60faa8222506ac0bd7eef80eb884c9f73e31e9f354b4740f21077
+a163698b989f2b0095d45ac12c6e482adf9d2433999e4ffe63cc69a997d89eee
 ```
 
 The exact generation time, each source file's digest and the runtime versions are in
@@ -60,6 +70,12 @@ certification or a Git commit snapshot.
 - The no-`mode` vector is a proposed compatibility case for the BitTool Wallet receiving side.
   The current BitTool Signer reference decoder still requires `mode`, so that vector must not be
   treated as evidence of what the current cold side exports.
+- The identity vectors were produced three independent ways before publication: by this engine,
+  by a from-scratch reference implementation written from the written rule alone, and — because
+  this is the same test phrase and the same derivation path — they are byte-identical to Ownbit's
+  own published `HD-abandon-m/44h/0h/0h/0/1000000000` vectors for epochs 1 and 2. What has **not**
+  been done is an end-to-end run against a real receiving wallet or a real server: no build yet
+  reads a v2 code, so the vectors are the contract that stands in for that.
 - The public vectors cover the protocol's basic paths. They do not mean that every token, NFT,
   multisig case, network error and UI acceptance item is complete; the full outstanding list is
   in the prompt.

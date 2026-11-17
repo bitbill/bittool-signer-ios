@@ -1,6 +1,6 @@
 import { Transaction, computeAddress, recoverAddress } from 'ethers/transaction';
 import { SigningKey } from 'ethers/crypto';
-import { TypedDataEncoder, hashMessage } from 'ethers/hash';
+import { TypedDataEncoder, hashMessage, verifyAuthorization } from 'ethers/hash';
 import { Interface } from 'ethers/abi';
 import { getAddress } from 'ethers/address';
 import { keccak256 } from 'ethers/crypto';
@@ -37,7 +37,7 @@ const MAX_UINT256 = (1n << 256n) - 1n;
 // Maximum network fee (native units) above which a transaction is flagged. Normal
 // transfers and swaps stay well below these; they catch fat-finger or hostile gas.
 const HIGH_FEE = { '1': 5n * 10n ** 16n, '10': 5n * 10n ** 16n, '42161': 5n * 10n ** 16n, '8453': 5n * 10n ** 16n,
-  '56': 5n * 10n ** 16n, '137': 20n * 10n ** 18n, '100': 5n * 10n ** 18n, '43114': 10n ** 18n };
+  '56': 5n * 10n ** 16n, '204': 5n * 10n ** 16n, '137': 20n * 10n ** 18n, '100': 5n * 10n ** 18n, '43114': 10n ** 18n };
 
 const nativeAmount = (network, wei) => decimal(wei, 18) + ' ' + network.symbol;
 const display = (action, extra = {}) => Object.fromEntries(Object.entries({ action, ...extra })
@@ -82,13 +82,13 @@ export function decodeCall(to, data, value = 0n, depth = 0, context = {}) {
   const raw = hexToBytes(data || '0x', 65536);
   const withValue = (base) => value > 0n && network ? { ...base, amount: decimal(value, 18), symbol: network.symbol } : base;
   if (!raw.length && to) {
-    return { title: 'Native transfer', fields, warnings, decodeStatus: 'fullyDecoded', riskLevel: 'normal', forwards: 0n,
+    return { title: 'Native transfer', fields, warnings, decodeStatus: 'fullyDecoded', riskLevel: 'normal', forwards: 0n, effect: value > 0n ? 'moves' : undefined,
       display: network ? display('Send', { amount: decimal(value, 18), symbol: network.symbol, counterpartyLabel: 'To', counterparty: getAddress(to) }) : display('Send') };
   }
   if (!to) {
     return { title: 'Deploy contract', fields: [...fields, field('Deployment bytecode', data)],
       warnings: ['HIGH RISK: Deployment bytecode is opaque; runtime behavior and resulting permissions are not decoded.'],
-      decodeStatus: 'opaque', riskLevel: 'high', forwards: 0n, display: display('Deploy Contract', withValue({})) };
+      decodeStatus: 'opaque', riskLevel: 'high', forwards: 0n, effect: 'unknown', display: display('Deploy Contract', withValue({})) };
   }
   let parsed;
   if (raw.length >= 4) try { parsed = ABI.parseTransaction({ data, value }); } catch { fail('CALLDATA', 'Malformed contract call.'); }
@@ -97,12 +97,16 @@ export function decodeCall(to, data, value = 0n, depth = 0, context = {}) {
     return { title: 'Unknown contract call', counterparty: { address: contract, role: 'contract' },
       fields: [...fields, field('Function selector', data.slice(0, 10)), field('Exact calldata', data)],
       warnings: ['HIGH RISK: This contract method is not decoded. The contract may move assets or change permissions.'],
-      decodeStatus: 'opaque', riskLevel: 'high', forwards: 0n,
+      decodeStatus: 'opaque', riskLevel: 'high', forwards: 0n, effect: 'unknown',
       display: display('Contract Interaction', withValue({ headline: 'Method ' + data.slice(0, 10), counterpartyLabel: 'Contract', counterparty: contract })) };
   }
   check(ABI.encodeFunctionData(parsed.fragment, parsed.args).toLowerCase() === data.toLowerCase(), 'CALLDATA', 'Contract call uses a non-canonical or trailing encoding.');
   const a = parsed.args, fn = parsed.name;
   let riskLevel = 'normal', decodeStatus = 'fullyDecoded', asset, callDisplay, title, summary, forwards = 0n;
+  // What the call does to someone's assets, for a batch headline that must not
+  // hide it: moves them, grants a permission over them, takes one back, or
+  // something this decoder cannot say.
+  let effect;
   // The address this request puts in someone's hands: for an approval that is
   // the spender, otherwise the contract being called.
   let counterparty = { address: contract, role: 'contract' };
@@ -119,16 +123,20 @@ export function decodeCall(to, data, value = 0n, depth = 0, context = {}) {
   };
   const amountDisplay = (amount, known) => known ? { amount: known.displayAmount, symbol: known.symbol } : { amount: String(amount), symbol: 'raw units' };
   if (fn === 'transfer') {
+    effect = 'moves';
     fields.push(field('Recipient', fmt(a[0])), field('Token amount (raw units)', a[1]));
     const known = token(a[1]);
     callDisplay = display('Send', { ...amountDisplay(a[1], known), counterpartyLabel: 'To', counterparty: getAddress(a[0]) });
   } else if (fn === 'approve') {
     const spender = getAddress(a[0]), id = a[1];
     if (spender !== ZERO_ADDRESS) counterparty = { address: spender, role: 'spender' };
+    // On an unregistered contract approve(x, 0) may grant ERC-721 token #0, so
+    // only a registry token's zero allowance, or a zero spender, takes one back.
     fields.push(field('Spender', fmt(spender)), field('Allowance / NFT token ID', id));
     riskLevel = 'high';
     const known = token(id);
     const unlimited = id === MAX_UINT256;
+    effect = spender === ZERO_ADDRESS || (known && id === 0n) ? 'revokes' : 'grants';
     if (known) {
       // Registry tokens are fungible ERC-20s: unchanged allowance display, including revoke for 0.
       warnings.push('This authorizes another address to spend assets. Unknown ERC20 allowance and ERC721 token approval share this selector.');
@@ -158,6 +166,7 @@ export function decodeCall(to, data, value = 0n, depth = 0, context = {}) {
       }
     }
   } else if (fn === 'transferFrom') {
+    effect = 'moves';
     const from = getAddress(a[0]), recipient = getAddress(a[1]), id = a[2];
     fields.push(field('Asset owner', fmt(from)), field('Recipient', fmt(recipient)), field('Amount / NFT token ID', id));
     const known = token(id);
@@ -172,6 +181,7 @@ export function decodeCall(to, data, value = 0n, depth = 0, context = {}) {
     }
   } else if (fn === 'safeTransferFrom' && parsed.fragment.inputs.length < 5) {
     // ERC-721 safeTransferFrom exists only on NFTs.
+    effect = 'moves';
     const recipient = getAddress(a[1]), id = a[2];
     contractLabel('NFT contract');
     fields.push(field('Asset owner', fmt(a[0])), field('Recipient', fmt(recipient)), ...tokenIdFields(id));
@@ -182,6 +192,7 @@ export function decodeCall(to, data, value = 0n, depth = 0, context = {}) {
     summary = `Send NFT ${tokenIdText(id)} (${short(contract)})`;
   } else if (fn === 'safeTransferFrom') {
     // ERC-1155 single transfer: quantities are whole units; IDs may be fungible.
+    effect = 'moves';
     const recipient = getAddress(a[1]), id = a[2], quantity = a[3];
     contractLabel('ERC-1155 contract');
     fields.push(field('Asset owner', fmt(a[0])), field('Recipient', fmt(recipient)), ...tokenIdFields(id), field('Quantity', quantity));
@@ -193,6 +204,7 @@ export function decodeCall(to, data, value = 0n, depth = 0, context = {}) {
       assetKind: 'multiToken', assetContract: contract, assetContractLabel: 'ERC-1155 contract (not verified)', tokenId: id.toString() });
     summary = `Send ${headline} (${short(contract)})`;
   } else if (fn === 'setApprovalForAll') {
+    effect = a[1] ? 'grants' : 'revokes';
     if (a[1]) counterparty = { address: getAddress(a[0]), role: 'operator' };
     const operator = getAddress(a[0]);
     contractLabel('Collection contract');
@@ -209,6 +221,7 @@ export function decodeCall(to, data, value = 0n, depth = 0, context = {}) {
       summary = `Revoke NFT operator ${short(operator)} for ${short(contract)}`;
     }
   } else if (fn === 'safeBatchTransferFrom') {
+    effect = 'moves';
     const ids = a[2], quantities = a[3], recipient = getAddress(a[1]);
     check(ids.length === quantities.length && ids.length <= 32, 'LIMIT', 'Invalid or oversized token batch.');
     contractLabel('ERC-1155 contract');
@@ -249,6 +262,7 @@ export function decodeCall(to, data, value = 0n, depth = 0, context = {}) {
     if (a[3]) warnings.push('HIGH RISK: DELEGATECALL executes in the Safe account context and may change owners, modules or storage.');
     callDisplay = { ...inner.display, action: 'Safe: ' + (inner.display?.action ?? inner.title) };
     if (inner.summary) summary = 'Safe: ' + inner.summary;
+    effect = inner.effect ?? (!delegated && a[1] > 0n ? 'moves' : undefined);
   } else if (fn === 'multiSend') {
     const reader = new Reader(hexToBytes(a[0], 65536));
     let count = 0, moved = 0n, unknownDelegate = 0; riskLevel = 'high';
@@ -278,7 +292,7 @@ export function decodeCall(to, data, value = 0n, depth = 0, context = {}) {
         if (inner.decodeStatus !== 'fullyDecoded') unknownDelegate++;
       }
       moved += spends;
-      calls.push({ index: count, inner, risk: op ? 'high' : inner.riskLevel, moves: spends, delegates: !!op });
+      calls.push({ index: count, inner, risk: op ? 'high' : inner.riskLevel, moves: spends, delegates: !!op, effect: inner.effect });
       fields.push(field(`Call ${count} operation`, op ? 'DELEGATECALL' : 'CALL'), ...inner.fields.map(f => field(`Call ${count}: ${f.label}`, f.value)));
       // Call-specific warnings are indexed; the shared generic notice is kept once.
       warnings.push(...inner.warnings.map(w => w === GENERIC_CALL_WARNING ? w : indexWarning(w, `Call ${count}`)));
@@ -289,7 +303,7 @@ export function decodeCall(to, data, value = 0n, depth = 0, context = {}) {
     warnings.push('MultiSend target code and the current Safe policy are unverified offline.');
     if (unknownDelegate > 0) {
       decodeStatus = 'partiallyDecoded';
-      warnings.push(`HIGH RISK: The amount shown is incomplete. ${unknownDelegate} DELEGATECALL branch${unknownDelegate === 1 ? '' : 'es'} run with the Safe's own balance and ${unknownDelegate === 1 ? 'its body is' : 'their bodies are'} not fully decoded, so what ${unknownDelegate === 1 ? 'it' : 'they'} spend cannot be counted.`);
+      warnings.push(`HIGH RISK: The amount shown is incomplete. ${unknownDelegate} DELEGATECALL ${unknownDelegate === 1 ? 'branch runs' : 'branches run'} with the Safe's own balance and ${unknownDelegate === 1 ? 'its body is' : 'their bodies are'} not fully decoded, so what ${unknownDelegate === 1 ? 'it spends' : 'they spend'} cannot be counted.`);
     }
     // Headline lists the riskiest calls first (stable within the same risk).
     const describe = ({ inner }) => {
@@ -301,13 +315,26 @@ export function decodeCall(to, data, value = 0n, depth = 0, context = {}) {
     // rank or position: truncating the list must never be what hides one. That
     // is any branch that spends native currency, and every DELEGATECALL, whose
     // body runs with the Safe's own balance and storage.
-    const material = ordered.filter(c => c.moves > 0n || c.delegates);
-    const filler = ordered.filter(c => !(c.moves > 0n || c.delegates));
-    const described = material.slice(0, 8);
-    const shown = [...described, ...filler].slice(0, Math.max(3, described.length));
-    const hidden = material.length - described.length, omitted = count - shown.length;
-    const headline = `${count} call${count === 1 ? '' : 's'}: ${shown.map(describe).join('; ')}`
-      + (omitted > 0 ? ` (+${omitted} more${hidden > 0 ? `, ${hidden} of them spending or delegating` : ''})` : '');
+    // That is any branch that spends native currency, every DELEGATECALL, and
+    // every call that moves tokens, grants a permission, or cannot be decoded: a
+    // token transfer used to count as filler and sort below three revokes, so
+    // "send 1,000,000 USDC" became "(+1 more)". Within them, outgoing transfers
+    // come first, then what runs with the Safe's own balance, then the rest.
+    const isMaterial = c => c.moves > 0n || c.delegates || ['moves', 'grants', 'unknown'].includes(c.effect);
+    const rank = c => c.moves > 0n || c.effect === 'moves' ? 0 : c.delegates ? 1 : c.effect === 'unknown' ? 2 : 3;
+    const material = ordered.filter(isMaterial).sort((p, q) => rank(p) - rank(q) || p.index - q.index);
+    const filler = ordered.filter(c => !isMaterial(c));
+    effect = calls.some(c => rank(c) === 0 && isMaterial(c)) ? 'moves' : calls.some(c => c.effect === 'unknown' || c.delegates) ? 'unknown'
+      : calls.some(c => c.effect === 'grants') ? 'grants' : undefined;
+    // Up to eight of them are named, then filler fills the line to three. With more
+    // than eight, naming some would hide the rest, so the headline counts each kind.
+    const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+    const kinds = [[c => rank(c) === 0, 'transfer'], [c => rank(c) === 1, 'DELEGATECALL'], [c => rank(c) === 2, 'undecoded call'],
+      [c => rank(c) === 3, 'permission grant']].map(([test, word]) => [material.filter(test).length, word]).filter(([n]) => n);
+    const shown = [...material, ...filler].slice(0, Math.max(3, material.length)), omitted = count - shown.length;
+    const headline = material.length > 8
+      ? `${plural(count, 'call')}: ${[...kinds.map(([n, word]) => plural(n, word)), ...(filler.length ? [`${filler.length} other`] : [])].join(', ')} · review each below`
+      : `${plural(count, 'call')}: ${shown.map(describe).join('; ')}` + (omitted > 0 ? ` (+${omitted} more)` : '');
     // `moved` is what the batch forwards internally; `value` is what this
     // wallet actually pays to the batch contract. When both exist they are
     // shown separately — the amount is always what leaves the wallet.
@@ -329,7 +356,7 @@ export function decodeCall(to, data, value = 0n, depth = 0, context = {}) {
     }
   } else {
     parsed.fragment.inputs.forEach((input, i) => fields.push(field(input.name, input.type === 'address' ? fmt(a[i]) : a[i])));
-    riskLevel = 'high';
+    riskLevel = 'high'; effect = 'grants';
     warnings.push('HIGH RISK: This changes Safe account ownership, threshold, modules, guard or fallback handler.');
   }
   const titles = { transfer: 'Transfer tokens', approve: 'Approve token spending', transferFrom: 'Transfer assets', safeTransferFrom: 'Transfer NFT', setApprovalForAll: 'Authorize collection spending', safeBatchTransferFrom: 'Transfer NFT batch', execTransaction: 'Execute Safe transaction', multiSend: 'Execute transaction batch', enableModule: 'Enable Safe module', disableModule: 'Disable Safe module', addOwnerWithThreshold: 'Add Safe owner', removeOwner: 'Remove Safe owner', swapOwner: 'Replace Safe owner', changeThreshold: 'Change Safe threshold', setGuard: 'Set Safe guard', setFallbackHandler: 'Set Safe fallback handler' };
@@ -354,8 +381,9 @@ export function decodeCall(to, data, value = 0n, depth = 0, context = {}) {
   // `forwards` is what the *executing* account pays out through this call's own
   // body, which only a DELEGATECALL caller spends. Every decoded method moves
   // the target contract's money rather than ours; a batch forwards `moved`.
+  if (value > 0n && fn !== 'multiSend') effect ??= 'moves';
   return { title, fields, warnings: [...new Set(warnings)], decodeStatus, riskLevel, display: callDisplay, counterparty,
-    forwards, ...(summary ? { summary } : {}), ...(asset ? { asset } : {}) };
+    forwards, ...(effect ? { effect } : {}), ...(summary ? { summary } : {}), ...(asset ? { asset } : {}) };
 }
 
 // ---------------------------------------------------------------------------
@@ -554,6 +582,21 @@ function typedDataReview(request, common) {
     if (m.operation) warnings.push('HIGH RISK: DELEGATECALL executes using Safe account storage and may change permissions.');
     typedDisplay = { ...inner.display, action: 'Safe: ' + (inner.display?.action ?? inner.title) };
     innerSummary = inner.summary;
+    // Safe 1.2.0 and earlier sign a domain with no chain ID. Without a network the
+    // inner call could not name a currency, and a plain send used to read just
+    // "Safe: Send" — no amount, no recipient, normal risk. What leaves the Safe is
+    // still known exactly, and the signature runs on every chain where this Safe
+    // exists, so both are stated and the acknowledgement is required.
+    if (!network) {
+      if (!delegated && m.value > 0n && typedDisplay.amount === undefined)
+        Object.assign(typedDisplay, { amount: decimal(m.value, 18), symbol: 'native coin' });
+      if (!delegated && typedDisplay.counterparty === undefined && getAddress(m.to) !== ZERO_ADDRESS)
+        Object.assign(typedDisplay, { counterpartyLabel: 'To', counterparty: getAddress(m.to) });
+      const reusable = warnings.indexOf('Network context not included in the signed domain; this signature may be reusable on other networks.');
+      if (reusable >= 0) warnings.splice(reusable, 1);
+      warnings.unshift('HIGH RISK: This Safe signature names no network, so it can be executed on every chain where this Safe exists. Check the amount and recipient as if it will run on all of them.');
+      riskLevel = 'high';
+    }
   } else if (/permit/i.test(t.primaryType)) {
     const permit2612 = canonical('Permit', [['owner','address'],['spender','address'],['value','uint256'],['nonce','uint256'],['deadline','uint256']]);
     const permitDai = canonical('Permit', [['holder','address'],['spender','address'],['nonce','uint256'],['expiry','uint256'],['allowed','bool']]);
@@ -628,7 +671,9 @@ function typedDataReview(request, common) {
         ...(contract ? { contract } : {}), ...(asset ? { asset } : {}) }) };
 }
 
-export function parseEVM(request) {
+/** `context.signerAddress` is the wallet a signing plan matched, for requests that
+ * do not name their sender. It never enters the request hash or the signing bytes. */
+export function parseEVM(request, context = {}) {
   check(!request.network || request.network === 'mainnet', 'NETWORK', 'Unsupported network');
   for (const id of [request.chainId, request.transport?.chainId].filter(v => v !== undefined)) evmNetwork(uint(id));
   if (request.chainId !== undefined && request.transport?.chainId !== undefined) check(uint(request.chainId) === uint(request.transport.chainId), 'CHAIN_ID', 'Conflicting network context in the request and transport.');
@@ -657,7 +702,7 @@ export function parseEVM(request) {
   check(raw && (typeof raw === 'string' || typeof raw === 'object'), 'TRANSACTION', 'Missing EVM transaction.');
   let unsigned = raw;
   if (typeof raw === 'object') {
-    const allowed = ['type', 'to', 'nonce', 'gasLimit', 'gasPrice', 'maxPriorityFeePerGas', 'maxFeePerGas', 'data', 'value', 'chainId', 'accessList', 'from'];
+    const allowed = ['type', 'to', 'nonce', 'gasLimit', 'gasPrice', 'maxPriorityFeePerGas', 'maxFeePerGas', 'data', 'value', 'chainId', 'accessList', 'authorizationList', 'from'];
     check(Object.keys(raw).every(k => allowed.includes(k)), 'TRANSACTION', 'Unsupported EVM transaction field.');
     check(raw.chainId !== undefined && raw.nonce !== undefined && raw.gasLimit !== undefined, 'TRANSACTION', 'Chain ID, nonce and gas limit are required.');
     // 'from' is not part of an unsigned transaction; when present (null means
@@ -672,8 +717,12 @@ export function parseEVM(request) {
   }
   const tx = Transaction.from(unsigned);
   check(!tx.signature, 'TRANSACTION', 'EVM transaction is already signed.');
-  check([0, 1, 2].includes(tx.type ?? tx.inferType()), 'UNSUPPORTED', 'Only EVM legacy, EIP-2930 and EIP-1559 transactions are supported.');
+  check([0, 1, 2, 4].includes(tx.type ?? tx.inferType()), 'UNSUPPORTED', 'Only EVM legacy, EIP-2930, EIP-1559 and EIP-7702 transactions are supported.');
   check(tx.chainId > 0n, 'CHAIN_ID', 'Unprotected or missing-chain-ID EVM transactions are refused.');
+  if ((tx.type ?? tx.inferType()) === 4) {
+    check(tx.to != null, 'AUTHORIZATION', 'An EIP-7702 transaction must name a destination address; it cannot deploy a contract.');
+    check((tx.authorizationList ?? []).length > 0, 'AUTHORIZATION', 'An EIP-7702 transaction must carry at least one authorization.');
+  }
   const network = evmNetwork(tx.chainId);
   if (request.chainId !== undefined) check(tx.chainId === uint(request.chainId), 'CHAIN_ID', 'Chain ID does not match the signing request.');
   if (request.transport?.chainId !== undefined) check(tx.chainId === uint(request.transport.chainId), 'CHAIN_ID', 'Transport chain ID differs from the transaction.');
@@ -688,22 +737,77 @@ export function parseEVM(request) {
     field('Nonce', tx.nonce), field('Gas limit', tx.gasLimit), field('Maximum gas price (wei)', feePerGas),
     field('Maximum network fee (' + network.symbol + ')', decimal(maxFee, 18))];
   let riskLevel = call.riskLevel;
+  // An unnamed chain is signed, not refused: the chain ID is part of what gets
+  // signed, so a signature made here is valid on that chain and on no other. What
+  // cannot be done is name it or price anything on it, and saying so is the point.
+  if (!network.known) {
+    call.warnings.unshift(`This device does not recognise EVM chain ${network.chainId}, so it cannot name the network or its native currency, and no token or contract on it is registered here — every address below reads as unregistered. Amounts are shown to 18 decimals, the usual EVM convention. Check the network in the wallet that built this request.`);
+    if (riskLevel === 'normal') riskLevel = 'warning';
+  }
   if (['10', '42161', '8453'].includes(network.chainId)) call.warnings.push('Additional L1 data or rollup fees are not bound by gasLimit × gas price and cannot be calculated fully offline.');
-  if (maxFee > (HIGH_FEE[network.chainId] ?? 5n * 10n ** 16n)) {
+  // Calling a fee "high" needs a sense of what the native currency is worth, and
+  // this device is offline. The eight calibrated chains keep their own ceiling;
+  // anything else denominated in ETH takes the same 0.05 ETH as Ethereum does.
+  // On a chain whose native currency has no ceiling here, no claim is made: the
+  // maximum is shown and the review says it could not be judged, which is better
+  // than a threshold guessed from a token price that moves.
+  const feeCeiling = HIGH_FEE[network.chainId] ?? (network.symbol === 'ETH' ? 5n * 10n ** 16n : undefined);
+  if (feeCeiling === undefined) {
+    call.warnings.push(`This device has no reference for a normal network fee on ${network.name}, so it cannot tell you whether this one is unusual. The maximum is shown above.`);
+  } else if (maxFee > feeCeiling) {
     call.warnings.unshift(`HIGH FEE: This transaction allows up to ${nativeAmount(network, maxFee)} in network fees. Check the gas settings in your other wallet.`);
     riskLevel = 'high';
   }
   if (tx.accessList?.length) fields.push(field('Access list', JSON.stringify(tx.accessList)));
+  // EIP-7702. A non-empty list is the strongest thing an account can sign, so a
+  // grant is always high risk and never reads as fully decoded — the delegate's
+  // code is on-chain and this device cannot look at it. A revocation gives nothing
+  // away, but one by another account depends on that account's on-chain nonce.
+  let decodeStatus = call.decodeStatus, title = call.title, callDisplay = call.display, delegationSummary;
+  if ((tx.type ?? tx.inferType()) === 4) {
+    const list = tx.authorizationList;
+    check(list.length <= 32, 'AUTHORIZATION', 'Too many EIP-7702 authorizations.');
+    fields.push(field('Account code delegations (EIP-7702)', String(list.length)));
+    const sender = context.signerAddress ?? request.address ?? (typeof raw === 'object' && raw.from ? raw.from : undefined);
+    const authorized = authorizations(list, network, sender ? getAddress(sender) : undefined, tx.nonce);
+    fields.push(...authorized.fields);
+    call.warnings.unshift(...authorized.warnings);
+    if (!authorized.entries.every(entry => entry.revokes && entry.authority)) {
+      riskLevel = 'high';
+      if (decodeStatus === 'fullyDecoded') decodeStatus = 'partiallyDecoded';
+    } else if (authorized.entries.some(entry => !entry.isSigner)) {
+      if (decodeStatus === 'fullyDecoded') decodeStatus = 'partiallyDecoded';
+      if (riskLevel === 'normal') riskLevel = 'warning';
+    }
+    // The list is what this transaction is for: the outer call is usually empty
+    // or a call into the code being installed. Its title, card and summary used to
+    // come from that outer call, so handing the whole account to a contract read
+    // "Send 0 ETH". When the outer call also moves funds, both are named, neither alone.
+    const entries = authorized.entries, one = entries.length === 1 ? entries[0] : undefined;
+    const movesFunds = tx.value > 0n || call.effect === 'moves';
+    const action = one?.revokes ? 'Remove account delegation' : one ? 'Delegate account' : 'Change account delegations';
+    const headline = movesFunds ? 'Changes account delegation and moves funds · review each below'
+      : !one ? 'Several account delegations · review each below'
+      : one.revokes ? (one.isSigner ? 'Restores this account to a plain account' : 'Removes the code delegation of another account')
+      : (one.isSigner ? 'Hands this account to a contract' : 'Hands another account to a contract') + (one.everyChain ? ' on every chain' : '');
+    title = action;
+    callDisplay = { action, headline, ...(one && !one.revokes && !movesFunds ? { counterpartyLabel: 'Delegate contract', counterparty: one.delegate } : {}) };
+    const whose = entry => entry.isSigner ? 'this account' : entry.authority ? 'account ' + getAddress(entry.authority) : 'an account';
+    const moved = tx.value > 0n ? nativeAmount(network, tx.value) : call.asset ? `${call.asset.displayAmount} ${call.asset.symbol}` : undefined;
+    delegationSummary = (!one ? `${entries.length} account delegations` : one.revokes ? `Remove the code delegation of ${whose(one)}`
+      : `Delegate ${whose(one)} to ${one.delegate}${one.everyChain ? ' on every chain' : ''}`)
+      + (movesFunds ? (moved ? ` and send ${moved}` : ' and move funds') : '');
+  }
   const contract = counterpartyNotice('evm', network.chainId, call.counterparty, call.warnings);
   if (contract?.known) fields.push(field(contract.role === 'spender' ? 'Spender (known contract)' : contract.role === 'operator' ? 'Operator (known contract)' : 'Contract (known)',
     `${contract.name} — ${contract.protocol} · ${contract.category}${contract.everyChain ? ' (same address on every EVM network)' : ''}`));
   if (contract && !contract.known && ['spender', 'operator'].includes(contract.role)) riskLevel = riskLevel === 'high' ? 'high' : 'warning';
   const rawAmount = call.fields.find(f => ['Token amount (raw units)', 'Allowance / NFT token ID', 'Amount / NFT token ID'].includes(f.label));
-  const summary = call.asset ? `${call.title}: ${call.asset.displayAmount} ${call.asset.symbol}` : call.title === 'Native transfer' ? `${decimal(tx.value, 18)} ${network.symbol}`
-    : call.summary ?? (rawAmount ? `${call.title}: ${rawAmount.value} raw units` : call.title);
+  const summary = delegationSummary ?? (call.asset ? `${call.title}: ${call.asset.displayAmount} ${call.asset.symbol}` : call.title === 'Native transfer' ? `${decimal(tx.value, 18)} ${network.symbol}`
+    : call.summary ?? (rawAmount ? `${call.title}: ${rawAmount.value} raw units` : call.title));
   return { path, digest: tx.unsignedHash, signingBytesDigest: tx.unsignedHash.slice(2), tx,
-    review: reviewResult(request, call.title, summary, fields, call.warnings, { decodeStatus: call.decodeStatus, riskLevel,
-      display: { ...call.display, fee: decimal(maxFee, 18) + ' ' + network.symbol },
+    review: reviewResult(request, title, summary, fields, call.warnings, { decodeStatus, riskLevel,
+      display: { ...callDisplay, fee: decimal(maxFee, 18) + ' ' + network.symbol },
       network: { chainId: network.chainId, name: network.name, symbol: network.symbol },
       ...(contract ? { contract } : {}), ...(call.asset ? { asset: call.asset } : {}) }) };
 }
@@ -714,8 +818,72 @@ function integerBytes(n) {
   return hexToBytes(text);
 }
 
+/** What an EIP-7702 transaction's authorization list actually does.
+ *
+ * Each entry is a separate signature by some account — its "authority" — saying
+ * that the code at `address` may act as that account's own code from then on.
+ * That is the most far-reaching thing an EOA can sign: the delegate contract can
+ * move everything the account holds, on every later transaction, until the
+ * delegation is replaced. The authority is not stated in the entry; it is
+ * recovered from the entry's own signature, which is the only way to tell whose
+ * account is being handed over — including whether it is this wallet's.
+ *
+ * `chainId` 0 inside an entry means the delegation applies on every chain, which
+ * is strictly worse than one that is pinned to the chain being signed for.
+ * `address` 0x0 is the opposite: it removes a delegation rather than granting one.
+ */
+function authorizations(list, network, signerAddress, outerNonce) {
+  const fields = [], warnings = [];
+  // EIP-7702 increments the sender's nonce before it processes the list, and every
+  // entry that takes effect increments its authority's nonce again. An entry whose
+  // nonce does not match is skipped on-chain while the rest of the transaction
+  // still runs. For this wallet's own entries that nonce is therefore known here,
+  // and an entry that cannot take effect has no place in a transaction to sign.
+  let ownNonce = BigInt(outerNonce) + 1n;
+  const entries = list.map((entry, index) => {
+    const delegate = getAddress(entry.address);
+    const chainId = uint(entry.chainId ?? 0), nonce = uint(entry.nonce ?? 0);
+    let authority;
+    try { authority = verifyAuthorization({ address: delegate, nonce, chainId }, entry.signature); }
+    catch { authority = undefined; }
+    const revokes = delegate === ZERO_ADDRESS;
+    const everyChain = chainId === 0n;
+    check(everyChain || chainId === uint(network.chainId), 'AUTHORIZATION',
+          `Authorization ${index + 1} is for chain ${chainId}, but this transaction is for chain ${network.chainId}.`);
+    const isSigner = !!authority && !!signerAddress && authority.toLowerCase() === signerAddress.toLowerCase();
+    if (isSigner) {
+      check(nonce === ownNonce, 'AUTHORIZATION',
+            `Authorization ${index + 1} cannot take effect: it is signed for nonce ${nonce}, but this wallet’s nonce will be ${ownNonce} when it is applied.`);
+      ownNonce += 1n;
+    }
+    return { index, delegate, chainId, nonce, authority, revokes, everyChain, isSigner };
+  });
+  for (const entry of entries) {
+    const label = `Authorization ${entry.index + 1}`;
+    fields.push(field(`${label} · Account being changed`, entry.authority ?? 'Not recoverable from this signature'),
+                field(`${label} · ${entry.revokes ? 'Removes delegation to' : 'Delegates account code to'}`, entry.revokes ? 'none (0x0)' : entry.delegate),
+                field(`${label} · Applies on`, entry.everyChain ? 'every EVM chain' : network.name),
+                field(`${label} · Account nonce`, entry.nonce));
+    if (!entry.authority) {
+      warnings.push(`HIGH RISK: ${label} carries a signature this device cannot read, so it cannot say whose account is being changed.`);
+      continue;
+    }
+    if (entry.revokes) {
+      warnings.push(entry.isSigner
+        ? `${label} removes the code delegation on ${entry.authority}. That restores a plain account and takes no new permission.`
+        : `${label} asks to remove the code delegation on ${entry.authority}. It takes effect only if that account’s nonce is ${entry.nonce} when this transaction runs, which BitTool Signer cannot check offline.`);
+      continue;
+    }
+    warnings.push(entry.isSigner
+      ? `HIGH RISK: ${label} hands this wallet's own account (${entry.authority}) to the contract at ${entry.delegate}. From then on that contract's code runs as your account and can move everything in it, on every later transaction, until the delegation is replaced. BitTool Signer is offline and cannot read that contract. Only continue if you set this up and trust that contract completely.`
+      : `HIGH RISK: ${label} hands the account ${entry.authority} to the contract at ${entry.delegate}. That contract's code then runs as that account and can move everything in it.`);
+    if (entry.everyChain) warnings.push(`HIGH RISK: ${label} is signed for chain 0, so it applies on every EVM chain, not only ${network.name}.`);
+  }
+  return { fields, warnings, entries };
+}
+
 export function signEVM(request, seed, root, task) {
-  const parsed = parseEVM(request), target = task?.targets?.[0];
+  const target = task?.targets?.[0], parsed = parseEVM(request, target?.address ? { signerAddress: target.address } : {});
   if (task) check(task.targets?.length === 1, 'SIGNER', 'An EVM task requires one signer.');
   return withKey(seed, root, 'evm', target?.path ?? parsed.path, (key, pub) => {
     const address = computeAddress('0x' + bytesToHex(pub));

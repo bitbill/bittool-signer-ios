@@ -5,6 +5,16 @@ Based on the BitTool Signer workspace code, real QR round-trip tests, and the us
 `fixtures/source-snapshot.json`. This is the implementation task for BitTool Wallet; the text below
 can be handed straight to a development agent.
 
+> **Superseded in part, 15 November 2026 — the wire version is now 2.** BitTool Signer 1.1.0 emits
+> `version: 2` with a **wallet-identity signature** (`khSig`, `khEpoch`) that the receiving side must
+> verify on the device before it creates a wallet, and it no longer emits version 1. Wherever the text
+> below says the version is `1`, or tells you to refuse version 2, read
+> [`../Wallet-Pairing-v2.md`](../Wallet-Pairing-v2.md) instead; the signature vectors to reproduce are
+> in [`../kh2_bittool_vectors.json`](../kh2_bittool_vectors.json), and `fixtures/wallet-pairing-v1-rejected.json`
+> is a version 1 payload kept so you can test that you refuse one. Everything else in this prompt —
+> the accounts, the two CBOR layers, canonical encoding, the UR transport and the signing vectors —
+> still stands.
+>
 > **Updated 18 October 2026.** The wallet-level payload now exports **seven accounts** — four Bitcoin
 > script types, EVM, TRON — and **three Solana addresses**, across four animated frames, with 1,561
 > bytes of inner CBOR at a 400-byte fragment length. The earlier version of this document described
@@ -46,7 +56,7 @@ placeholders in the draft:
 
 | Item | Current BitTool Signer | What BitTool Wallet must do |
 |---|---|---|
-| Wallet protocol version | Integer `1` | Refuse unknown versions explicitly; the v2 in the attached filename does not mean wire version 2 |
+| Wallet protocol version | Integer `2` since BitTool Signer 1.1.0 (was `1`) | Accept `2` only, and refuse every other version — version 1 included. See `../Wallet-Pairing-v2.md` |
 | Wallet QR | `ur:bytes` containing a CBOR byte string, inside which is a canonical CBOR object | Both CBOR layers must be decoded correctly |
 | `mode` | The current export still carries `"full"`, and exports only this one format | Be compatible with the current export; show no Simple/Full UI |
 | The draft has no `mode` | The current code has not dropped the field | **A receiver-side compatibility extension for BitTool Wallet**: allow it to be absent or `full`, treating both as synonymous, and refuse other values for now. Do not claim that BitTool Signer currently emits a mode-less format |
@@ -544,8 +554,10 @@ implementation is JavaScript, Swift or Kotlin, it must pass the same vectors.
 1. Import the accompanying real current pairing and compare item by item: **the four Bitcoin account
    xpubs, the EVM and TRON xpubs, the nine first addresses, and all three Solana paths and addresses**.
    Validate the inner CBOR and the UR outer bytes, and confirm out-of-order and repeated frames produce
-   the same result. **All four frames must be required before a result is produced.**
-2. Test the mode-less receiver extension separately. Refuse version `"1"` as a string, version 2, mode
+   the same result. **Every frame must be required before a result is produced** (the current payload is
+   five frames; do not hard-code the count).
+2. Test the mode-less receiver extension separately. Refuse version `"2"` as a string, version 1,
+   version 3, a missing, malformed, wrong-epoch, malleated or other-wallet `khSig`, mode
    simple, an unknown network, xprv, a corrupt xpub, the wrong depth, index or path, a duplicate chain
    and script combination, a missing entry, duplicate Solana addresses, an oversized payload, duplicate
    CBOR keys, mixed sessions and a corrupt checksum. Unknown optional fields may be ignored.

@@ -120,11 +120,18 @@ test('SOL-NFT-1: recipient resolution fails closed on mint, order, program, re-o
   // Token program mismatch: the Token-2022 ATA is used with a classic transfer.
   unresolved([ataIx(recipient, mint, TOKEN2022), transferChecked({ source, mint, destination: ata(recipient, mint, TOKEN2022) })], 'token program mismatch');
   // SetAuthority(AccountOwner) or CloseAccount on the destination between the two instructions.
-  unresolved([ataIx(recipient, mint), { program: TOKEN, accounts: [destination, recipient], data: bytes([6, 2, 1], base58.decode(k(0x99))) }, transferChecked({ source, mint, destination })], 'SetAuthority in between');
+  // Re-owning the destination is itself a change of control, so it now leads the
+  // headline (BTS-02); what this case guards is unchanged: no folded recipient.
+  const reowned = [ataIx(recipient, mint), { program: TOKEN, accounts: [destination, recipient], data: bytes([6, 2, 1], base58.decode(k(0x99))) }, transferChecked({ source, mint, destination })];
+  unresolved(reowned, 'SetAuthority in between', false);
+  assert.deepEqual([review(reowned).display.action, review(reowned).display.counterparty], ['Change token authority', k(0x99)]);
   unresolved([ataIx(recipient, mint), { program: TOKEN, accounts: [destination, recipient, recipient], data: new Uint8Array([9]) }, transferChecked({ source, mint, destination })], 'CloseAccount in between', false);
   // Any opaque instruction anywhere in the transaction, even after the transfer.
-  const opaque = unresolved([ataIx(recipient, mint), transferChecked({ source, mint, destination }), { program: k(0x98), accounts: [destination], data: new Uint8Array([1]) }], 'opaque instruction');
+  // The undecoded instruction also keeps the transfer from standing alone as the
+  // headline: it could move anything this wallet controls.
+  const opaque = unresolved([ataIx(recipient, mint), transferChecked({ source, mint, destination }), { program: k(0x98), accounts: [destination], data: new Uint8Array([1]) }], 'opaque instruction', false);
   assert.equal(opaque.riskLevel, 'high');
+  assert.equal(opaque.display.headline, 'Moves funds and runs undecoded instructions · review each below');
   // An unchecked transfer carries no mint, so the ATA's mint cannot be matched.
   const unchecked = unresolved([ataIx(recipient, mint), { program: TOKEN, accounts: [source, destination, ME], data: bytes([3], u64(1)) }], 'unchecked transfer');
   assert.deepEqual([unchecked.display.amount, unchecked.display.symbol], ['1', 'raw unit']);

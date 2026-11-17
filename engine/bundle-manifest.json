@@ -1,8 +1,8 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "file": "BitToolSigner/Resources/signer.js",
-  "sha256": "4b3717599e8ee3ed9d2480e640e7203731543cc8ab0f2c3cec3b78e6f400fa19",
-  "bytes": 1181432,
+  "sha256": "f774f1f2b0614e7faec0eeac30ee216bd351ae4f2a326846a057b489a7c01a96",
+  "bytes": 1203208,
   "inputs": [
     "data/known-contracts.engine.json",
     "data/token-registry.engine.json",
@@ -268,6 +268,7 @@
     "src/evm.js",
     "src/index.js",
     "src/keys.js",
+    "src/kh2.js",
     "src/known-contracts.js",
     "src/nft-orders.js",
     "src/polyfills.js",

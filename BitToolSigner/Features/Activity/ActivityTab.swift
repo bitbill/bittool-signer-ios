@@ -68,7 +68,7 @@ private struct ActivityRow: View {
         HStack(spacing: 12) {
             ReceiptLogo(receipt: receipt, size: 36)
             VStack(alignment: .leading, spacing: 3) {
-                Text(receipt.title).font(.subheadline.weight(.semibold)).lineLimit(2)
+                Text(verbatim: ReviewText.phrase(receipt.title)).font(.subheadline.weight(.semibold)).lineLimit(2)
                 Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
             }
             Spacer(minLength: 8)
@@ -122,7 +122,7 @@ struct ActivityDetailView: View {
             Section {
                 VStack(spacing: 10) {
                     ReceiptLogo(receipt: receipt, size: 56)
-                    Text(receipt.title).font(.title3.weight(.bold)).multilineTextAlignment(.center)
+                    Text(verbatim: ReviewText.phrase(receipt.title)).font(.title3.weight(.bold)).multilineTextAlignment(.center)
                     if let summary = receipt.summary, !summary.isEmpty {
                         Text(summary).font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
                     }
@@ -214,16 +214,17 @@ struct ActivityDetailView: View {
     }
 
     static func essentials(of review: TransactionReview) -> [Essential] {
-        var lines = [Essential(id: "action", label: "Action", value: review.display?.action ?? review.title)]
+        var lines = [Essential(id: "action", label: "Action", value: ReviewText.phrase(review.display?.action ?? review.title))]
         if let display = review.display {
             if let amount = display.amount {
                 lines.append(Essential(id: "amount", label: "Amount",
-                                       value: [amount, display.symbol].compactMap { $0 }.joined(separator: " ")))
+                                       value: ReviewText.amountLine(amount, display.symbol)))
             }
             if let counterparty = display.counterparty {
                 // The engine's own caption ("Spender", "Operator", "To").
                 lines.append(Essential(id: "counterparty", label: LocalizedStringKey(display.counterpartyLabel ?? "To"),
-                                       value: AddressFormatter.short(counterparty, leading: 6, trailing: 6)))
+                                       value: AddressFormatter.looksLikeAddress(counterparty)
+                                        ? AddressFormatter.short(counterparty, leading: 6, trailing: 6) : counterparty))
             }
             if let fee = display.fee {
                 // The same distinction the pre-sign review makes: an energy
@@ -289,7 +290,8 @@ private struct SignedRequestView: View {
                     ContractNotice(contract: contract)
                 }
                 ForEach(Array(review.warnings.enumerated()), id: \.offset) { _, warning in
-                    Callout(verbatim: warning, tone: warning.uppercased().hasPrefix("HIGH") ? .danger : .warning)
+                    // Translated as the review screen translates it; the tone is read from the engine's English.
+                    Callout(verbatim: ReviewText.sentence(warning), tone: warning.uppercased().hasPrefix("HIGH") ? .danger : .warning)
                 }
                 ReviewDetailsCard(fields: review.fields)
             }

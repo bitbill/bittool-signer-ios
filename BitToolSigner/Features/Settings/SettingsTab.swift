@@ -175,11 +175,11 @@ struct CompatibilityView: View {
             item(.bitcoin, formats: "crypto-account (account xpub), crypto-psbt, BBQR, Base64 PSBT",
                  signing: "PSBT v0/v2: single-sig (Legacy, Nested, Native SegWit, Taproot) and multisig (P2SH, P2SH-P2WSH, P2WSH, Taproot script path). MuSig2 is not supported.")
             item(.evm, formats: "crypto-hdkey (EIP-4527), eth-sign-request / eth-signature",
-                 signing: "Legacy, EIP-2930 and EIP-1559 transactions, personal messages and EIP-712 typed data, including Safe, Permit2 and NFT marketplace orders.")
+                 signing: "Legacy, EIP-2930, EIP-1559 and EIP-7702 transactions on any EVM chain, personal messages and EIP-712 typed data, including Safe, Permit2 and NFT marketplace orders.")
             item(.tron, formats: "Address QR (any index), tron-sign-request / tron-signature",
                  signing: "TRX and TRC-20 transfers, contract calls, permission updates and Stake 2.0 resources. No mainstream wallet sends TRON transactions to a QR signer in this format yet.")
             item(.solana, formats: "crypto-multi-accounts, sol-sign-request / sol-signature",
-                 signing: "Legacy and v0 transactions with static accounts, and messages. Address lookup tables are not supported offline.")
+                 signing: "Legacy and v0 transactions, including address lookup tables, and messages. An address a table supplies is labelled as such and cannot be shown, so the review marks the transaction high risk.")
             Section {
                 HStack(spacing: 12) {
                     Image(systemName: "square.grid.2x2.fill")
@@ -188,7 +188,7 @@ struct CompatibilityView: View {
                         .accessibilityHidden(true)
                     Text("Wallet Level · all chains").font(.headline)
                 }
-                DetailLine(label: "QR format", value: "bittool-signer-wallet v1 (ur:bytes, canonical CBOR): an account xpub for each Bitcoin address type, for EVM and for TRON, and all three Solana addresses, in one animated QR", monospaced: false)
+                DetailLine(label: "QR format", value: "bittool-signer-wallet v2 (ur:bytes, canonical CBOR): an account xpub for each Bitcoin address type, for EVM and for TRON, all three Solana addresses and this wallet’s identity signature, in one animated QR", monospaced: false)
                 WalletGroup(title: "Works with", systemImage: "qrcode.viewfinder", wallets: CompatibleWallets.walletLevel)
                     .padding(.vertical, 4)
             }

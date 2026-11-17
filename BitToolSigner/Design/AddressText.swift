@@ -6,6 +6,11 @@ import SwiftUI
 enum AddressFormatter {
     static func groups(_ value: String, size: Int = 4) -> [String] {
         guard size > 0, !value.isEmpty else { return [value] }
+        // Grouping exists so two compact identifiers can be compared character by
+        // character. A value with spaces in it is prose — the placeholder for an
+        // account this device cannot resolve, for one — and cutting it into fours
+        // only makes it unreadable.
+        guard !value.contains(where: \.isWhitespace) else { return [value] }
         var body = Substring(value)
         var result: [String] = []
         if body.hasPrefix("0x") || body.hasPrefix("0X") {
@@ -45,9 +50,20 @@ struct AddressText: View {
     var font: Font = .body
     var groupSize = 4
 
-    var body: some View {
+    @ViewBuilder var body: some View {
+        if address.contains(where: \.isWhitespace) { plain } else { grouped }
+    }
+
+    /// Prose, not an identifier: shown as it is, in the ordinary face.
+    private var plain: some View {
+        Text(verbatim: address)
+            .font(font)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var grouped: some View {
         let groups = AddressFormatter.groups(address, size: groupSize)
-        groups.enumerated().reduce(Text(verbatim: "")) { text, item in
+        return groups.enumerated().reduce(Text(verbatim: "")) { text, item in
             let (index, group) = item
             let edge = index == 0 || index == groups.count - 1
             let piece = Text(verbatim: group)

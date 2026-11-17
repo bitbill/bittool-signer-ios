@@ -36,7 +36,7 @@ struct SignatureResultView: View {
                             ChainLogo(chain: review.chain, size: 32)
                         }
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(review.title).font(.subheadline.weight(.semibold))
+                            Text(verbatim: ReviewText.phrase(review.title)).font(.subheadline.weight(.semibold))
                             if !review.summary.isEmpty {
                                 Text(review.summary).font(.footnote).foregroundStyle(.secondary).lineLimit(2)
                             }

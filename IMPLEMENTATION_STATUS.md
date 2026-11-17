@@ -1,8 +1,9 @@
-# BitTool Signer implementation status · Revision 11 (18 October 2026)
+# BitTool Signer implementation status · Revision 17 (17 November 2026)
 
 This log records what was changed in each round, what was tested, and — just as importantly —
-what has **not** been verified. Newest revisions first. Version **1.0.0 (1)**, iOS 17 minimum,
-with Liquid Glass on iOS 26 and native fallbacks on iOS 17 and 18.
+what has **not** been verified. Newest revisions first. Version **1.1.0 (2)**, iOS 17 minimum,
+with Liquid Glass on iOS 26 and native fallbacks on iOS 17 and 18. Version 1.0.0 (1) was uploaded
+to App Store Connect from tag `v1.0.0`; this round is the first change on top of it.
 
 The app has not shipped, so each round adopts the new storage format directly and does not
 migrate older development data. The product decisions (D01–D28) of the original Revision 1
@@ -11,6 +12,498 @@ request: Bitcoin now exports an Account XPUB by default, the leaf-public-key mod
 export any address index, and Ownbit and its display rules were removed. That specification was a
 pre-implementation work order whose decisions this log supersedes in places, so it is no longer
 published here; it remains in the Git history from the initial commit.
+
+## Revision 17 (17 November 2026): the independent 1.1.0 audit, and three more from the Android port
+
+**Where they came from.** Two sources, fixed together and synced to Android as one bundle:
+
+1. An independent audit of this repository at 1.1.0, written from a third party's point of view
+   (not published yet; see `SECURITY.md`): no Critical or High, six Medium. Five
+   are fixed here. M-02 (Bitcoin change may sit at any derivation index of the wallet, the identity
+   path included) is left as it is by product decision.
+2. A brief from the Android port (`docs/qa/ios-fix-brief-2026-11-17/` in the Android repository),
+   written after two audits of Android 1.1.0. Its M-01 is the audit's M-03 below. BTS-02 and BTS-11
+   are in the shared engine; §4 is this app's own unlock delay.
+
+| ID | What was wrong | Fix |
+| --- | --- | --- |
+| M-01 | About half of the engine's warnings, HIGH RISK ones included, reached people in English in all 20 languages. The Revision 15 check scanned source literals and missed warnings held in constants, returned by helpers, or numbered (`Order 2: …`) | `ReviewText` now draws every kind of engine text through one entry point, `render(english, as: kind)`, with kinds for phrases, headlines, Details labels and sentences. Labels are translated part by part (`Instruction 4 · Amount (USDC)`); numbered sentences keep their number and severity marker; values stay exactly as the engine wrote them. Templates moved to `ReviewTextTemplates.swift`: 23 → **96**, four of them with slots whose values are engine text in turn. A numbered sentence that does not translate in full is drawn exactly as the engine wrote it. Coverage is now measured on the engine's **real output**: `engine/test/support/review-text-corpus.mjs` runs the whole engine suite and records every warning, refusal, title, action, headline and label it produces (`engine/test/fixtures/review-text-corpus.json`); `ReviewTextCoverageTests` draws each through all 20 bundles and fails on any English fallback. Headlines that are only values (amounts, NFT IDs, roots) are exempt |
+| M-03 (Android M-01) | A Solana dust transfer was the headline and the Activity summary of a transaction that also ran an instruction this device cannot decode, which can move anything the wallet controls | Beside a transfer, burn or permission change, an undecoded instruction makes the action `Sign Transaction`, the headline name both (`Moves funds and runs undecoded instructions · review each below`), the first warning a HIGH RISK one, and the summary end in ` and N undecoded instruction(s)`. Marketplace programs keep their own headline, but no longer cover another program's undecoded instruction |
+| M-04 | A Safe transaction with no chain ID showed `Safe: Send` with no amount or recipient, at normal risk | The amount (`native coin`, 18 decimals) and recipient are shown; the yellow note became a HIGH RISK warning that the signature is valid on every chain the Safe exists on; risk is high |
+| M-05 | A Safe MultiSend folded a 1,000,000 USDC transfer into `(+1 more)` behind three revokes | `decodeCall` reports each call's effect; transfers, DELEGATECALLs, undecoded calls and grants are always named before revokes, and more than eight of them become a count (`10 calls: 9 transfers, 1 other · review each below`) |
+| M-06 | An EIP-7702 delegation of the whole account read `Send 0 ETH` | Title, action, headline, counterparty (`Delegate contract`) and summary describe the delegation; with value as well, both are named |
+| BTS-02 | A burn beside a permission change was counted as a transfer: `Remove token authority (Mint tokens) and 1 transfer`, under `Changes permissions and moves funds` | Four kinds of effect, each named when another is present: permission change, burn, transfer, undecoded instruction. Six new fixed headlines (`Changes permissions and destroys assets · review each below` and its combinations), two new first warnings, and a summary that names the burn (`… and burn 1000000000 raw units`) and counts only real transfers. A burn beside transfers alone keeps its own headline, which already names both. Risk, the burn warnings and the acknowledgement are unchanged |
+| BTS-11 | A Metaplex TransferV1 whose metadata, edition or token-record account came from a lookup table was refused outright: the table placeholder never equalled the derived PDA, so `INSTRUCTION` was thrown before the raw-bytes fallback | Each of the four comparisons first checks for a placeholder and throws `LOOKUP_TABLE`, so that instruction falls back to raw bytes and HIGH RISK. A wrong account that is in the message is still refused. No other `===` comparison in `solana.js` refuses a placeholder |
+| §4 | The failed-password delay was a date. An offline phone's date is whatever its owner sets: forward skipped every delay, a clock reset locked the wallet for the gap | The delay runs on `CLOCK_MONOTONIC_RAW`, the clock App Lock already uses (counts sleep, cannot be set, restarts at boot). The `.attempts` file also stores `attemptUptime`; time left is `attemptUptime + delay − now`, never more than one delay. An attempt from an earlier boot is counted from the current boot, so a restart can only lengthen the wait; a file written by 1.0.0 runs one full delay from the first try. `retryAfter` is still written, so an older build can read the file, but is no longer read. `docs/Security.md` updated |
+
+**Catalogue.** `engine/data/interface-strings.json` 1207 → **1538** keys (+331, none removed): Details
+labels and their numbered keys, display actions and headlines (including the seven actions
+Revision 16 listed as never catalogued), warnings, the 47 refusals the tests and the fuzzing reach
+most, counterparty labels, unit words. All 20 languages written; `.lproj` files regenerated.
+
+**Engine bundle.** SHA-256 `f774f1f2b0614e7faec0eeac30ee216bd351ae4f2a326846a057b489a7c01a96`,
+**1,203,208** bytes (was `40670e04…`, 1,198,633). Rebuilt in an isolated directory: byte-identical,
+`bundle-manifest.json` too. The network and `eval` patterns occur 0 times. Handoff
+`source-snapshot.json` and `SHA256SUMS.json` regenerated; pairing and signing fixtures unchanged.
+
+**Tests.** Engine **265/265** (was 257): `headline-consequence.test.mjs` (5, new), two new in
+`solana-authority-headline.test.mjs`, one new in `solana-lookup-accounts.test.mjs` (the BTS-11 role
+matrix, each signed after acknowledgement and the signature verified), and updated expectations in
+`nft-solana.test.mjs` and `nft-evm.test.mjs`. The Android repro prints what its brief expects. Swift
+**192 tests in 26 suites**, all passing: `ReviewTextCoverageTests` (new; every engine text in 20
+languages) and two clock tests in `SecurityTests`. The Connect QR timing test that failed once under
+a machine load of about 200 passed in this run.
+
+**Not verified in this round.** The new strings were written by AI and not read by a native speaker
+of any language. The lookup-table, burn and Safe cases are synthetic; nothing was put on a chain.
+The unlock delay was tested with an injected clock only: sleep, a changed date and a restart were not
+tried on a device, and that the clock counts sleep rests on Darwin's `clock_gettime(3)`. UI tests
+were not rerun, and nothing was tested on a physical device. **Known gap:** Solana burn headlines
+(`Destroys 1000000 tokens · 1 other transfer below`, `Destroys 2 NFT in 2 burns`) still show in English: the
+coverage test treats `Destroys <amount> …` as a value, but these carry words. Translating them needs
+a template slot for amounts with unit words, and Android must follow, so it is left for a later
+round. Still open from the 1.1.0 audits: M-02 (above), L-2 (one damaged vault file hides every
+wallet), L-3 (`docs/Security.md` is still titled v1.0.0), and the two product questions from the Android audits (raising the delay past five minutes,
+a list of common passwords).
+
+## Revision 16 (16 November 2026, night): eight findings from an external 1.1.0 audit, and two of ours
+
+**Where they came from.** An external AI audit of the Android 1.1.0 workspace raised six findings,
+and the Android port found two more while doing Revision 15. Every one of them lives in code this
+repository owns — the shared engine, its tests, `docs/Wallet-Pairing-v2.md` and the string catalogue
+— so they are fixed here and Android syncs the result byte for byte. Each was reproduced on this
+workspace before it was fixed; the reproduction for each is in its test. Two more are from this
+repository's own 1.1.0 audit (not published): L-1, and a constraint on
+the BTS-10 fix that the Android brief did not state.
+
+| ID | What was wrong | Fix |
+| --- | --- | --- |
+| §7.1 | Five HIGH RISK warnings — both lookup-table warnings, the lookup-table instruction warning and both EIP-7702 delegation warnings — stayed in **English in every language**. The engine writes `transaction's`; the catalogue keys, written by hand in Revision 15, read `transaction’s`, and the template regex matched neither to the other | `ReviewText.Template` matches either apostrophe to either, values captured from the original text. A new test runs the **real engine** and reads its warnings through the **ja and zh-Hans** bundles: falling back to English fails it. The Revision 15 test ran in English, where a fallback passes, so it could not have caught this |
+| §7.2 | `ReviewText.substitute` returned the translation with `%@` still in it when its placeholders did not fit | Returns nil; the caller shows the engine's English. `sentence(_:translate:)` takes the lookup as a parameter so a test can hand it a broken translation |
+| BTS-02 | A one-lamport SOL transfer became the headline and the Activity summary (`0.000000001 SOL`) of a transaction that also approved an unlimited token delegate, re-owned a token account, removed a mint authority or reassigned an account | A change of control — SPL Approve and ApproveChecked, SetAuthority (to an address or to none), System Assign, Stake Authorize, Metaplex and Bubblegum delegates — now leads `display` and `summary` ahead of burns and transfers and names the new holder as the counterparty. When funds also move, the headline names both (see R-1). Headlines are fixed phrases so they can be translated |
+| R-1 | **Introduced by the first BTS-02 fix and found re-reviewing it.** Leading with the change of control *instead of* the amount opened the mirror image: 1,000 SOL out beside an approval of zero tokens read "Approve delegate — Lets another address spend these tokens", with no amount, "also transfers funds" as the last of five warnings and "… and 1 transfer" in Activity. Before the fix that transaction's headline was "1000 SOL" | When both are present the headline names both — "Changes permissions and moves funds · review each below" — and neither alone; the **first** warning says to check every transfer as carefully as the permission change; the Activity summary keeps the amount for a single transfer ("… and 1 transfer of 1000 SOL"). Tested in both instruction orders |
+| BTS-02 | Stake **Authorize** and **AuthorizeChecked** were not decoded at all: shown as raw bytes | Decoded, with a separate HIGH RISK sentence for the withdraw authority (every lamport, both authorities) and the stake authority |
+| BTS-07 | The pairing page and `Wallet-Pairing-v2.md` said the identity signature lets a receiver "tell a real pairing from a copied QR code", "closes" replay, and proves possession of "the public keys it exports". It signs one fixed sentence, deterministically: a photograph is a valid code, and only the BIP44 legacy account is bound | Page text replaced (20 translations); the spec now says what is proved and adds **What the signature does not prove**, requiring receivers to have the person compare the first address of *every* account. The protocol is unchanged — binding the whole body, or a challenge, needs a BitTool Wallet release and is a product decision |
+| BTS-08 | A self-revocation signed for a nonce at which it cannot apply read `normal`, `fullyDecoded`, "restores a plain account", with no acknowledgement — identical to one that does apply | EIP-7702 increments the sender's nonce before the list, and each applied entry increments its authority's. For this wallet's own entries that nonce is known offline, so an entry that cannot take effect is **refused**, grants and chain-0 entries included. Another account's revocation now says it applies only at a nonce this device cannot see, and is at least `partiallyDecoded` |
+| BTS-08 | Whether an entry was this wallet's depended on the request naming its sender; a request without `address` or `from` could not be held to the rule | `parseEVM` takes the matched signer from the plan (`resolveSigningPlan`, `signPlanTask`, `signEVM`); it never enters the request hash or the signing bytes. This was I-6 of the 1.1.0 audit |
+| BTS-09 | A type 4 transaction with an empty authorization list read `normal`; one with no destination was signable after acknowledgement. EIP-7702 makes both invalid | Both refused, whatever is acknowledged |
+| BTS-10 | An associated-token-account instruction whose token account, owner or mint came from a lookup table refused the **whole transaction** with an untranslated `Unknown letter: "["` and no error code — the shape of Jupiter and Stargate transactions, which is what Revision 13 added lookup tables for. The 1.1.0 audit had called this fail-closed and correct; for safety it was, for function it was not | Reviewed, not refused: shown with its placeholders, `partiallyDecoded`, and a sentence saying ownership cannot be checked. Program accounts from a table make that instruction raw bytes. `pubkey()` refuses a placeholder with code `LOOKUP_TABLE`, and one instruction that fails that way falls back to raw bytes instead of refusing the transaction. The Metaplex recipient check and the transfer-hook check say what they cannot check |
+| BTS-10 constraint | Not in the brief. The recipient fold (`t.movement.to = x.owner`) trusts that an ATA it finds was proven; the PDA check was what made that true. Skipping the check for table accounts but still recording the ATA would let a review read "to <respectable owner>" while the tokens go to whatever the table holds | An unproven ATA is never recorded for folding. A regression test builds exactly that transaction and asserts the claimed owner never appears as the recipient |
+| L-1 | The engine required the risk acknowledgement only for partially decoded or opaque requests; a fully decoded HIGH RISK request (an unlimited approval, a burn, a message) signed without it. The interface asked; the engine did not check | The engine refuses a HIGH RISK request that is not acknowledged. Eleven engine-test calls and one native test now pass the acknowledgement the review screen would ask for — the native one through `TransactionReview.requiresAcknowledgement`, the app's own rule |
+| BTS-06 | The bundle test returned early, and passed, when `signer.js` was missing | It fails. The path literal is unchanged, because Android's sync rewrites that exact string |
+
+**Also:** the engine bundle's banner said `BitTool Signer 1.0.0`; it says 1.1.0 (I-5 of the audit).
+
+**Strings.** 29 added and 2 removed in all 20 languages (1180 → **1207** keys): ten engine
+sentences, two templates, sixteen display phrases (actions, headlines, the `Delegate` label) and
+the new pairing-page paragraph. Removed: the "delegates nothing" warning (that transaction is now
+refused) and the old pairing paragraph. Templates: 21 → **23**. New template English, for Android's
+`TEMPLATES`:
+
+- `Authorization %@ cannot take effect: it is signed for nonce %@, but this wallet’s nonce will be %@ when it is applied.`
+- `%@ asks to remove the code delegation on %@. It takes effect only if that account’s nonce is %@ when this transaction runs, which BitTool Signer cannot check offline.`
+
+**Engine bundle.** SHA-256 `40670e04574b40d3999265570a8e0481082ca1ac1cd60e5dea1bd4a7f8fba40f`,
+**1,198,633** bytes (was `a163698b…`, 1,194,055). Rebuilt in an isolated directory from the pinned
+dependencies: byte-identical. `fetch(`, `XMLHttpRequest`, `WebSocket`, `EventSource`, `sendBeacon`,
+`importScripts`, `eval(` and `new Function(` occur 0 times. Handoff `source-snapshot.json` and
+`SHA256SUMS.json` regenerated; the pairing fixtures did not change.
+
+**Tests.** Engine **257/257** (was 242): `solana-lookup-accounts.test.mjs` (6, new),
+`solana-authority-headline.test.mjs` (5, new), four new and one rewritten in
+`evm-7702-and-chains.test.mjs`. The Android repro (`docs/qa/ios-fix-brief-2026-11-16/repro.mjs` in
+the Android repository) now reports what its brief expects: nonce 5 refused, nonce 6 unchanged,
+empty list refused, the lookup-table ATA reviewed. Swift **186 tests in 25 suites** (was 183), run against the final bundle. UI: the 18 functional tests
+and the pairing-states screenshot passed (19, no failures, the known `typeText` flake included); that
+run used the bundle before the R-1 change, which alters only Solana headlines no UI test reaches. The
+pairing page was checked by screenshot with the new paragraph.
+
+This round was re-reviewed in a report that supersedes the first review. Neither review is
+published yet.
+
+**Not verified in this round.** No EIP-7702 transaction was put on a chain, so the nonce rule rests
+on the specification, not on an observed skip. No real Jupiter or Stargate transaction was decoded;
+the lookup-table tests are synthetic. The 28 new strings were not read by a native speaker of any
+language. Nothing was tested on a physical device. Still open from the 1.1.0 audit: L-2 (one damaged
+vault file hides every wallet), L-3 (`docs/Security.md` describes 1.0.0), and seven engine display
+actions that were never in the catalogue (`Sign Transaction`, `Burn` and five more), so they show in
+English.
+
+## Revision 15 (16 November 2026, late): the engine's own sentences, in all 21 languages
+
+**The engine spoke English.** Its field labels, titles and display actions were already translated
+at draw time by `ReviewText`, but the two kinds of sentence that carry the meaning were not: the
+**warnings** on a review card, and the **refusals** that appear when a request is rejected. A
+Japanese or Russian user saw a fully translated card with an English red callout — and worse, when
+the Signer refused a code, the refusal was the *only* text on screen, in English.
+
+**398 engine sentences, in all 20 non-English languages.** The string list went from 782 keys per
+language to **1180**:
+
+| What | Keys | Notes |
+| --- | --- | --- |
+| Review warnings | 76 whole sentences + 17 templates | Everything `warnings.push`, `warnings.unshift` or a literal `warnings` array can hold |
+| Engine refusals | 282 | Every whole-sentence `check()` message across `protocols.js` and `src/*.js` |
+| Host refusals | 11 | `SigningEngine.swift`'s own messages, which surface the same way |
+| Refusal templates | 4 | The ones the engine builds around a value |
+| Compatibility page | 2 rewritten | See below |
+
+**How a sentence with a value in it is translated.** `ReviewText.sentence(_:)` tries an exact
+lookup first, then each registered `Template` — the English sentence compiled into an anchored
+regular expression with `(.+?)` where the value goes. The captured values are substituted into the
+translated string with `String(format:)`, so a language that needs another order says so with
+positional specifiers (`%1$@`), which five of them do for "X of Y". A sentence that matches nothing
+is shown in the engine's own words rather than mangled. 21 templates are registered.
+
+**Severity is still read from the English.** `RequestReviewView` calls `isSevere(warning)` on the
+engine's original text, never on the translation: "HIGH RISK" is a marker in the source string, so
+no translator can change a callout's colour, and `SigningEngineError` keeps its untranslated
+`message` for the tests and the code path while `errorDescription` returns the translated one.
+
+**Two warnings are assembled from a branch**, not written whole: `'The leaf owner' + (payer ? ' or
+payer' : '') + ' does not sign…'`. A template would have left " or payer" in English inside an
+otherwise translated sentence, so both complete forms were registered as exact keys instead.
+
+**Three guards, so this cannot rot.** `engine/test/warning-coverage.test.mjs` (new, four tests)
+scans the engine source for every warning literal and every lone-literal `check()` message,
+resolves the JavaScript escapes, keeps the ones that are whole sentences, and asserts each has a
+key — with a floor on how many it found, so the scan going blind fails too. A second test asserts
+every translation keeps the placeholder count its English has; a third pins the assembled forms and
+fails if the engine rewords a fragment. On the Swift side `BitToolSignerTests/ReviewWarningTests.swift`
+(new, nine tests) covers the fallback, template matching, multi-value order, a value that looks like
+a pattern, every template matching its own sentence, no two templates claiming the same sentence, a
+reordering round trip, a real translation loaded from the zh-Hans/ja/de/ru bundles, and the live
+engine's warnings never leaving a `%@` behind.
+
+**What the scan caught.** An earlier, looser filter (`s[0] === s[0].toUpperCase()`, which is true
+for a space or a period) let six concatenation fragments through as if they were sentences;
+tightening it to `/^[A-Z]/` surfaced two templates that genuinely had no translation. The
+lone-literal test for refusals first matched `'This message is ' + bytes.length + ' bytes. …'` as a
+whole string, because the regex's `.` could cross the closing quote; it now scans for the matching
+quote and requires it to be the last character.
+
+**Three findings from the Android review, all real, all fixed here.**
+
+1. **Settings › Compatibility was out of date in two rows.** Solana still said "Address lookup
+   tables are not supported offline" — untrue since Revision 13 — and EVM still listed only
+   Legacy / EIP-2930 / EIP-1559, with no mention of EIP-7702 or of every chain being signed. Both
+   rows were rewritten and translated; the two stale keys were removed from the string list and
+   from all 20 translation files. These sentences live in the iOS-maintained catalogue, so Android
+   picks them up by re-syncing rather than by writing its own.
+2. **`AddressFormatter.short` was abbreviating things that are not addresses.** With Revision 13 a
+   `display.counterparty` can be a lookup-table placeholder — `[lookup table <pubkey> · entry 3]` —
+   and the Activity record ran it through `short(leading: 6, trailing: 6)`, producing
+   `[looku…try 3]`. It is now abbreviated only when `AddressFormatter.looksLikeAddress` says so,
+   which is the same distinction `AddressText` already makes between an identifier and prose.
+3. **The wallet-level QR format line** already mentions the identity signature on iOS (Revision 12);
+   nothing to do here. Android's copy of that sentence is its own string and is listed in the
+   hand-off prompt.
+
+**Tests.** Engine **242/242** (was 238): four new in `warning-coverage.test.mjs`. Swift
+**183 tests in 25 suites** (was 174 in 24): `ReviewWarningTests` is the new suite. The 21 UI tests
+were not re-run in this round — nothing they assert changed, but that is an assumption, not a
+result.
+
+**Also in this round: the password field was invisible on the pairing page.** On *Pair Wallet ›
+Wallet Level*, a wallet from before 1.1.0 asks for its password, and the field read as a line of
+grey body text — nothing said it accepted typing. The cause was not that page: **every other call
+site drew the box itself** (`.padding(14).background(Palette.card / .raised, …)`), so the chrome was
+the caller's job and `ConnectView.swift:518` was the one that forgot.
+
+The box now belongs to `PasswordField`, and is on by default, so a call site that does nothing is
+correct. `chrome: .plain` opts out in the four `Form` rows, where the grouped-list row is
+iOS's own idiom for a field and reads as one. Everywhere outside a `Form` the field draws its box:
+the four single-field sites — App Lock, the recovery-phrase unlock, the signing password sheet and
+the pairing page — had their hand-rolled boxes removed, and the two pairs that shared one card with
+a `Divider` between them (Set a Password, and the BIP39 passphrase) became two boxes in a spaced
+stack. That card had the same failing as the pairing page, just less obviously: a divider between
+two paragraphs of grey placeholder. One rule now: inside a `Form`, the row is the field; outside
+one, the outline is.
+
+It is an **outline**, not a fill. The call to action directly beneath is a capsule that stays greyed
+out until something is typed, so a grey filled field above a grey filled button is two lozenges with
+nothing to say which one takes text; both `tertiarySystemFill` and `secondarySystemFill` were tried
+on screen and neither read as an input. An outline's fill is whatever is behind it — the card on the
+pairing page, the page itself during setup — so one treatment works on both backgrounds and in both
+appearances.
+
+Verified by screenshot through `ScreenshotTour`, not by eye over the code: `15f-wallet-level-password`
+before and after. No test can catch this class of bug — the UI tests found and typed into the field
+the whole time it was invisible — which is why the fix is structural rather than a fifth copy of the
+box.
+
+**Not verified in this round.** The translations are the work of this round and have not been read
+by a native speaker of any of the 20 languages; the tests prove that every sentence has an entry,
+that the entry loads, and that it keeps its placeholders — not that it reads well. Nothing here was
+tested on a physical device. No refusal was triggered on screen in each language; the proof that a
+refusal is translated is the key being present and `errorDescription` going through
+`ReviewText.sentence`, which `ReviewWarningTests` exercises directly but not through the error path.
+
+## Revision 14 (16 November 2026): every EVM chain, 60 of them named, and EIP-7702
+
+**Every EVM chain ID is signed now.** The engine used to refuse any chain outside a list of eight,
+which meant every other legitimate network was simply unusable. The list was never a safety boundary — it is a display registry,
+holding a network's name and its native ticker so a fee can be denominated and a token identity
+looked up — and refusing an unnamed chain protected nobody: the chain ID is inside what gets
+signed (EIP-155), so a signature made for one chain is valid on that chain and on no other.
+
+**60 EVM chains are named, up from 8.** Naming a chain is what lets a fee be denominated and a
+token identity looked up, so the eight that were there covered eight networks and left every other
+one anonymous. 52 more were added: the major rollups (Linea, Scroll, zkSync Era, Blast, Taiko,
+Mode, Zora, World Chain, Unichain, Ink, Soneium, Swellchain, Zircuit, Abstract, Lisk, BOB, Manta
+Pacific, Boba, Polygon zkEVM, Arbitrum Nova, MegaETH) and the major alternative L1s and sidechains
+(Mantle, Celo, opBNB, Berachain, Sei, Monad, Sonic, Ronin, Kaia, Cronos, Core, Flare, Rootstock,
+Moonbeam, Moonriver, Astar, Metis, Kava, Gravity, Immutable zkEVM, Oasis Sapphire, ApeChain,
+Etherlink, Plume, Bitlayer, Merlin, Fantom, Fraxtal, Shibarium, Degen, Aurora, Harmony).
+
+Every name and native ticker was taken from the `ethereum-lists/chains` registry rather than typed
+from memory, which caught three things memory had wrong: chain 999 is Wanchain Testnet in that
+registry and not Hyperliquid, chain 1514 is Data Network and not Story, and Fraxtal's native
+currency is FRAX rather than frxETH. Where the registry is ambiguous — Hyperliquid's mainnet has
+no uncontested entry — the chain was left unnamed rather than guessed at: an unnamed chain still
+signs, a mislabelled one misleads. All 60 have an 18-decimal native currency, which is what the
+fee display assumes.
+
+**Naming a chain is not knowing its tokens.** The bundled token registry still covers only the
+original eight, so a token on any of the 52 resolves to nothing and reads as an unregistered
+contract — which is the truth, and is tested.
+
+**A fee is only called high where there is a reference for normal.** The high-fee warning compares
+against a per-chain ceiling, and a ceiling is a claim about what the native currency is worth —
+something an offline device cannot know. The eight calibrated chains keep theirs, anything else
+denominated in ETH takes the same 0.05 ETH ceiling Ethereum uses, and opBNB takes BNB Smart
+Chain's. On the remaining 31, whose native currency has no ceiling here, **no claim is made**: the
+maximum fee is shown and the review says plainly that it could not be judged. Guessing 31
+thresholds from token prices that move would have produced false alarms on the cheap ones, and a
+warning that cries wolf is worse than none.
+
+An unnamed chain is still signed and **said to be unnamed**: it is called `Chain <id>`, its native
+unit is `native units` rather than a guessed ticker, no token or contract on it resolves against
+the bundled registry (so every address reads as unregistered, which is the truth), and a notice
+says all of that and tells the person to check the network in the wallet that built the request.
+The risk level rises to `warning` where it would otherwise be `normal`. **Chain ID 0 stays
+refused**: that is an unprotected transaction, which replays on every network, and is a different
+thing from a network this device cannot name.
+
+**EIP-7702 (transaction type 4) is supported.** Type 4 was refused outright, which locks the
+device out of every smart-account application now building on it. It is read now, and the
+`authorization_list` is where the whole risk lives, so that is what the review is about:
+
+- Each entry says that the code at some address may act as an account's own code from then on.
+  The account — the *authority* — is **not stated in the entry**; it is recovered from the
+  entry's own signature, which is the only way to tell whose account is being handed over.
+- When the recovered authority is the wallet being asked to sign, the warning says so in those
+  words: this hands your own account to that contract, which can then move everything in it on
+  every later transaction until the delegation is replaced.
+- `chainId` 0 inside an entry means the delegation applies on **every** EVM chain, and gets its
+  own warning. An entry for some other specific chain is a mismatch and is refused.
+- Delegating to `0x0` is the opposite operation — it removes a delegation — so it is described
+  as restoring a plain account, is not labelled HIGH RISK, and does not trip the acknowledgement
+  gate. A list that both revokes and grants is still a grant.
+- A non-empty list is always `high` risk and never `fullyDecoded`: the delegate's code is
+  on-chain and this device cannot read it, so signing needs an explicit acknowledgement.
+
+The transport gate had to be opened too: an `eth-sign-request` of dataType 4 (EIP-2718 typed
+transaction) previously accepted only transaction-type bytes 1 and 2, so a 7702 payload was
+refused before anything could read it. Type 3 (blob) is still refused there, as before.
+
+**Tests.** The engine suite is **238/238** (was 230). New: `engine/test/evm-7702-and-chains.test.mjs`
+— the wallet's own account being delegated and the wording that goes with it; another account's
+delegation not being described as this wallet's; a chain-0 entry called out and a wrong-chain
+entry refused; a revocation not dressed up as a grant, and a mixed list still treated as one; an
+empty list; a full sign that recovers to the signing wallet with the inner authorization intact
+and the unsigned hash unchanged; twelve of the newly named chains resolving to the right
+name and ticker, an unnamed one signing under a numeric name with a notice, a token on a newly
+named chain still reading as unregistered, the fee being judged on a calibrated chain and
+explicitly not judged on an uncalibrated one, chain 0 still refused; and a type 4 payload travelling through
+the UR transport while a blob payload still stops there.
+
+**Not verified.** No real EIP-7702 transaction from a live smart-account wallet has been through
+this, and nothing has been signed on any of the 52 new chains on a device — both are exercised only
+by fixtures built here. The chain data is as good as the `ethereum-lists/chains` registry was on
+16 November 2026; a chain that renames itself or relaunches will go stale silently.
+**BitTool Wallet cannot produce a 7702 request** — its own EVM builder
+(`AirGapRequestBuilder.evmTransaction`) hardcodes `type: 2` — and by the owner's decision that is
+left as it is for now, so a delegation reaching BitTool Signer has to come from another wallet or
+an application that builds the request itself.
+
+## Revision 13 (16 November 2026): Solana address lookup tables, and a transaction sent as a message
+
+**Reported from the outside.** A user posted that a Stargate bridge claim on Solana failed in
+BitTool Signer with *"Solana messages must be 1–1024 bytes"*, and added that a plain swap did not
+work either. Both turned out to be real, and they are two separate problems.
+
+**1. Address lookup tables are now read instead of refused.** Until this round a version 0
+message carrying any address lookup table was rejected outright, on the grounds that the addresses
+a table supplies live in an on-chain account an offline device cannot read. That reasoning is
+sound and the conclusion was wrong: Jupiter, Stargate and essentially every current Solana
+application build v0 transactions with lookup tables, so the rule did not make signing safer, it
+made Solana signing **impossible** — which is what the second half of the report was about.
+
+A table is now parsed and the transaction is signable, with everything it costs stated plainly:
+
+- The tables are listed in full (account, writable and read-only entry counts) and so is the
+  number of accounts they supply. All of that is in the message, so all of it can be shown.
+- Solana resolves accounts as static keys, then every table's writable entries, then every
+  table's read-only ones. Each supplied account becomes `[lookup table <account> · entry <n>]`.
+  Square brackets are outside the base58 alphabet, so a placeholder can never read as an address.
+- An instruction whose **program** comes from a table is shown as raw bytes and nothing else:
+  with no program identity there is nothing truthful to say about what it does.
+- An instruction whose **accounts** include supplied ones still decodes — the amount is in the
+  instruction data, not in the table — but it says how many of its accounts could not be shown.
+- The transaction can never read as `fullyDecoded`, and its risk level is always `high`, so
+  `signPlanTask` demands an explicit acknowledgement before it will sign. The leading warning
+  says how many accounts came from how many tables and that any of them could be a recipient the
+  person did not intend.
+
+Signer matching is unaffected: Solana cannot load a signer through a lookup table, so required
+signers are always static keys.
+
+The first run of this on a device showed the placeholder being cut into four-character groups in
+the headline "To" box — `AddressText` groups every value it is handed, so that two identifiers can
+be compared character by character, and on a sentence that only made it unreadable. It now shows
+anything containing whitespace as ordinary text, which is right for every caller, not just this
+one.
+
+**2. A transaction sent through the message path now says so.** Solana message signing has no
+mandatory domain prefix, so a signature over transaction bytes *is* a usable transaction
+signature. Two checks already caught that — a 1024-byte ceiling and a first-byte test — but they
+reported a byte count, which tells nobody what went wrong. The parser now recognises the shape
+first and names it: a bare transaction message, or a **whole serialized transaction** (a
+signature array followed by its message), with the advice that the sending wallet should use a
+transaction request. The size limit remains as a backstop and now states the limit and the actual
+size. EVM and TRON were audited for the same class of problem and do not have it: both
+domain-separate messages from transactions (`\x19Ethereum Signed Message:` / EIP-712 `\x19\x01`,
+`\x19TRON Signed Message:`), so a message signature can never be replayed as a transaction one.
+
+**3. The hole that produced the report (BitTool Wallet).** `WCRequestChecks.isSolanaTransactionMessage`
+recognised only a bare transaction message. A dApp calling `solana_signMessage` with a whole
+serialized transaction slipped past it — the leading signature array makes the header parse read
+`keyCount` out of a signature byte and fail — and was forwarded to BitTool Signer as a message,
+where it hit the byte-count refusal. The guard now strips a leading signature array and re-checks.
+BitTool Wallet also no longer refuses v0 transactions on the BitTool Signer path, and its Solana
+bridge can split a serialized v0 transaction into the message that gets signed without a versioned
+transaction class, which the bundled web3.js does not have. A hot wallet still refuses v0: there
+is nothing in that bundle to put a signature back into.
+
+**Tests.** The engine suite is **230/230** (was 224). New: `engine/test/solana-lookup-tables.test.mjs`
+— six tests covering a table being read, named and gated; a supplied account never being shown as
+an address; a supplied program being shown as bytes and never guessed at; the acknowledgement gate
+firing and the resulting signature verifying against the message; five malformed table shapes
+refused; and the message path naming a bare transaction, a serialized transaction and an oversized
+message instead of measuring them. `engine/test/engine.test.mjs` had its ALT case rewritten from
+"refuses" to "reads but gates", with a table-free control that still reads as fully decoded. On
+the wallet side `SecurityAuditFixTests.solanaTransactionMessagesAreRecognised` gained the
+serialized-transaction cases, signed and unsigned, legacy and v0.
+
+**Not verified.** No real Stargate or Jupiter transaction has been through this end to end: the
+tests use synthetic v0 messages built here. What a lookup-table-heavy swap looks like on the
+review screen — how many placeholder rows a real Jupiter route produces, and whether that is
+readable rather than merely honest — has not been seen on a device. The option of having the
+online wallet send the resolved table contents, so the Signer could show them clearly marked as
+claimed-but-unverified, is **not** implemented: it needs a `sol-sign-request` extension and is a
+protocol decision.
+
+## Revision 12 (15 November 2026): wallet-level pairing v2 and the KH v2 wallet-identity signature
+
+**The pairing code now proves who made it.** A wallet-level QR used to be unauthenticated: anyone
+who photographed one could replay it, and the receiving wallet had no way to tell a genuine
+pairing from a copy. `bittool-signer-wallet` is now **version 2** and carries `khSig` and
+`khEpoch` — a Bitcoin message signature over the fixed sentence `OwnbitAuth:v2:epoch=<N>` made
+with the wallet's identity key. The receiving wallet verifies it on the device, offline, against
+the code's own public keys, and the backend verifies the same signature against the extended
+public key the wallet registers. v1 is no longer produced, and the reference decoder refuses it.
+The full format is in [docs/Wallet-Pairing-v2.md](docs/Wallet-Pairing-v2.md); v1 stays in the
+repository as history and as something to test refusal against.
+
+**The identity key is `m/44'/0'/0'/0/1000000000` — not BIP84, and this was worth stopping over.**
+The specification for this round said BitTool Wallet registers the **BIP84** receive-branch xpub
+(`m/84'/0'/0'/0`) as its `extendedKeys`, which would have put the identity key under BIP84. The
+code says otherwise: BitTool Wallet iOS registers the **BIP44** receive-branch xpub, both for a
+hot wallet (`derived.mainPubkey` in `CreateWalletConfirmPasswordView`, pinned to
+`btc[.legacy].receiveXpub`, purpose 44) and for a watch wallet paired from BitTool Signer
+(`identityXpub` in `BitToolSignerWalletService`, BIP84 only as a fallback for the pre-2026-10-18
+single-account QR). Since the backend derives the identity key as the non-hardened child
+`AUTH_INDEX` of whatever is in `extendedKeys`, a BIP84 signature would have been rejected with
+−140 on every call, and the vectors published for the other three platforms would have been
+wrong. Two further confirmations: Ownbit's shipped implementation signs under
+`w.mainExtPublicKey` at `<seedTypePath>/0/1000000000`, and its own published HD vector is at
+`m/44'/0'/0'/0/1000000000`. The owner confirmed BIP44; the specification's sentence is a drafting
+slip.
+
+**The signature is produced once and stored, never recomputed on demand.** A wallet created or
+imported on 1.1.0 signs its identity at that moment, from the seed already in hand, and the
+signature is written beside the authenticated public index under the same HMAC and device
+protection — so opening the pairing page never asks for a password. A wallet saved by 1.0.0 has
+none: the Wallet Level page shows a one-time password field (`WalletIdentityAuthorizationView`)
+instead of a QR, explains why, and says that the recovery phrase and password do not change.
+Cancelling leaves that wallet without a wallet-level code; Coin Level is unaffected. Repairing a
+wallet and resetting its password both already decrypt the seed, so they fill a missing signature
+in silently rather than leaving a second prompt behind. Rebuilding the public index without a
+signature **drops** any stored one: the two come from the same seed and must never disagree.
+
+**Only one sentence can ever be signed.** The new engine operation `signKhV2` takes an epoch and
+nothing else — there is no message parameter, so an attacker who reaches the engine cannot use it
+as an oracle for arbitrary text. A test passes `path` and `message` alongside a valid request and
+asserts the output is unchanged. The signature is verified against its own key before it is
+returned, again against the wallet's public index before it enters a payload, and the host checks
+the `walletKeyId` the same engine call reports before filing it next to a wallet's keys.
+`signKhV2` is on the release allowlist but deliberately **not** on the warm-context list: it
+receives a secret, so it runs in a fresh JavaScriptCore context like every other signing path.
+
+**Published vectors, verified three ways.** `docs/kh2_bittool_vectors.json` holds epochs 1 and 2
+for the public `abandon … about` phrase; the other three BitTool platforms must reproduce those
+bytes exactly. Before any of this was written, a from-scratch pure-Python reference (secp256k1,
+RFC 6979, BIP32, BIP39, the Bitcoin message digest and base58check, all by hand) was checked
+against **all seven** of Ownbit's published `kh2_vectors.json` vectors, including the high-S
+negative case, and reproduced every one byte for byte. The engine's output then matched that
+reference — and, because this is the same phrase and path, it is byte-identical to Ownbit's own
+`HD-abandon-m/44h/0h/0h/0/1000000000` vectors for both epochs. Three independent implementations,
+one answer.
+
+**Tests.** The engine suite is **224/224** (was 210). New: `engine/test/kh2.test.mjs` — six tests
+covering Ownbit's four published vectors, the high-S copy that must not verify but must still fold
+to the same `kh2`, BitTool's own two vectors byte for byte, RFC 6979 determinism, phrase-and-seed
+equivalence, a BIP39 passphrase giving a different identity, the Bitcoin Signed Message digest
+recomputed independently from the rule, the public-data-only identity derivation, nine malformed
+signature shapes, and the fixed-text restriction. `engine/test/wallet-pairing.test.mjs` was
+rewritten for v2 and gained a test that refuses a missing, malformed, wrong-epoch, malleated,
+re-headered or other-wallet signature, and that v1 and v3 are both refused like any other version.
+On the Swift side, `BitToolSignerTests/WalletIdentityTests.swift` covers the stored value's
+validation, the engine reproducing the published vector through the real bundled runtime and
+ignoring an injected path and message, a new wallet signing at creation and surviving a reload, a
+1.0.0 wallet having no code until the right password is entered (and a wrong one changing
+nothing), repair filling the signature in, and a rewritten index dropping a stale signature.
+
+**Payload size.** 1561 → **1666** canonical CBOR bytes, SHA-256
+`cc911414877a3b544b90f6c8ac794c76197015b60c00002d12577608473894ef`, five animated frames of 717
+characters (was four of 831). The engine bundle is
+`6679136fc523914b970c147dfacd44ff9275a3f82be265b987c2323521583217`.
+
+**Also in this round, carried over from the commits after the 1.0.0 tag** (they are part of what
+1.1.0 ships): the scan-page status strings and the App Lock unlock button were localized, BitTool
+Wallet is described as running on Android as well as iOS, and the three findings of the Android
+security review that live in the shared engine were fixed.
+
+**Two stale "v1" labels on screen.** The Pair page's *Format* line and the Compatibility page's
+*QR format* line both still named `bittool-signer-wallet v1` after the payload became v2. Neither
+is localized — both are `Text(verbatim:)` literals naming a wire format — so neither showed up in
+the string export, and the only test that touched one asserted the old text. Both now say v2, the
+Compatibility line also mentions the identity signature, and both are pinned by UI assertions
+(`testConnectAndAddressesUsePublicDataOnly` and `testSettingsReferencePagesAndGuide`) so they
+cannot drift again. The internal `.v1` suffixes in Keychain service names, storage keys and HMAC
+domain labels are untouched: changing those would orphan existing device keys.
+
+**Eight new interface strings**, translated into all 20 non-English languages and regenerated
+through `scripts/write-localizations.py` (790 keys each). Release notes for all 21 languages are
+in [docs/Release-Notes-1.1.0.md](docs/Release-Notes-1.1.0.md).
+
+**Not verified in this round.** The receiving side: no BitTool Wallet build yet reads a v2 code,
+so the end-to-end pairing — scan, local verification, `registerKhV2`, watch wallet created — has
+not been exercised against a real server or a real wallet build. The published vectors are the
+contract that stands in for it until then. The rotation path (`khEpoch` ≥ 2) is implemented and
+unit-tested but has no server to rotate against: the backend only has epoch 1 today. Nothing here
+was tested on a physical device.
 
 ## Revision 11 (18 October 2026, late): the three open R2 findings, password reset, delete confirmation
 
@@ -840,15 +1333,15 @@ flow following Ownbit's latest approach, styled with this app's own colours and 
   Revision 3: a scanned phrase QR is imported with its own spelling).
 ## Test results
 
-Current as of Revision 11 (18 October 2026).
+Current as of Revision 14 (16 November 2026).
 
 | Check | Result | Scope |
 |---|---|---|
-| JS engine (Node) | **210/210 passed** | Protocols, the public index, the resolver, signing on four chains, `hardening.test.mjs` (the Revision 2 review regressions), wallet-level pairing, NFT display for EVM and Solana, TRON arbitrary indices, the Bitcoin Account XPUB default, the QR payload view (22 Pair exports and 17 signature returns; frames are re-decoded, and URs and signatures are cross-checked against Keystone's parser), the Bitcoin fee policy, and both rounds of review findings (`audit-bts-2026-1018` and `-r2`). The token registry test checks all 3,350 records item by item: address shape, uniqueness, on-chain decimals, the icon pack having no holes with each image's hash equal to its id, and Solana's token program binding |
-| Native unit tests | **168 tests in 23 suites passed** | The real JavaScriptCore bridge, payload view parsing and signature result payloads, signing records storing the fingerprint, the vault and public index HMAC, wallet-level pairing (public index read-only, four Bitcoin script types, three Solana addresses, public index version 1), Pair prefetching (generated only when permitted, cleared on suspension, expired results discarded), the privacy shield window following the app's appearance, the 2-of-3 recovery card layout, one font size per word grid, recovery privacy (direct reveal, screenshot warning), scan purpose, the compatible wallet list, NFT display, the ten BIP39 languages, the vault password reset, and App Lock gating of the delete confirmation |
+| JS engine (Node) | **238/238 passed** | Protocols, the public index, the resolver, signing on four chains, `hardening.test.mjs` (the Revision 2 review regressions), wallet-level pairing v2 and the KH v2 wallet-identity signature (`kh2.test.mjs`: the published vectors byte for byte, the message digest recomputed independently, malleated, wrong-epoch and other-wallet signatures refused, and no text but the fixed sentence signable), NFT display for EVM and Solana, TRON arbitrary indices, the Bitcoin Account XPUB default, the QR payload view (22 Pair exports and 17 signature returns; frames are re-decoded, and URs and signatures are cross-checked against Keystone's parser), the Bitcoin fee policy, and both rounds of review findings (`audit-bts-2026-1018` and `-r2`). The token registry test checks all 3,350 records item by item: address shape, uniqueness, on-chain decimals, the icon pack having no holes with each image's hash equal to its id, and Solana's token program binding |
+| Native unit tests | **186 tests in 25 suites passed** | The real JavaScriptCore bridge, the wallet-identity signature (`WalletIdentityTests`: the published vector through the bundled runtime, an injected path and message ignored, a new wallet signed at creation, a pre-1.1.0 wallet gated on its password, repair filling it in, a rebuilt index dropping a stale signature), payload view parsing and signature result payloads, signing records storing the fingerprint, the vault and public index HMAC, wallet-level pairing v2 (public index read-only, four Bitcoin script types, three Solana addresses, public index version 1, the identity signature in the payload), Pair prefetching (generated only when permitted, cleared on suspension, expired results discarded), the privacy shield window following the app's appearance, the 2-of-3 recovery card layout, one font size per word grid, recovery privacy (direct reveal, screenshot warning), scan purpose, the compatible wallet list, NFT display, the ten BIP39 languages, the vault password reset, and App Lock gating of the delete confirmation |
 | UI automation | **17 tests, 1 known flake** | iPhone 17 Pro · iOS 26.4 simulator, isolated fixtures, public unfunded vectors. Run serially, 16 of 17 pass; `testApprovalNamesAKnownSpenderAndFlagsAnUnlistedOne` fails intermittently because `typeText` drops characters from a long payload under load, and passes when rerun on its own. Its known-contract assertions, which run before the failing line, pass even in the failing run |
-| Screenshot tour | **Passed** | iPhone 17 Pro light and dark (120 shots) and iPhone SE 3rd generation on iOS 17.2 light (60 shots) |
-| Release device build | **Passed** | `generic/platform=iOS`, unsigned; also archives successfully as Release 1.0.0 (1) with a dSYM |
+| Screenshot tour | **Passed for 1.0.0; Revisions 12–13 ran only their own new shots** | iPhone 17 Pro light and dark (120 shots) and iPhone SE 3rd generation on iOS 17.2 light (60 shots) for 1.0.0. Revision 12 added `testWalletLevelPairingStates` (the Wallet Level page with a signed wallet and with a pre-1.1.0 wallet) and Revision 13 added `testSolanaLookupTableReview` (a v0 transfer whose recipient comes from a lookup table); both were run, the full tour has not been re-run |
+| Release device build | **Not re-run in Revision 12** | Last verified for 1.0.0 (1): `generic/platform=iOS`, unsigned, and archiving as Release with a dSYM. The 1.1.0 (2) archive has not been built |
 | Clean-room engine rebuild | **Byte-identical** | `npm ci --ignore-scripts` plus `npm run build` in a throwaway copy of the commit reproduces the shipped `signer.js` exactly |
 | Bundle | 1,181,026 bytes | SHA-256 `6933d0d8a6f60faa8222506ac0bd7eef80eb884c9f73e31e9f354b4740f21077`, see [engine/bundle-manifest.json](engine/bundle-manifest.json) |
 

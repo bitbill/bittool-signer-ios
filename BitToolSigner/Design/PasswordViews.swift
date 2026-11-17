@@ -22,14 +22,23 @@ struct PasswordField: View {
     /// Adds an eye button. Used for the passphrase, where a typo cannot be
     /// noticed any other way.
     var revealable = false
+    /// Whether the field draws its own box. A bare `SecureField` on a card is
+    /// indistinguishable from body text until it has focus, so the box is the
+    /// default and a caller opts out only where the container already draws
+    /// one — a `Form` row.
+    var chrome: Chrome = .box
 
     @State private var revealed = false
     @Environment(\.scenePhase) private var scenePhase
 
-    init(_ kind: Kind, text: Binding<String>, isNew: Bool = false, revealable: Bool = false) {
+    init(_ kind: Kind, text: Binding<String>, isNew: Bool = false, revealable: Bool = false,
+         chrome: Chrome = .box) {
         title = kind.title; identifier = kind.rawValue; placeholder = kind.placeholder
-        _text = text; self.isNew = isNew; self.revealable = revealable
+        _text = text; self.isNew = isNew; self.revealable = revealable; self.chrome = chrome
     }
+
+    /// `box` draws the field; `plain` leaves it to the container.
+    enum Chrome { case box, plain }
 
     /// Which secret the field asks for. The raw value is the English source
     /// text and doubles as the accessibility identifier, so the field is
@@ -63,16 +72,19 @@ struct PasswordField: View {
     var body: some View {
         // Only the revealable (passphrase) field is backed by UIKit: every other
         // password field here is plain SwiftUI and stays that way.
-        if !revealable {
-            SecureField(title, text: $text)
-                .textContentType(isNew ? nil : .password)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .privacySensitive()
-                .accessibilityIdentifier(identifier)
-        } else {
-            revealableField
+        Group {
+            if !revealable {
+                SecureField(title, text: $text)
+                    .textContentType(isNew ? nil : .password)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .privacySensitive()
+                    .accessibilityIdentifier(identifier)
+            } else {
+                revealableField
+            }
         }
+        .passwordFieldBox(chrome)
     }
 
     private var revealableField: some View {
@@ -235,5 +247,25 @@ struct WalletIdentityHeader: View {
             Spacer(minLength: 0)
         }
         .accessibilityElement(children: .combine)
+    }
+}
+
+
+private extension View {
+    /// An outlined box, because a filled one does not work here. The call to
+    /// action directly below is a capsule that is greyed out until something
+    /// is typed, so a grey filled field beside a grey filled button is two
+    /// lozenges and no clue which one accepts text. An outline is unambiguous:
+    /// the fill matches whatever is behind it — the card on the pairing page,
+    /// the page itself during setup — and the border is the field.
+    @ViewBuilder func passwordFieldBox(_ chrome: PasswordField.Chrome) -> some View {
+        switch chrome {
+        case .plain: self
+        case .box:
+            padding(.horizontal, 14)
+                .padding(.vertical, 13)
+                .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(Color(uiColor: .opaqueSeparator), lineWidth: 1.5))
+        }
     }
 }

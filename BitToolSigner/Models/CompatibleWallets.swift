@@ -126,7 +126,8 @@ enum CompatibleWallets {
         watching("OneKey", "wallet_onekey", "iOS · Android"),
     ]
 
-    // Wallet level: one `bittool-signer-wallet` v1 QR for all four chains (docs/Wallet-Pairing-v1.md).
+    // Wallet level: one `bittool-signer-wallet` v2 QR for all four chains, carrying the
+    // wallet-identity signature (docs/Wallet-Pairing-v2.md). Needs BitTool Wallet 1.1.0 or later.
     // BitTool Wallet (BITTOOL PTE. LTD.) is the wallet this format is designed with.
     static let walletLevel = [
         signing("BitTool Wallet", "wallet_bittool", "iOS · Android"),

@@ -138,11 +138,11 @@ test('public EVM resolver supports paths, limited fallback, collisions, missing 
 
 test('signing plan binds immutable QR bytes, key identity, task contents and exact nonzero EVM path',()=>{
   const request={...message(evm(8)),path:evm(8).path},plan=resolveSigningPlan({request,wallets});assert.equal(plan.status,'ready');
-  const out=signPlanTask({request,plan,taskId:plan.tasks[0].id,mnemonic:MN});assert.equal(verifyMessage(getBytes(request.message),'0x'+out.signature),evm(8).address);
-  assert.throws(()=>signPlanTask({request,plan,taskId:plan.tasks[0].id,mnemonic:MN2}),/decrypted wallet/);
+  const out=signPlanTask({request,plan,taskId:plan.tasks[0].id,mnemonic:MN,riskAcknowledged:true});assert.equal(verifyMessage(getBytes(request.message),'0x'+out.signature),evm(8).address);
+  assert.throws(()=>signPlanTask({request,plan,taskId:plan.tasks[0].id,mnemonic:MN2,riskAcknowledged:true}),/decrypted wallet/);
   assert.throws(()=>signPlanTask({request:{...request,message:'0x686a'},plan,taskId:plan.tasks[0].id,mnemonic:MN}),/changed/);
-  const altered=clone(plan);altered.tasks[0].targets[0].path=evm(0).path;assert.throws(()=>signPlanTask({request,plan:altered,taskId:plan.tasks[0].id,mnemonic:MN}),/changed/);
-  const {planHash,...body}=altered;altered.planHash=requestHash(body);assert.throws(()=>signPlanTask({request,plan:altered,taskId:plan.tasks[0].id,mnemonic:MN}),/targets/);
+  const altered=clone(plan);altered.tasks[0].targets[0].path=evm(0).path;assert.throws(()=>signPlanTask({request,plan:altered,taskId:plan.tasks[0].id,mnemonic:MN,riskAcknowledged:true}),/changed/);
+  const {planHash,...body}=altered;altered.planHash=requestHash(body);assert.throws(()=>signPlanTask({request,plan:altered,taskId:plan.tasks[0].id,mnemonic:MN,riskAcknowledged:true}),/targets/);
   const fixture=JSON.parse(fs.readFileSync(new URL('./fixtures/evm-public-ui.json',import.meta.url)));
   const qr=decodeQR({frames:fixture.frames}).request;validateRequestTransport(qr);assert.equal(resolveSigningPlan({request:qr,wallets}).status,'ready');
   assert.throws(()=>validateRequestTransport({...qr,message:'0x00'}),/original QR/);
@@ -164,7 +164,7 @@ function bitcoinRequest(entries,{derivations=true,multisig=false}={}){
 test('PSBT public matching fixes two wallet tasks, preserves partial signatures, and never scans beyond zero fallback',()=>{
   const request=bitcoinRequest([{cache:A,path:"m/84'/0'/0'/0/8"},{cache:A,path:"m/84'/0'/0'/1/3"},{cache:B,path:"m/84'/0'/0'/0/0"}]);
   const plan=resolveSigningPlan({request,wallets});assert.equal(plan.status,'ready');assert.equal(plan.tasks.length,2);assert.deepEqual(plan.tasks[0].inputs,[0,1]);
-  const first=signPlanTask({request,plan,taskId:plan.tasks[0].id,mnemonic:MN});
+  const first=signPlanTask({request,plan,taskId:plan.tasks[0].id,mnemonic:MN,riskAcknowledged:true});
   const second=signPlanTask({request,plan,taskId:plan.tasks[1].id,mnemonic:MN2,previousResult:first});
   const tx=Transaction.fromPSBT(fromBase64(second.psbt));assert.equal(tx.getInput(0).partialSig.length,1);assert.equal(tx.getInput(2).partialSig.length,1);tx.finalize();assert.ok(tx.extract().length>0);
   assert.equal(second.requestHash,plan.requestHash);assert.deepEqual(second.completedTaskIds,plan.tasks.map(t=>t.id));
@@ -175,7 +175,7 @@ test('PSBT public matching fixes two wallet tasks, preserves partial signatures,
   const multisig=bitcoinRequest([{cache:A,path:"m/48'/0'/0'/2'/0/0"},{cache:B,path:"m/48'/0'/0'/2'/0/0"}],{derivations:false,multisig:true});
   const decoded=decodeQR({frames:encodeQR({type:'crypto-psbt',payload:multisig.psbt,encoding:'base64'}).frames}).request;
   const multiPlan=resolveSigningPlan({request:decoded,wallets});assert.equal(multiPlan.tasks.length,2);
-  const a=signPlanTask({request:decoded,plan:multiPlan,taskId:multiPlan.tasks[0].id,mnemonic:MN});
+  const a=signPlanTask({request:decoded,plan:multiPlan,taskId:multiPlan.tasks[0].id,mnemonic:MN,riskAcknowledged:true});
   const b=signPlanTask({request:decoded,plan:multiPlan,taskId:multiPlan.tasks[1].id,mnemonic:MN2,previousResult:a});
   const final=decodeQR({frames:encodeResponse({request:decoded,result:b}).frames}).request;
   const full=Transaction.fromPSBT(fromBase64(final.psbt));assert.equal(full.getInput(0).partialSig.length,2);full.finalize();assert.ok(full.extract().length>0);
@@ -192,7 +192,7 @@ test('Solana message matching handles optional address and exact presets; transa
   for(const key of A.solanaPublicKeys){
     const request={chain:'solana',kind:'message',message:toBase64(new TextEncoder().encode('Public Solana fixture')),path:key.path,masterFingerprint:A.masterFingerprint};
     const plan=resolveSigningPlan({request,wallets});assert.equal(plan.status,'ready');assert.equal(plan.tasks[0].paths[0],key.path);
-    const result=signPlanTask({request,plan,taskId:plan.tasks[0].id,mnemonic:MN});assert.ok(ed25519.verify(hexToBytes(result.signature),fromBase64(request.message),hexToBytes(key.publicKey)));
+    const result=signPlanTask({request,plan,taskId:plan.tasks[0].id,mnemonic:MN,riskAcknowledged:true});assert.ok(ed25519.verify(hexToBytes(result.signature),fromBase64(request.message),hexToBytes(key.publicKey)));
     assert.equal(resolveSigningPlan({request:{...request,path:undefined,address:key.address,masterFingerprint:undefined},wallets}).status,'invalid'); // JSON callers must omit absent keys.
     const withoutPath={chain:'solana',kind:'message',message:request.message,address:key.address};assert.equal(resolveSigningPlan({request:withoutPath,wallets}).status,'ready');
   }
@@ -203,7 +203,7 @@ test('Solana message matching handles optional address and exact presets; transa
     const bytes=concat(...(version==='v0'?[new Uint8Array([128])]:[]),new Uint8Array([2,1,1]),short(4),...keys,new Uint8Array(32).fill(9),short(1),instruction,...(version==='v0'?[short(0)]:[]));
     const request={chain:'solana',kind:'transaction',message:toBase64(bytes),address:signer.address,signatures:[toBase64(ed25519.sign(bytes,new Uint8Array(32).fill(7))),null]};
     const plan=resolveSigningPlan({request,wallets});assert.equal(plan.status,'ready');assert.equal(plan.tasks[0].targets[0].signerSlot,1);
-    const result=signPlanTask({request,plan,taskId:plan.tasks[0].id,mnemonic:MN});assert.equal(result.signatures[0],request.signatures[0]);assert.ok(ed25519.verify(fromBase64(result.signatures[1]),bytes,hexToBytes(signer.publicKey)));
+    const result=signPlanTask({request,plan,taskId:plan.tasks[0].id,mnemonic:MN,riskAcknowledged:true});assert.equal(result.signatures[0],request.signatures[0]);assert.ok(ed25519.verify(fromBase64(result.signatures[1]),bytes,hexToBytes(signer.publicKey)));
     assert.equal(resolveSigningPlan({request:{...request,address:recipient.address},wallets}).status,'noMatch');
   }
 });
@@ -212,7 +212,7 @@ test('TRON matches the 100 cached addresses without a path, any index with a pat
   for(const index of [0,99]){
     const key=A.tronAddressIndex[index],request={chain:'tron',kind:'message',message:'68656c6c6f',messageStandard:'TIP191',address:key.address};
     const plan=resolveSigningPlan({request,wallets});assert.equal(plan.status,'ready');assert.equal(plan.tasks[0].paths[0],key.path);
-    const result=signPlanTask({request,plan,taskId:plan.tasks[0].id,mnemonic:MN});
+    const result=signPlanTask({request,plan,taskId:plan.tasks[0].id,mnemonic:MN,riskAcknowledged:true});
     const digest=keccak256(Buffer.concat([Buffer.from('\x19TRON Signed Message:\n5'),Buffer.from('hello')]));
     assert.equal(recoverAddress(digest,'0x'+result.signature),HDNodeWallet.fromPhrase(MN,undefined,key.path).address);
   }
@@ -222,7 +222,7 @@ test('TRON matches the 100 cached addresses without a path, any index with a pat
   for(const index of [100,50000]){
     const path="m/44'/195'/0'/0/"+index,request={chain:'tron',kind:'message',message:'68656c6c6f',messageStandard:'TIP191',path,masterFingerprint:A.masterFingerprint};
     const plan=resolveSigningPlan({request,wallets});assert.equal(plan.status,'ready');assert.equal(plan.tasks[0].paths[0],path);
-    const result=signPlanTask({request,plan,taskId:plan.tasks[0].id,mnemonic:MN});
+    const result=signPlanTask({request,plan,taskId:plan.tasks[0].id,mnemonic:MN,riskAcknowledged:true});
     const digest=keccak256(Buffer.concat([Buffer.from('\x19TRON Signed Message:\n5'),Buffer.from('hello')]));
     assert.equal(recoverAddress(digest,'0x'+result.signature),HDNodeWallet.fromPhrase(MN,undefined,path).address);
     const withAddress={...request,address:pub(A,'tron',path).address};assert.equal(resolveSigningPlan({request:withAddress,wallets}).status,'ready');
@@ -236,7 +236,7 @@ test('TRON matches the 100 cached addresses without a path, any index with a pat
 
 test('PSBT plan rejects tampered accumulation and limits absent derivation cosigners to explicit scripts',()=>{
   const request=bitcoinRequest([{cache:A,path:"m/84'/0'/0'/0/0"},{cache:B,path:"m/84'/0'/0'/0/0"}]);
-  const plan=resolveSigningPlan({request,wallets}),first=signPlanTask({request,plan,taskId:plan.tasks[0].id,mnemonic:MN});
+  const plan=resolveSigningPlan({request,wallets}),first=signPlanTask({request,plan,taskId:plan.tasks[0].id,mnemonic:MN,riskAcknowledged:true});
   const second=()=>signPlanTask({request,plan,taskId:plan.tasks[1].id,mnemonic:MN2,previousResult:first});
   const changed=RawPSBTV0.decode(fromBase64(first.psbt));delete changed.inputs[1].bip32Derivation;first.psbt=toBase64(RawPSBTV0.encode(changed));
   assert.throws(second,/metadata/);

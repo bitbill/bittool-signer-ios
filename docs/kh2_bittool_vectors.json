@@ -1,0 +1,41 @@
+{
+  "warning": "PUBLIC, UNFUNDED TEST VECTOR ONLY. Never send assets to these addresses.",
+  "about": "KH v2 wallet-identity signatures for BitTool Signer and BitTool Wallet. Every platform must reproduce these bytes exactly.",
+  "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+  "passphrase": "",
+  "authIndex": 1000000000,
+  "path": "m/44'/0'/0'/0/1000000000",
+  "registeredExtendedKeys": {
+    "note": "The xpub BitTool Wallet registers as extendedKeys; the backend derives the identity key as its non-hardened child authIndex.",
+    "accountPath": "m/44'/0'/0'",
+    "branch": "0",
+    "xpub": "xpub6ELHKXNimKbxMCytPh7EdC2QXx46T9qLDJWGnTraz1H9kMMFdcduoU69wh9cxP12wDxqAAfbaESWGYt5rREsX1J8iR2TEunvzvddduAPYcY"
+  },
+  "messageDigest": "SHA-256 twice over 0x18 | \"Bitcoin Signed Message:\\n\" | varint(len) | message",
+  "signatureFormat": "base64 of 65 bytes: header (27 + recovery id + 4 for a compressed key) | R (32) | S (32); RFC 6979 deterministic k; low S",
+  "kh2": "lower-case hex of SHA-256(R | S), S folded into the low half",
+  "vectors": [
+    {
+      "epoch": 1,
+      "message": "OwnbitAuth:v2:epoch=1",
+      "path": "m/44'/0'/0'/0/1000000000",
+      "publicKey": "02a61d47c2a0326f197d2d42bfc27b4171f7870e6b3d7ad37f3f210c3d602bab1c",
+      "address": "1N8ju3BdMHttCNBJ4d8v3eCrpzdLk1m9Vo",
+      "signature": "IDbq1RPzOmq1q37JrcXcPBa9vVjrpG0B+9/ltJXQjfWlDGoP/gwHDMeGFH5XdL693wnhbeAsBdfRj7x70s94Lm4=",
+      "r": "36ead513f33a6ab5ab7ec9adc5dc3c16bdbd58eba46d01fbdfe5b495d08df5a5",
+      "s": "0c6a0ffe0c070cc786147e5774bebddf09e16de02c05d7d18fbc7bd2cf782e6e",
+      "kh2": "4fb494ddc6dac144c283c3a24f92156937c855a1b2e3997981ef510465d948fc"
+    },
+    {
+      "epoch": 2,
+      "message": "OwnbitAuth:v2:epoch=2",
+      "path": "m/44'/0'/0'/0/1000000000",
+      "publicKey": "02a61d47c2a0326f197d2d42bfc27b4171f7870e6b3d7ad37f3f210c3d602bab1c",
+      "address": "1N8ju3BdMHttCNBJ4d8v3eCrpzdLk1m9Vo",
+      "signature": "HyJlRiut4wBA9pcd0q6BFqC1ghMJUhpRd82P3pUS+LNLBY0MOquhqW11cNTf1QGYSHUJ3b8N930O+SvrVOIdYqE=",
+      "r": "2265462bade30040f6971dd2ae8116a0b5821309521a5177cd8fde9512f8b34b",
+      "s": "058d0c3aaba1a96d7570d4dfd50198487509ddbf0df77d0ef92beb54e21d62a1",
+      "kh2": "af8fde9ee528be6f31de021820fa7490b1584b0b753b29e12443927135ec5292"
+    }
+  ]
+}

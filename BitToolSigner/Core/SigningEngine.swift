@@ -3,8 +3,13 @@ import JavaScriptCore
 
 struct SigningEngineError: LocalizedError, Sendable {
     let code: String
+    /// The engine's own English. Severity markers and the tests read this, not
+    /// the translation.
     let message: String
-    var errorDescription: String? { message }
+    /// Translated as the interface draws it, the same way a review warning is:
+    /// the engine has no locale, so its sentences are keys. Falls back to the
+    /// English when a language has no entry.
+    var errorDescription: String? { ReviewText.sentence(message) }
 }
 
 /// One JavaScriptCore VM with the bundled engine and native entropy installed.
@@ -118,6 +123,7 @@ actor SigningEngine: IncrementalQREngine {
     private static let productionOperations: Set<String> = [
         "mnemonic", "capabilities",
         "derivePublicIndex", "derivePublicAddresses", "createPublicPairing", "createWalletPairing",
+        "signKhV2",
         "decodeQR", "decodePayload", "review", "resolveSigningPlan", "signPlanTask", "encodeResponse",
     ]
     /// Trusted local public inputs only.

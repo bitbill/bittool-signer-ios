@@ -12,7 +12,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const engine = path.resolve(process.argv[2] || path.join(here, '../../engine'));
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const sourcePaths = ['protocols.js', ...fs.readdirSync(path.join(engine, 'src')).filter(p => p.endsWith('.js')).map(p => 'src/' + p),
-  'test/protocols.test.js', 'test/wallet-pairing.test.mjs', 'package.json', 'package-lock.json', 'data/token-registry.engine.json'];
+  'test/protocols.test.js', 'test/wallet-pairing.test.mjs', 'test/kh2.test.mjs', 'package.json', 'package-lock.json', 'data/token-registry.engine.json'];
 const before = new Map(sourcePaths.map(p => [p, sha(fs.readFileSync(path.join(engine, p)))]));
 const bundleBefore = sha(fs.readFileSync(path.join(engine, '../BitToolSigner/Resources/signer.js')));
 const require = createRequire(path.join(engine, 'package.json'));
@@ -25,7 +25,9 @@ const { sha256 } = await dep('@noble/hashes/sha2.js');
 const { secp256k1 } = await dep('@noble/curves/secp256k1.js');
 const { ed25519 } = await dep('@noble/curves/ed25519.js');
 const { Transaction, getBytes, verifyMessage, verifyTypedData, recoverAddress, Signature } = await dep('ethers');
-const { createWalletPairing, decodeWalletPairing, canonicalCBOR, decodeQR, encodeQR, encodeResponse } = await local('protocols.js');
+const { createWalletPairing, decodeWalletPairing, canonicalCBOR, decodeQR, encodeQR, encodeResponse, walletPairingObject,
+        walletPairingIdentity } = await local('protocols.js');
+const { signKhV2, verifyKhV2, khV2FromSignature, KH_V2_PATH, KH_V2_AUTH_INDEX } = await local('src/kh2.js');
 const { derivePublicIndex, derivePublicKeyAt } = await local('src/public-index.js');
 const { execute } = await local('src/index.js');
 const { resolveSigningPlan, signPlanTask } = await local('src/resolver.js');
@@ -58,20 +60,67 @@ const tag = (tag, value) => ({ tag, value });
 function keypath(fullPath) {
   return tag(304, new Map([[1, fullPath.split('/').slice(1).flatMap(p => [Number(p.replace("'", '')), p.endsWith("'")])], [2, parseInt(publicIndex.masterFingerprint, 16)]]));
 }
-const pairing = createWalletPairing({ publicIndex });
-assert.deepEqual(decodeWalletPairing({ frames: [...pairing.frames].reverse() }), pairing.payload);
+// The wallet-identity signature every v2 pairing carries, and the vector file the
+// other three BitTool platforms match byte for byte.
+const identities = [1, 2].map(epoch => signKhV2({ mnemonic: MN, epoch }));
+for (const item of identities) {
+  assert.ok(verifyKhV2({ signature: item.signature, epoch: item.epoch, publicKey: item.publicKey }));
+  assert.equal(khV2FromSignature(item.signature), item.kh2);
+  assert.equal(item.path, KH_V2_PATH);
+}
+fs.writeFileSync(path.join(here, '../kh2_bittool_vectors.json'), JSON.stringify({
+  warning: 'PUBLIC, UNFUNDED TEST VECTOR ONLY. Never send assets to these addresses.',
+  about: 'KH v2 wallet-identity signatures for BitTool Signer and BitTool Wallet. Every platform must reproduce these bytes exactly.',
+  mnemonic: MN, passphrase: '', authIndex: KH_V2_AUTH_INDEX, path: KH_V2_PATH,
+  registeredExtendedKeys: { note: 'The xpub BitTool Wallet registers as extendedKeys; the backend derives the identity key as its non-hardened child authIndex.',
+    accountPath: "m/44'/0'/0'", branch: '0', xpub: await (async () => {
+      const { HDKey } = await dep('@scure/bip32');
+      const { mnemonicToSeedSync } = await dep('@scure/bip39');
+      const node = HDKey.fromMasterSeed(mnemonicToSeedSync(MN)).derive("m/44'/0'/0'/0");
+      assert.equal(Buffer.from(HDKey.fromExtendedKey(node.publicExtendedKey).deriveChild(KH_V2_AUTH_INDEX).publicKey).toString('hex'),
+                   identities[0].publicKey, 'public derivation from the registered xpub must give the identity key');
+      return node.publicExtendedKey;
+    })() },
+  messageDigest: 'SHA-256 twice over 0x18 | "Bitcoin Signed Message:\\n" | varint(len) | message',
+  signatureFormat: 'base64 of 65 bytes: header (27 + recovery id + 4 for a compressed key) | R (32) | S (32); RFC 6979 deterministic k; low S',
+  kh2: 'lower-case hex of SHA-256(R | S), S folded into the low half',
+  vectors: identities.map(item => ({ epoch: item.epoch, message: item.message, path: item.path,
+    publicKey: item.publicKey, address: item.address, signature: item.signature,
+    r: Buffer.from(item.signature, 'base64').subarray(1, 33).toString('hex'),
+    s: Buffer.from(item.signature, 'base64').subarray(33, 65).toString('hex'),
+    kh2: item.kh2 })),
+}, null, 2) + '\n');
+
+const pairing = createWalletPairing({ publicIndex, khSig: identities[0].signature });
+const { identity: decodedIdentity, ...decodedPairing } = decodeWalletPairing({ frames: [...pairing.frames].reverse() });
+assert.deepEqual(decodedPairing, pairing.payload);
+assert.deepEqual(decodedIdentity, walletPairingIdentity(pairing.payload));
+assert.equal(decodedIdentity.address, identities[0].address);
 const inner = canonicalCBOR(pairing.payload), outer = readFrames(pairing.frames).cbor;
 assert.deepEqual(Buffer.from(outer), cbor(inner));
 save('wallet-pairing-current.json', {
   warning: 'PUBLIC, UNFUNDED TEST VECTOR ONLY. Never send assets to these addresses.',
-  protocolVersion: 1, logicalPayload: pairing.payload, innerCBORHex: inner.toString('hex'),
+  protocolVersion: 2, logicalPayload: pairing.payload, innerCBORHex: inner.toString('hex'),
   innerCBORBytes: inner.length, innerCBORSHA256: sha(inner), urCBORHex: Buffer.from(outer).toString('hex'),
-  frames: pairing.frames, verify: pairing.verify, solanaAccountCount: pairing.payload.accounts.find(a => a.chain === 'sol').accounts.length,
+  frames: pairing.frames, verify: pairing.verify, identity: pairing.identity,
+  solanaAccountCount: pairing.payload.accounts.find(a => a.chain === 'sol').accounts.length,
+});
+// A v1 payload: no identity signature. A BitTool Wallet 1.1.0 receiver must refuse
+// it, because a watch wallet built from it cannot register with the backend.
+const v1 = { ...pairing.payload, version: 1 };
+delete v1.khSig; delete v1.khEpoch;
+const v1Bytes = canonicalCBOR(v1);
+assert.throws(() => decodeWalletPairing({ frames: frames('bytes', cbor(v1Bytes), 200) }), /version/);
+save('wallet-pairing-v1-rejected.json', {
+  note: 'The version 1 payload BitTool Signer produced before 1.1.0, kept so receivers can test that they refuse it. It carries no khSig/khEpoch, so the receiving wallet has no identity to register.',
+  logicalPayload: v1, innerCBORHex: v1Bytes.toString('hex'), innerCBORSHA256: sha(v1Bytes),
+  frames: frames('bytes', cbor(v1Bytes), 200),
+  expectedReceiverBehaviour: 'Refuse, and tell the person to update BitTool Signer to 1.1.0 or later and scan again.',
 });
 const noMode = { ...pairing.payload }; delete noMode.mode;
 const noModeBytes = canonicalCBOR(noMode);
 save('wallet-pairing-no-mode-receiver-extension.json', {
-  note: 'Proposed BitTool Wallet receiver compatibility with the attached draft; NOT emitted by this BitTool Signer snapshot. All other fields unchanged. The current BitTool Signer reference decoder rejects absent mode.',
+  note: 'Proposed BitTool Wallet receiver compatibility with the attached draft; NOT emitted by this BitTool Signer snapshot. All other fields unchanged, identity signature included. The current BitTool Signer reference decoder rejects absent mode.',
   logicalPayload: noMode, innerCBORHex: noModeBytes.toString('hex'), innerCBORSHA256: sha(noModeBytes),
   frames: frames('bytes', cbor(noModeBytes), 200),
 });

@@ -52,7 +52,9 @@ function solRequest({version='legacy',alt=false,unknown=false,multisig=false}={}
  const header=new Uint8Array([multisig?2:1,0,1]);
  const instruction=concat(new Uint8Array([keys.length-1]),short(2),new Uint8Array(multisig?[1,2]:[0,1]),short(12),u32(2),u64(123456789));
  if(unknown)keys[keys.length-1]=new Uint8Array(32).fill(99);
- const msg=concat(...(version==='v0'?[new Uint8Array([128])]:[]),header,short(keys.length),...keys,new Uint8Array(32).fill(5),short(1),instruction,...(version==='v0'?[short(alt?1:0)]:[]));
+ // `alt` appends one real address lookup table: its account, one writable entry, no read-only ones.
+ const lookups=version!=='v0'?[]:alt?[short(1),new Uint8Array(32).fill(6),short(1),new Uint8Array([3]),short(0)]:[short(0)];
+ const msg=concat(...(version==='v0'?[new Uint8Array([128])]:[]),header,short(keys.length),...keys,new Uint8Array(32).fill(5),short(1),instruction,...lookups);
  const request={chain:'solana',kind:'transaction',message:toBase64(msg)};
  if(multisig)request.signatures=[toBase64(ed25519.sign(msg,new Uint8Array(32).fill(7))),null];
  return request;
@@ -122,13 +124,25 @@ test('Solana legacy/v0 signatures verify and preserve exact message',()=>{
 test('Solana multisig adds correct slot and preserves other signer',()=>{
  const r=solRequest({multisig:true});const out=sign(r);assert.equal(out.signerIndex,1);assert.equal(out.signatures[0],r.signatures[0]);assert.equal(out.signatures.length,2);
 });
-test('Solana refuses ALT, bad signatures and wrong signer; unknown programs are marked high risk',()=>{
- fails(()=>review(solRequest({version:'v0',alt:true})),'LOOKUP_TABLE');assert.equal(review(solRequest({unknown:true})).riskLevel,'high');assert.equal(review(solRequest({unknown:true})).decodeStatus,'opaque');
+test('Solana reads ALT transactions but gates them; bad signatures and the wrong signer are refused',()=>{
+ // An address lookup table is signable — refusing it made most Solana applications
+ // unusable — but it always carries a high-risk warning that names the table, and it
+ // always leaves the review short of "fully decoded" so signing needs an acknowledgement.
+ const alt=review(solRequest({version:'v0',alt:true}));
+ assert.equal(alt.riskLevel,'high');assert.equal(alt.decodeStatus,'partiallyDecoded');
+ assert.ok(alt.warnings[0].startsWith('HIGH RISK:'),alt.warnings[0]);
+ assert.match(alt.warnings[0],/address lookup table/);
+ assert.equal(alt.fields.find(f=>f.label==='Accounts loaded from lookup tables').value,'1');
+ assert.match(alt.fields.find(f=>f.label==='Address lookup tables').value,/\(1 writable, 0 read-only\)/);
+ // Without a table the same transaction reads cleanly and needs no acknowledgement.
+ const plain=review(solRequest({version:'v0'}));
+ assert.equal(plain.decodeStatus,'fullyDecoded');assert.ok(!plain.warnings.some(w=>w.includes('lookup table')));
+ assert.equal(review(solRequest({unknown:true})).riskLevel,'high');assert.equal(review(solRequest({unknown:true})).decodeStatus,'opaque');
  const r=solRequest();fails(()=>sign({...r,address:base58.encode(new Uint8Array(32))}),'SIGNER');fails(()=>review({...r,signatures:[toBase64(new Uint8Array(64).fill(1))]}),'SIGNATURE');
 });
 test('dispatch rejects oversized/malformed input without reflecting secrets',()=>{const r=JSON.parse(dispatch('{"operation":"sign","mnemonic":"SECRET","request":{}}'));assert.equal(r.ok,false);assert.ok(!JSON.stringify(r).includes('SECRET'));assert.equal(JSON.parse(dispatch('x'.repeat(1048577))).error.code,'LIMIT');});
 test('browser bundle operates in a JavaScriptCore-like isolated environment',()=>{
- let source;try{source=readFileSync(new URL('../../BitToolSigner/Resources/signer.js',import.meta.url),'utf8');}catch{return;}
+ const source=readFileSync(new URL('../../BitToolSigner/Resources/signer.js',import.meta.url),'utf8');
  const context=vm.createContext({});vm.runInContext(source,context,{timeout:20000});
  const result=JSON.parse(context.BitToolSignerEngine.dispatch(JSON.stringify({operation:'deriveAccounts',mnemonic:MN})));
  assert.equal(result.ok,true);assert.equal(result.result.accounts[1].address,accounts[1].address);assert.equal(vm.runInContext('typeof fetch',context),'undefined');

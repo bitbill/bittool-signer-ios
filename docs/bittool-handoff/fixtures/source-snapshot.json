@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-10-18T11:45:22.125Z",
+  "generatedAt": "2026-11-17T00:21:13.941Z",
   "nodeVersion": "v20.20.2",
   "sourceType": "Local working tree, not a release certification or Git commit snapshot",
   "files": [
     {
       "path": "engine/protocols.js",
-      "sha256": "b74922ddcce79e6bf8ed24a00e970019ae57a8f057f7122e69750f227a92df4f"
+      "sha256": "b1f684a34daf5d9a7a1f37ba57e7a6d99904b5c8b10e5a1787b7e242abfc60c3"
     },
     {
       "path": "engine/src/bitcoin-policy.js",
@@ -13,19 +13,23 @@
     },
     {
       "path": "engine/src/bitcoin.js",
-      "sha256": "78e56e69d75765078293274b9a49a3e9c31e0f642f2b416e9ab5f1f5cca58650"
+      "sha256": "2e18238703238f5c8a8e8f6bf3ad09697dea1657c83b917cc3d10adb7b9eac30"
     },
     {
       "path": "engine/src/evm.js",
-      "sha256": "e10b49ad5517c1d19ca3fc6b6309fa8e825a94c715644e9c47f87ccc8b86f7b7"
+      "sha256": "c83764578803a31c02024337aeaa984f0d40f243397205c81b81b2ab8a14eb3c"
     },
     {
       "path": "engine/src/index.js",
-      "sha256": "12064a16114238ff10e2e254a5953dbab4c1ba493a62dffcab456702fe9018ba"
+      "sha256": "035a3d7f37af459f6c59f85a56c6ea10e107cdb9d9419bc339bde94e1bc248c1"
     },
     {
       "path": "engine/src/keys.js",
       "sha256": "9e79dac967ef18bee9288054b025485bb888c0f7d98ae10f74f0de1ae5f2b0f8"
+    },
+    {
+      "path": "engine/src/kh2.js",
+      "sha256": "ea4349260fd267fbde59eabf98ffda5739ca8f14d645376778a4753fe7f7aff3"
     },
     {
       "path": "engine/src/known-contracts.js",
@@ -45,15 +49,15 @@
     },
     {
       "path": "engine/src/resolver.js",
-      "sha256": "fa8437f88cd1825807ef4064c177c13ad76508cce19e0df80be142a67cd04e80"
+      "sha256": "2f22963ea2678a2e2181c7e25f7ad42563c5965a2bea0bdd4288b68ecc6dab00"
     },
     {
       "path": "engine/src/solana.js",
-      "sha256": "7ad89f4ca6ed81c02c3dea77ceeaa62bc56b78166492dd2619f023d42410c4a2"
+      "sha256": "9e7c781c3ff103976f40b488813d4e916189ba8d5fb2185386a05fc7ae93cbe0"
     },
     {
       "path": "engine/src/token-registry.js",
-      "sha256": "535c7e7210677054f2b1644c88763ad1140e5e0565744a186413c1e3af23ed39"
+      "sha256": "94a135a9e50eaab204e5c7343a4776416f68610c6c7d5e9f106086b7275e32ed"
     },
     {
       "path": "engine/src/tron.js",
@@ -69,11 +73,15 @@
     },
     {
       "path": "engine/test/wallet-pairing.test.mjs",
-      "sha256": "cce2d9a12dada171aa90609a9034fbb45ba2bc1277ab35fec0bc536ce005ef09"
+      "sha256": "0cdc7f889fd1c903a0567bee7d0f90fb282e06a570a1226149a3c4e07360a9fe"
+    },
+    {
+      "path": "engine/test/kh2.test.mjs",
+      "sha256": "5b20c0160f6d96e354bfe40af67f41d5f78a1341071f2672e8bd7792f35ecc4a"
     },
     {
       "path": "engine/package.json",
-      "sha256": "df822547798b3f7f9ca188afac8e1ea4bd86f94343327fd5a0bd7266ffe9a4c8"
+      "sha256": "439e56caf55cdd7b7624c08855a9a73c092e4082010c1ab534c5d0b56f3e900a"
     },
     {
       "path": "engine/package-lock.json",
@@ -86,11 +94,11 @@
   ],
   "bundle": {
     "path": "BitToolSigner/Resources/signer.js",
-    "sha256": "6933d0d8a6f60faa8222506ac0bd7eef80eb884c9f73e31e9f354b4740f21077",
-    "bytes": 1181026
+    "sha256": "f774f1f2b0614e7faec0eeac30ee216bd351ae4f2a326846a057b489a7c01a96",
+    "bytes": 1203208
   },
   "capabilities": {
-    "version": "1.0.0",
+    "version": "1.1.0",
     "offline": true,
     "chains": [
       "bitcoin",
@@ -103,9 +111,17 @@
       "eth-sign-request/eth-signature",
       "sol-sign-request/sol-signature",
       "tron-sign-request/tron-signature",
-      "BBQR PSBT"
+      "BBQR PSBT",
+      "bittool-signer-wallet v2"
     ],
     "authorization": "Public-index resolution with fixed, independently authorized wallet tasks",
+    "walletIdentity": {
+      "format": "KH v2",
+      "message": "OwnbitAuth:v2:epoch=<N>",
+      "path": "m/44'/0'/0'/0/1000000000",
+      "signature": "Bitcoin Signed Message, ECDSA secp256k1, RFC 6979, low-S, compressed header",
+      "restriction": "Only that exact sentence can be signed; arbitrary text is not accepted"
+    },
     "bitcoin": {
       "supported": [
         "PSBT v0/v2",
@@ -130,7 +146,7 @@
     },
     "evm": {
       "supported": [
-        "Legacy/EIP-2930/EIP-1559",
+        "Legacy/EIP-2930/EIP-1559/EIP-7702",
         "personal_sign arbitrary bytes",
         "EIP-712",
         "SafeTx CALL/DELEGATECALL",
@@ -143,7 +159,8 @@
         "LooksRare v2 maker and batch orders",
         "Blur blind Merkle-root orders (shown as opaque)"
       ],
-      "networks": [
+      "networks": "every EVM chain ID; 60 are named",
+      "tokenRegistryNetworks": [
         1,
         56,
         42161,
@@ -158,13 +175,14 @@
         "Custom typed data: partially decoded",
         "Delegatecall, batch, permit and permission operations: high risk",
         "NFT marketplace orders and collection-wide approvals: high risk",
-        "ERC20/ERC721 shared selectors on unregistered contracts: shown as NFT or token"
+        "ERC20/ERC721 shared selectors on unregistered contracts: shown as NFT or token",
+        "EIP-7702 account code delegation: the delegate contract is on-chain and cannot be read offline, so a delegation is always high risk, never fully decoded, and names the account it changes by recovering it from the authorization signature",
+        "An EVM chain with no name here: signed, but the network and its native currency cannot be named and no contract or token on it is registered"
       ],
       "rejected": [
-        "Unsupported chain IDs",
-        "EIP-7702",
         "Blob transactions",
-        "eth_sign raw hash"
+        "eth_sign raw hash",
+        "Chain ID 0 or an unprotected transaction"
       ]
     },
     "tron": {
@@ -187,7 +205,7 @@
     },
     "solana": {
       "supported": [
-        "Legacy/v0 static keys",
+        "Legacy and v0 messages, including address lookup tables",
         "Three registered Ed25519 preset paths",
         "System transfers, create, nonce, assign and allocate",
         "SPL Token transfers/approvals/mint/burn/close/setAuthority/syncNative",
@@ -199,11 +217,12 @@
       "riskGated": [
         "Unknown programs: opaque",
         "Token-2022 extensions: partially decoded",
-        "Squads approve/reject/cancel proposal references: partially decoded"
+        "Squads approve/reject/cancel proposal references: partially decoded",
+        "Address lookup tables: the loaded addresses are on-chain and cannot be read offline, so every account they supply is shown as a placeholder, the review is never fully decoded and signing needs an explicit acknowledgement"
       ],
       "rejected": [
-        "Address lookup tables",
-        "Malformed messages and invalid signer slots"
+        "Malformed messages and invalid signer slots",
+        "Transactions sent through a message request"
       ]
     },
     "releaseQualification": "Protocol unit tests do not establish third-party wallet end-to-end certification or a security audit."

@@ -81,8 +81,6 @@ struct AppLockView: View {
                 .focused($passwordFocused)
                 .submitLabel(.go)
                 .onSubmit(authenticatePassword)
-                .padding(14)
-                .background(Palette.raised, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             Button(action: authenticatePassword) { ActionLabel("Unlock", systemImage: "lock.open", busy: busy) }
                 .prominentAction()
                 .disabled(walletID == nil || password.isEmpty || busy)

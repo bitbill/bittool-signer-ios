@@ -71,7 +71,9 @@ struct RequestReviewView: View {
     private func warnings(_ review: TransactionReview) -> some View {
         VStack(spacing: 10) {
             ForEach(Array(review.warnings.enumerated()), id: \.offset) { _, warning in
-                Callout(verbatim: warning, tone: isSevere(warning) ? .danger : .warning)
+                // Severity is read from the engine's English, never from the
+                // translation: "HIGH RISK" is a marker in the source text.
+                Callout(verbatim: ReviewText.sentence(warning), tone: isSevere(warning) ? .danger : .warning)
             }
         }
     }
@@ -87,7 +89,7 @@ struct RequestReviewView: View {
                 .font(.headline)
             if let message = store.matchingError {
                 VStack(alignment: .leading, spacing: 10) {
-                    Label(ReviewText.phrase(message), systemImage: "xmark.octagon.fill")
+                    Label(ReviewText.sentence(message), systemImage: "xmark.octagon.fill")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Palette.danger)
                         .accessibilityIdentifier("signing.matchError")
@@ -245,7 +247,13 @@ struct ReviewSummaryCard: View {
 
     private var amountText: String? {
         guard let display = review.display, let amount = display.amount else { return nil }
-        return [amount, display.symbol].compactMap { $0 }.joined(separator: " ")
+        return ReviewText.amountLine(amount, display.symbol)
+    }
+
+    /// A message's words, or the type name of unrecognised typed data, are the
+    /// requester's and are drawn as they are; everything else is the engine's.
+    private func shownHeadline(_ text: String) -> String {
+        ReviewText.headlineIsTheirs(action: review.display?.action) ? text : ReviewText.headline(text)
     }
 
     private var textHeadline: String? {
@@ -292,10 +300,10 @@ struct ReviewSummaryCard: View {
                         .accessibilityIdentifier("review.headline")
                 }
                 if let secondary = review.display?.amount != nil ? review.display?.headline : nil {
-                    Text(verbatim: ReviewText.headline(secondary)).font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                    Text(verbatim: shownHeadline(secondary)).font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
                 }
                 if let textHeadline {
-                    Text(verbatim: ReviewText.headline(textHeadline))
+                    Text(verbatim: shownHeadline(textHeadline))
                         .font(.title3.weight(.semibold))
                         .multilineTextAlignment(.center)
                         .lineLimit(Self.headlineLineLimit(review.display))
@@ -324,7 +332,7 @@ struct ReviewSummaryCard: View {
                 .accessibilityElement(children: .combine)
             }
             if let note = review.display?.note {
-                Label(note, systemImage: "checkmark.shield.fill")
+                Label(ReviewText.sentence(note), systemImage: "checkmark.shield.fill")
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(Palette.success)
             }
@@ -354,7 +362,7 @@ struct ReviewSummaryCard: View {
         VStack(spacing: 10) {
             if let contract = display.assetContract {
                 VStack(spacing: 6) {
-                    Text(verbatim: display.assetContractCaption)
+                    Text(verbatim: ReviewText.label(display.assetContractCaption))
                         .font(.caption.weight(.semibold)).foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
@@ -442,7 +450,9 @@ struct ReviewSummaryCard: View {
             } else {
                 GenericNetworkLogo(size: 18)
             }
-            Text(review.networkName).font(.caption.weight(.semibold)).lineLimit(1)
+            // A named network is a name; without one the engine says so in a phrase.
+            Text(verbatim: review.network == nil ? ReviewText.phrase(review.networkName) : review.networkName)
+                .font(.caption.weight(.semibold)).lineLimit(1)
         }
         .padding(.horizontal, 10).padding(.vertical, 5)
         .background(Palette.raised, in: Capsule())
@@ -841,8 +851,6 @@ struct AuthorizeSheet: View {
                         .focused($focused)
                         .submitLabel(.done)
                         .onSubmit(sign)
-                        .padding(14)
-                        .background(Palette.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                     if let error {
                         Callout(verbatim: error, tone: .danger)
                     } else {

@@ -135,6 +135,11 @@ struct ConnectView: View {
         [chain.rawValue, profile, outputMode, String(index)].joined(separator: "|")
     }
     private var current: PairingPayload? { loadedKey == requestKey ? payload : nil }
+    /// A wallet saved before version 1.1.0 has no identity signature, so its
+    /// wallet-level code cannot be built until its password is entered once.
+    private var needsIdentity: Bool {
+        store.metadataStatus(for: walletID) == .ready && !store.hasWalletIdentity(walletID)
+    }
     private static let walletKeyValue = "wallet"
     private var walletKey: String { Self.walletKeyValue }
     private var currentWallet: WalletPairingPayload? { walletLoadedKey == walletKey ? walletPayload : nil }
@@ -159,7 +164,8 @@ struct ConnectView: View {
                     notes
                     IntendedWalletsView(chain: chain, profile: profile, mode: outputMode)
                 case .wallet:
-                    WalletLevelPairingView(payload: currentWallet, error: error,
+                    WalletLevelPairingView(walletID: walletID, payload: currentWallet, error: error,
+                                           needsIdentity: needsIdentity,
                                            masterFingerprint: store.publicMetadata(for: walletID)?.masterFingerprint,
                                            initialImages: preparedImages)
                 }
@@ -182,7 +188,7 @@ struct ConnectView: View {
                 .accessibilityIdentifier("connect.copy")
             }
         }
-        .task(id: level == .coin ? requestKey : walletKey) { await load() }
+        .task(id: level == .coin ? requestKey : walletKey + (needsIdentity ? "|unsigned" : "|signed")) { await load() }
         .copiedToast($copied)
     }
 
@@ -314,7 +320,12 @@ struct ConnectView: View {
     }
 
     private func load() async {
-        if level == .wallet { await loadWallet(); return }
+        if level == .wallet {
+            // Nothing to load while the identity is missing: the page shows the
+            // password form instead, and loading would only add an error to it.
+            guard !needsIdentity else { walletPayload = nil; walletLoadedKey = nil; error = nil; return }
+            await loadWallet(); return
+        }
         let key = requestKey
         if loadedKey == key, payload != nil { return } // Opened with the prefetched QR.
         let first = loadedKey == nil
@@ -349,16 +360,21 @@ struct ConnectView: View {
 
 enum PairingLevel: Hashable { case coin, wallet }
 
-/// BitTool Signer wallet-level pairing (`bittool-signer-wallet` v1): one QR carrying the
+/// BitTool Signer wallet-level pairing (`bittool-signer-wallet` v2): one QR carrying the
 /// watch information for Bitcoin, EVM, TRON and Solana at once, for multi-chain
 /// wallets that implement it: the account xpubs for Bitcoin, EVM and TRON (so the
-/// wallet derives every address without scanning again) and one Solana address,
-/// since hardened Ed25519 derivation has no xpub.
+/// wallet derives every address without scanning again) and all three Solana
+/// addresses, since hardened Ed25519 derivation has no xpub. v2 also carries the
+/// wallet-identity signature, which the receiving wallet verifies on the device.
 /// Coin level stays the choice for Sparrow, MetaMask and other wallets that read
 /// each chain's standard format.
 struct WalletLevelPairingView: View {
+    let walletID: UUID
     let payload: WalletPairingPayload?
     let error: String?
+    /// True for a wallet from before version 1.1.0: its identity signature has to
+    /// be produced once, which needs the wallet password.
+    var needsIdentity = false
     let masterFingerprint: String?
     /// Images of the prefetched QR, so the page is complete on its first frame.
     var initialImages: [UIImage]?
@@ -388,7 +404,9 @@ struct WalletLevelPairingView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            if let payload {
+            if needsIdentity {
+                WalletIdentityAuthorizationView(walletID: walletID)
+            } else if let payload {
                 // An animated multi-part QR, drawn as large as the screen allows.
                 QRCodeView(frames: payload.frames, maxSide: 360, initialImages: initialImages)
                     .accessibilityIdentifier("connect.walletQR")
@@ -397,6 +415,11 @@ struct WalletLevelPairingView: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
+                Text("This code is version 2 and needs BitTool Wallet 1.1.0 or later.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .accessibilityIdentifier("connect.walletLevelVersion")
                 verification(payload)
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Works with").font(.headline)
@@ -460,7 +483,7 @@ struct WalletLevelPairingView: View {
                     Divider()
                 }
             }
-            DetailLine(label: "Format", value: "bittool-signer-wallet v1 · ur:bytes (canonical CBOR) · \(payload.payloadBytes) bytes", monospaced: false)
+            DetailLine(label: "Format", value: "bittool-signer-wallet v2 · ur:bytes (canonical CBOR) · \(payload.payloadBytes) bytes", monospaced: false)
             if let masterFingerprint { DetailLine(label: "Master fingerprint", value: masterFingerprint.uppercased()) }
             PayloadDisclosure(title: "Payload (JSON)", text: payload.json, identifier: "connect.walletJSON")
             Text("Public addresses and public keys only. No private key, recovery phrase or passphrase is included.")
@@ -468,6 +491,61 @@ struct WalletLevelPairingView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .cardBackground()
+    }
+}
+
+/// Signs a wallet's KH v2 identity, for a wallet created before version 1.1.0.
+///
+/// Version 2 of the wallet-level code carries a signature that proves this device
+/// holds the private key behind the public keys it exports, and producing one
+/// needs the seed. Newer wallets sign it when they are created, so this appears
+/// only once per older wallet. Cancelling simply leaves the page without a code.
+struct WalletIdentityAuthorizationView: View {
+    let walletID: UUID
+    @EnvironmentObject private var store: AppStore
+    @StateObject private var operation = WalletOperation()
+    @State private var password = ""
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Label("Verify your password once", systemImage: "lock.shield")
+                .font(.headline)
+            Text("The new pairing code carries this wallet’s identity signature, which BitTool Wallet 1.1.0 or later checks when it adds the wallet. BitTool Signer needs your wallet password once to create it. Your recovery phrase and password do not change.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            PasswordField(.walletPassword, text: $password)
+                .focused($focused)
+                .onSubmit(submit)
+                .accessibilityIdentifier("connect.identityPassword")
+            if let error = operation.error {
+                Callout(verbatim: error, tone: .danger)
+            }
+            Button(action: submit) { ActionLabel("Create Pairing Code", busy: operation.busy) }
+                .prominentAction()
+                .disabled(password.isEmpty || operation.busy)
+                .accessibilityIdentifier("connect.identitySubmit")
+            Text("Until then this wallet has no wallet-level code. Chain-specific codes (Coin Level) work as before.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardBackground()
+        .accessibilityIdentifier("connect.walletIdentity")
+        // A typed password is dropped the moment the app is suspended.
+        .onChange(of: store.securityEpoch) { _, _ in if !operation.busy { password = "" } }
+        .onDisappear { operation.cancel(); password = "" }
+    }
+
+    private func submit() {
+        guard !password.isEmpty, !operation.busy else { return }
+        let entered = password, epoch = store.securityEpoch
+        password = ""; focused = false
+        operation.run(epoch: epoch, current: { store.securityEpoch }) {
+            try await store.authorizeWalletIdentity(walletID: walletID, password: entered)
+        }
     }
 }
 

@@ -20,6 +20,9 @@ final class AppStore: ObservableObject {
     @Published private(set) var walletLoadSucceeded = false
     @Published private(set) var publicWallets: [UUID: WalletPublicMetadata] = [:]
     @Published private(set) var metadataStatuses: [UUID: PublicMetadataStatus] = [:]
+    /// KH v2 identity signatures, one per wallet that has one. A wallet saved
+    /// before version 1.1.0 is absent here until its password is entered once.
+    @Published private(set) var walletIdentities: [UUID: WalletIdentitySignature] = [:]
     @Published private(set) var duplicateWalletIDs: Set<UUID> = []
     @Published private(set) var review: TransactionReview?
     @Published private(set) var plan: SigningPlan?
@@ -126,15 +129,16 @@ final class AppStore: ObservableObject {
         do {
             let originals = try await vault.list()
             var displayed: [VaultMetadata] = [], indexes: [UUID: WalletPublicMetadata] = [:]
-            var statuses: [UUID: PublicMetadataStatus] = [:]
+            var statuses: [UUID: PublicMetadataStatus] = [:], identities: [UUID: WalletIdentitySignature] = [:]
             let key = originals.isEmpty ? nil : try? await vault.publicDataKey(createIfMissing: false)
             for wallet in originals {
                 let snapshot = await publicRepository.snapshot(walletID: wallet.id, key: key)
                 displayed.append(VaultMetadata(id: wallet.id, name: snapshot.displayName ?? wallet.name, createdAt: wallet.createdAt))
                 indexes[wallet.id] = snapshot.metadata; statuses[wallet.id] = snapshot.status
+                if let identity = snapshot.identity { identities[wallet.id] = identity }
             }
             guard loading == reloadEpoch else { return }
-            wallets = displayed; publicWallets = indexes; metadataStatuses = statuses
+            wallets = displayed; publicWallets = indexes; metadataStatuses = statuses; walletIdentities = identities
             clearConnectPrefetch(); scheduleConnectPrefetch()
             walletLoadSucceeded = true
             let grouped = Dictionary(grouping: indexes.keys, by: { indexes[$0]?.walletKeyId ?? "" })
@@ -148,6 +152,10 @@ final class AppStore: ObservableObject {
     }
     func publicMetadata(for id: UUID) -> WalletPublicMetadata? { publicWallets[id] }
     func metadataStatus(for id: UUID) -> PublicMetadataStatus { metadataStatuses[id] ?? .needsCompletion }
+    /// Whether this wallet can show its wallet-level QR without asking for a
+    /// password. False for a wallet created before version 1.1.0, which has to
+    /// sign its identity once before the v2 pairing code can be built.
+    func hasWalletIdentity(_ id: UUID) -> Bool { walletIdentities[id] != nil }
     func walletLabel(for id: UUID) -> String { wallets.first { $0.id == id }?.name ?? "Wallet" }
     /// Stable seed for the wallet's identity color; never used for signing decisions.
     func avatarIdentity(for id: UUID) -> String { publicWallets[id]?.walletKeyId ?? id.uuidString }
@@ -182,7 +190,8 @@ final class AppStore: ObservableObject {
         guard passphrase.utf8.count <= 1024 else { throw AppIssue.message(String(localized: "The BIP39 passphrase exceeds 1,024 UTF-8 bytes.", bundle: AppText.bundle)) }
         // The vault always stores the canonical words the seed is derived from.
         let mnemonic = try await validateMnemonic(mnemonic).phrase
-        let raw = try await engine.run(operation: "derivePublicIndex", parameters: ["seed": try BIP39Seed.hex(mnemonic: mnemonic, passphrase: passphrase)])
+        let seed = try BIP39Seed.hex(mnemonic: mnemonic, passphrase: passphrase)
+        let raw = try await engine.run(operation: "derivePublicIndex", parameters: ["seed": seed])
         try requireSession(epoch)
         let index = try WalletPublicMetadata(raw)
         await reload()
@@ -191,11 +200,15 @@ final class AppStore: ObservableObject {
         guard !publicWallets.values.contains(where: { $0.walletKeyId == index.walletKeyId }) else {
             throw AppIssue.message(String(localized: "This recovery phrase and passphrase already belong to an existing wallet.", bundle: AppText.bundle))
         }
+        // The seed is already here, so the wallet-level QR never needs the
+        // password again: the identity is signed now and stored with the index.
+        let identity = try await signWalletIdentity(seed: seed, walletKeyId: index.walletKeyId, epoch: epoch)
         // Prepare the public sidecar first. It is invisible without a committed
         // vault. A crash cannot leave a visible new wallet with missing setup.
         let id = UUID()
         guard let key = try await vault.publicDataKey(createIfMissing: true) else { throw VaultError.deviceKeyUnavailable }
-        try await publicRepository.save(index, walletID: id, displayName: name.trimmingCharacters(in: .whitespacesAndNewlines), key: key)
+        try await publicRepository.save(index, walletID: id, displayName: name.trimmingCharacters(in: .whitespacesAndNewlines),
+                                        identity: identity, key: key)
         let metadata: VaultMetadata
         do {
             try requireSession(epoch)
@@ -213,23 +226,71 @@ final class AppStore: ObservableObject {
     func completeSetup(walletID: UUID, password: String) async throws {
         guard wallets.contains(where: { $0.id == walletID }) else { throw VaultError.walletNotFound }
         let epoch = securityEpoch, sensitive = sensitiveEpoch
-        let raw = try await authenticatedPublicIndex(walletID: walletID, password: password, epoch: epoch)
+        let (raw, seed) = try await authenticatedPublicIndex(walletID: walletID, password: password, epoch: epoch)
         try requireSession(epoch)
         guard sensitive == sensitiveEpoch else { throw CancellationError() }
         let index = try WalletPublicMetadata(raw)
+        let identity = try await signWalletIdentity(seed: seed, walletKeyId: index.walletKeyId, epoch: epoch)
         // Password authorization may repair an inconsistent public cache. The
         // encrypted wallet, never the old cache, is the identity authority.
         guard let key = try await vault.publicDataKey(createIfMissing: true) else { throw VaultError.deviceKeyUnavailable }
-        try await publicRepository.save(index, walletID: walletID, displayName: walletLabel(for: walletID), key: key)
+        try await publicRepository.save(index, walletID: walletID, displayName: walletLabel(for: walletID),
+                                        identity: identity, key: key)
         await reload()
         // Existing duplicate encrypted records are preserved and reported; the
         // resolver rejects an ambiguous identity instead of deleting user data.
     }
 
-    private func authenticatedPublicIndex(walletID: UUID, password: String, epoch: UUID) async throws -> [String: Any] {
+    /// Signs this wallet's KH v2 identity and checks that the signature belongs
+    /// to the wallet it will be stored beside. The engine verifies the signature
+    /// against its own key before returning it; this checks it against the public
+    /// index, so a signature is never filed under another wallet's keys.
+    private func signWalletIdentity(seed: String, walletKeyId: String, epoch: UUID) async throws -> WalletIdentitySignature {
+        let result = try await engine.run(operation: "signKhV2", parameters: ["seed": seed, "epoch": 1])
+        try requireSession(epoch)
+        guard let identity = WalletIdentitySignature(epoch: result["epoch"], signature: result["signature"]),
+              (result["walletKeyId"] as? String)?.lowercased() == walletKeyId.lowercased() else {
+            throw AppIssue.message(String(localized: "This wallet’s identity signature could not be produced.", bundle: AppText.bundle))
+        }
+        return identity
+    }
+
+    /// Signs the identity for a wallet that has none — one created before version
+    /// 1.1.0 — after its password is entered. Only the signature is written; the
+    /// public index on disk is left exactly as it is.
+    func authorizeWalletIdentity(walletID: UUID, password: String) async throws {
+        guard let existing = publicWallets[walletID] else {
+            throw AppIssue.message(String(localized: "Repair this wallet before pairing it.", bundle: AppText.bundle))
+        }
+        let epoch = securityEpoch, sensitive = sensitiveEpoch
         let secret = try await vault.unlock(id: walletID, password: password)
         try requireSession(epoch)
-        return try await engine.run(operation: "derivePublicIndex", parameters: ["seed": try BIP39Seed.hex(mnemonic: secret.mnemonic, passphrase: secret.passphrase)])
+        guard sensitive == sensitiveEpoch else { throw CancellationError() }
+        let identity = try await signWalletIdentity(seed: try BIP39Seed.hex(mnemonic: secret.mnemonic, passphrase: secret.passphrase),
+                                                    walletKeyId: existing.walletKeyId, epoch: epoch)
+        guard let key = try await vault.publicDataKey(createIfMissing: false) else { throw VaultError.deviceKeyUnavailable }
+        try await publicRepository.saveIdentity(identity, walletID: walletID, key: key)
+        await reload()
+    }
+
+    #if DEBUG && targetEnvironment(simulator)
+    /// Simulator UI-test fixture only: rewrites a wallet's sidecar without its
+    /// identity signature, so it looks exactly like one saved by 1.0.0. This is
+    /// the same "a rebuilt index drops a stale signature" path the repository
+    /// takes, not a separate back door, and it is absent from device builds.
+    func dropWalletIdentityForUITests(walletID: UUID) async {
+        guard let index = publicWallets[walletID],
+              let key = try? await vault.publicDataKey(createIfMissing: false) else { return }
+        try? await publicRepository.save(index, walletID: walletID, displayName: walletLabel(for: walletID), key: key)
+        await reload()
+    }
+    #endif
+
+    private func authenticatedPublicIndex(walletID: UUID, password: String, epoch: UUID) async throws -> ([String: Any], String) {
+        let secret = try await vault.unlock(id: walletID, password: password)
+        try requireSession(epoch)
+        let seed = try BIP39Seed.hex(mnemonic: secret.mnemonic, passphrase: secret.passphrase)
+        return (try await engine.run(operation: "derivePublicIndex", parameters: ["seed": seed]), seed)
     }
 
     func renameWallet(walletID: UUID, name: String) async throws {
@@ -288,7 +349,8 @@ final class AppStore: ObservableObject {
     }
 
     private func prefetchConnectPairings() async {
-        for wallet in wallets where connectPrefetch[wallet.id] == nil && metadataStatus(for: wallet.id) == .ready {
+        for wallet in wallets where connectPrefetch[wallet.id] == nil && metadataStatus(for: wallet.id) == .ready
+                                     && walletIdentities[wallet.id] != nil {
             guard !Task.isCancelled, let index = publicWallets[wallet.id]?.jsonData else { return }
             let epoch = securityEpoch
             guard let payload = try? await walletPairing(walletID: wallet.id) else { continue }
@@ -300,11 +362,18 @@ final class AppStore: ObservableObject {
         }
     }
 
-    /// One QR for all chain families (`bittool-signer-wallet` v1), public data only.
-    /// BitTool Signer offers one wallet-level form: the account-level (`full`) payload.
+    /// One QR for all chain families (`bittool-signer-wallet` v2), public data only.
+    /// BitTool Signer offers one wallet-level form: the account-level (`full`)
+    /// payload, carrying this wallet's identity signature. A wallet without a
+    /// stored signature cannot produce one: its password is needed once.
     func walletPairing(walletID: UUID) async throws -> WalletPairingPayload {
         guard let metadata = publicWallets[walletID] else { throw AppIssue.message(String(localized: "Wallet setup required.", bundle: AppText.bundle)) }
-        let result = try await engine.run(operation: "createWalletPairing", parameters: ["publicIndex": metadata.raw, "mode": "full"])
+        guard let identity = walletIdentities[walletID] else {
+            throw AppIssue.message(String(localized: "Verify this wallet’s password once to create its pairing code.", bundle: AppText.bundle))
+        }
+        let result = try await engine.run(operation: "createWalletPairing",
+                                          parameters: ["publicIndex": metadata.raw, "mode": "full",
+                                                       "khSig": identity.signature, "khEpoch": identity.epoch])
         return try WalletPairingPayload(result)
     }
 
@@ -506,6 +575,14 @@ final class AppStore: ObservableObject {
             throw AppIssue.message(String(localized: "This recovery phrase belongs to a different wallet.", bundle: AppText.bundle))
         }
         try await vault.resetPassword(id: walletID, mnemonic: canonical, passphrase: passphrase, newPassword: newPassword)
+        // The seed is in hand and verified against this wallet, so a wallet from
+        // before version 1.1.0 gets its identity signature here too, silently.
+        if walletIdentities[walletID] == nil,
+           let identity = try? await signWalletIdentity(seed: try BIP39Seed.hex(mnemonic: canonical, passphrase: passphrase),
+                                                        walletKeyId: existing.walletKeyId, epoch: epoch),
+           let key = try? await vault.publicDataKey(createIfMissing: false) {
+            try? await publicRepository.saveIdentity(identity, walletID: walletID, key: key)
+        }
         // The password that was authorizing this session is gone.
         suspend()
         await reload()

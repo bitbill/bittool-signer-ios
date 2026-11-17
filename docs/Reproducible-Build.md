@@ -47,7 +47,7 @@ for a release is recorded in that release's `release-manifest.json`).
 ```bash
 git clone https://github.com/bitbill/bittool-signer-ios
 cd bittool-signer-ios
-git checkout v1.0.0            # or whichever tag or commit you are checking
+git checkout v1.1.0            # or whichever tag or commit you are checking
 cd engine
 npm ci --ignore-scripts        # exact versions from the lockfile, no install hooks
 npm run build

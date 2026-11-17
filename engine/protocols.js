@@ -6,7 +6,9 @@ import { UR, URDecoder, UREncoder } from '@ngraveio/bc-ur';
 import { HDKey } from '@scure/bip32';
 import { base58, base58check, base32nopad } from '@scure/base';
 import { sha256 } from '@noble/hashes/sha2.js';
+import { p2pkh } from '@scure/btc-signer';
 import { validatePublicIndex, derivePublicKeyAt, BITCOIN_PROFILES, SOLANA_PROFILES } from './src/public-index.js';
+import { KH_V2_ACCOUNT_PATH, KH_V2_AUTH_INDEX, KH_V2_PATH, khV2PublicIdentity, khV2SignatureBytes, requireKhV2, verifyKhV2 } from './src/kh2.js';
 import { requestHash as hashRequest } from './src/util.js';
 import { psbtSummary } from './src/bitcoin.js';
 import { Inflate } from 'fflate';
@@ -196,7 +198,11 @@ function requestFromUR(ur) {
       return { ...request, kind: 'typedData', typedData: parseProtocolJSON(text) };
     }
     if (dataType === 3) return { ...request, kind: 'personal', message: `0x${signData.toString('hex')}` };
-    ensure(signData.length > 0 && (dataType === 1 ? signData[0] >= 0xc0 : signData[0] === 1 || signData[0] === 2), 'Transaction data type does not match payload');
+    // What is left is dataType 1 (a legacy RLP transaction) or dataType 4 (an
+    // EIP-2718 typed transaction, whose first byte is the transaction type):
+    // 1 (EIP-2930), 2 (EIP-1559) and 4 (EIP-7702) are read. Type 3 (blob) is not,
+    // so it stops at the transport rather than deeper in.
+    ensure(signData.length > 0 && (dataType === 1 ? signData[0] >= 0xc0 : [1, 2, 4].includes(signData[0])), 'Transaction data type does not match payload');
     return { ...request, kind: 'transaction', transaction: `0x${signData.toString('hex')}` };
   }
   if (isTron) {
@@ -600,13 +606,18 @@ export function createPublicPairing({ publicIndex, chain, profile, outputMode, i
 export const createPairing = createPublicPairing;
 
 // ---------------------------------------------------------------------------
-// BitTool Signer Wallet-Level QR Pairing v1 (docs/Wallet-Pairing-v1.md).
+// BitTool Signer Wallet-Level QR Pairing v2 (docs/Wallet-Pairing-v2.md).
 // One QR for all four chain families: `ur:bytes`, whose byte string is the
 // canonical CBOR encoding of the logical object. Chain-specific exports above
 // stay unchanged for third-party wallets.
+//
+// v2 adds the wallet-identity signature (`khSig`, `khEpoch`): proof that whoever
+// built this code holds the private key behind the exported public keys. v1 is
+// no longer produced, and the reference decoder no longer accepts it — a watch
+// wallet created from an unsigned code cannot register with the backend.
 
 export const WALLET_PAIRING_PROTOCOL = 'bittool-signer-wallet';
-export const WALLET_PAIRING_VERSION = 1;
+export const WALLET_PAIRING_VERSION = 2;
 
 /** RFC 8949 §4.2.1 core deterministic encoding for the pairing object: definite
  * lengths, shortest-form integers, and map keys sorted by the bytewise order of
@@ -641,7 +652,7 @@ const PAIRING_BTC_SCRIPTS = Object.freeze([
  * xpub for each of the four single-sig Bitcoin script types, for EVM and for TRON,
  * and the three Solana addresses (Ed25519 derivation is hardened, so Solana has no
  * xpub and each profile has to be sent as its own address). */
-export function walletPairingObject(cache) {
+export function walletPairingObject(cache, { khSig, khEpoch = 1 } = {}) {
   const btcNodes = PAIRING_BTC_SCRIPTS.map(([profile, script]) => {
     const node = cache.bitcoinPublicNodes.find(item => item.scriptProfile === profile);
     ensure(node, 'Missing Bitcoin account for ' + profile);
@@ -661,10 +672,14 @@ export function walletPairingObject(cache) {
     { chain: 'tron', accountPath: cache.tronAccountNode.originPath, xpub: cache.tronAccountNode.xpub, derive: '0/*' },
     { chain: 'sol', profile: 'bip44-solana', accounts: sol },
   ];
-  // masterFingerprint is an additive v1 field (parsers ignore unknown fields): it lets a
+  // The identity signature is checked against this wallet's own public keys before
+  // it goes into a payload: an exported code never claims an identity the keys
+  // beside it disagree with, whatever produced or stored the signature.
+  requireKhV2(cache, khSig, khEpoch);
+  // masterFingerprint is an additive field (parsers ignore unknown ones): it lets a
   // watch wallet put BitTool Signer's fingerprint into PSBT and sign-request derivation data.
   return { protocol: WALLET_PAIRING_PROTOCOL, version: WALLET_PAIRING_VERSION, mode: 'full', network: 'mainnet',
-    masterFingerprint: cache.masterFingerprint.toLowerCase(), accounts };
+    masterFingerprint: cache.masterFingerprint.toLowerCase(), khEpoch, khSig, accounts };
 }
 
 /** The fragment size for the pairing's animated QR. Four Bitcoin xpubs, EVM,
@@ -674,9 +689,11 @@ export function walletPairingObject(cache) {
  * version, and the ceiling guarantees at least two frames for any payload. */
 const WALLET_PAIRING_FRAGMENT = 400;
 
-export function createWalletPairing({ publicIndex, mode = 'full' }) {
+export function createWalletPairing({ publicIndex, mode = 'full', khSig, khEpoch = 1 }) {
   ensure(mode === 'full', 'Unsupported wallet pairing mode');
-  const cache = validatePublicIndex(publicIndex), object = walletPairingObject(cache);
+  ensure(Number.isSafeInteger(khEpoch) && khEpoch >= 1, 'Invalid wallet identity epoch');
+  ensure(typeof khSig === 'string' && khSig.length > 0, 'A wallet-level QR needs this wallet\u2019s identity signature');
+  const cache = validatePublicIndex(publicIndex), object = walletPairingObject(cache, { khSig, khEpoch });
   const payload = canonicalCBOR(object);
   // Animated, so the old one-QR ceiling no longer applies; this one only keeps
   // the frame count and the scan time sane.
@@ -695,8 +712,10 @@ export function createWalletPairing({ publicIndex, mode = 'full' }) {
     first('evm', 'standard', "m/44'/60'/0'/0/0"), first('tron', 'standard', "m/44'/195'/0'/0/0"),
     ...Object.entries(SOLANA_PROFILES).map(([profile, path]) => first('sol', profile, path)),
   ];
+  // The identity is reported separately from `verify`: it is not a receive address
+  // and must never be offered as one, but the page and the tests want to see it.
   return { type: 'bytes', frames: qr.frames, text: qr.frames.join('\n'), mode: 'full', payload: object, payloadBytes: payload.length,
-    verify };
+    verify, identity: { ...khV2PublicIdentity(cache), epoch: khEpoch } };
 }
 
 /** A CBOR tag read by the canonical parser (kept distinct from maps with a "tag" key). */
@@ -757,8 +776,24 @@ function parseCanonicalCBOR(bytes) {
   return value;
 }
 
-/** Test/developer decoder: exact v1 checks, unknown fields (of any type) ignored,
- * other versions refused, non-canonical encodings refused. */
+/** The identity key as a receiving wallet derives it, from the payload alone:
+ * the p2pkh account xpub inside the code, then the non-hardened children
+ * `0/AUTH_INDEX`. This is the derivation the backend repeats on the xpub a
+ * wallet registers, which is why a decoder can check the signature offline. */
+export function walletPairingIdentity(object) {
+  const account = (object.accounts ?? []).find(item => item && item.chain === 'btc' && item.script === 'p2pkh');
+  ensure(account && typeof account.xpub === 'string' && account.accountPath === KH_V2_ACCOUNT_PATH,
+         'Wallet pairing has no Bitcoin legacy account to verify its identity against');
+  let node;
+  try { node = HDKey.fromExtendedKey(account.xpub).deriveChild(0).deriveChild(KH_V2_AUTH_INDEX); }
+  catch { fail('Wallet pairing identity key cannot be derived'); }
+  return { path: KH_V2_PATH, publicKey: Buffer.from(node.publicKey).toString('hex'),
+           address: p2pkh(node.publicKey).address };
+}
+
+/** Test/developer decoder: exact v2 checks, unknown fields (of any type) ignored,
+ * other versions refused (v1 included), non-canonical encodings refused, and the
+ * identity signature verified against the code's own public keys. */
 export function decodeWalletPairing({ frames }) {
   const decoder = new URDecoder(); frames.forEach(frame => decoder.receivePart(frame));
   ensure(decoder.isComplete() && decoder.isSuccess(), 'Incomplete wallet pairing QR');
@@ -774,5 +809,12 @@ export function decodeWalletPairing({ frames }) {
   ensure(object.version === WALLET_PAIRING_VERSION, 'Unsupported wallet pairing version');
   ensure(object.mode === 'simple' || object.mode === 'full', 'Unsupported wallet pairing mode');
   ensure(Array.isArray(object.accounts), 'Wallet pairing has no accounts');
-  return object;
+  // A v2 code without a usable signature is refused outright rather than treated
+  // as a weaker pairing: the receiving wallet has nothing to register with.
+  ensure(Number.isSafeInteger(object.khEpoch) && object.khEpoch >= 1, 'Wallet pairing has no identity epoch');
+  khV2SignatureBytes(object.khSig);
+  const identity = walletPairingIdentity(object);
+  ensure(verifyKhV2({ signature: object.khSig, epoch: object.khEpoch, publicKey: identity.publicKey }),
+         'Wallet pairing identity signature does not match its own public keys');
+  return { ...object, identity };
 }
